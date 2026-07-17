@@ -25,10 +25,12 @@ export default function BookingFlow({
   shopSlug,
   services,
   barbers,
+  cancellationNoticeHours,
 }: {
   shopSlug: string;
   services: Service[];
   barbers: Barber[];
+  cancellationNoticeHours: number;
 }) {
   const [step, setStep] = useState(1);
   const [serviceId, setServiceId] = useState<string | null>(null);
@@ -41,7 +43,9 @@ export default function BookingFlow({
   const [clientPhone, setClientPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<
-    { ok: true; barberName: string; startTime: string } | { ok: false; error: string } | null
+    | { ok: true; barberName: string; startTime: string; appointmentId: string }
+    | { ok: false; error: string }
+    | null
   >(null);
 
   const days = useMemo(() => nextDays(14), []);
@@ -85,6 +89,19 @@ export default function BookingFlow({
           {date.toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" })} a las{" "}
           {date.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
         </p>
+        <div className="mx-auto mt-6 max-w-sm rounded-md border border-white/10 bg-ink p-4 text-sm">
+          <p className="text-cream/70">
+            ¿Necesitas cancelar? Guarda este enlace, se requieren al menos{" "}
+            <span className="font-semibold text-cream">{cancellationNoticeHours} horas</span> de
+            anticipación o quedará registrado como cancelación tardía:
+          </p>
+          <a
+            href={`/cita/${result.appointmentId}`}
+            className="mt-2 block break-all text-gold hover:underline"
+          >
+            /cita/{result.appointmentId}
+          </a>
+        </div>
         <p className="mt-6 text-sm text-cream/50">Te esperamos. ¡Gracias por reservar!</p>
       </div>
     );

@@ -35,6 +35,7 @@ export default async function BookPage({
             price: s.price,
           }))}
           barbers={shop.barbers.map((b) => ({ id: b.id, name: b.name }))}
+          cancellationNoticeHours={shop.cancellationNoticeHours}
         />
       </div>
     </main>

@@ -52,6 +52,17 @@ async function main() {
   const today = new Date();
   today.setHours(11, 0, 0, 0);
   const in3h = new Date(today.getTime() + 3 * 60 * 60000);
+  const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60000);
+
+  const miguel = await prisma.client.create({
+    data: { shopId: shop.id, name: "Miguel Ángel", phone: "555-0101" },
+  });
+  const pedro = await prisma.client.create({
+    data: { shopId: shop.id, name: "Pedro Salinas", phone: "555-0102" },
+  });
+  const carlosCliente = await prisma.client.create({
+    data: { shopId: shop.id, name: "Roberto Núñez", phone: "555-0103", strikes: 2 },
+  });
 
   await prisma.appointment.createMany({
     data: [
@@ -59,8 +70,9 @@ async function main() {
         shopId: shop.id,
         barberId: carlos.id,
         serviceId: corteClasico.id,
-        clientName: "Miguel Ángel",
-        clientPhone: "555-0101",
+        clientId: miguel.id,
+        clientName: miguel.name,
+        clientPhone: miguel.phone,
         startTime: today,
         endTime: new Date(today.getTime() + corteClasico.durationMinutes * 60000),
         status: "CONFIRMED",
@@ -70,12 +82,25 @@ async function main() {
         shopId: shop.id,
         barberId: jonathan.id,
         serviceId: corteBarba.id,
-        clientName: "Pedro Salinas",
-        clientPhone: "555-0102",
+        clientId: pedro.id,
+        clientName: pedro.name,
+        clientPhone: pedro.phone,
         startTime: in3h,
         endTime: new Date(in3h.getTime() + corteBarba.durationMinutes * 60000),
         status: "CONFIRMED",
         source: "WALK_IN",
+      },
+      {
+        shopId: shop.id,
+        barberId: carlos.id,
+        serviceId: corteClasico.id,
+        clientId: carlosCliente.id,
+        clientName: carlosCliente.name,
+        clientPhone: carlosCliente.phone,
+        startTime: lastWeek,
+        endTime: new Date(lastWeek.getTime() + corteClasico.durationMinutes * 60000),
+        status: "NO_SHOW",
+        source: "ONLINE",
       },
     ],
   });
