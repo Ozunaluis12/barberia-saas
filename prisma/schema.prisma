@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Una barbería (tenant). Todo cuelga de aquí para soportar multi-sucursal/SaaS.
+model Shop {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  phone     String?
+  address   String?
+  plan      String   @default("GRATIS") // GRATIS, PRO
+  cancellationNoticeHours Int @default(3)
+  createdAt DateTime @default(now())
+
+  users        User[]
+  barbers      Barber[]
+  services     Service[]
+  appointments Appointment[]
+  clients      Client[]
+}
+
+// Historial de un cliente dentro de una barbería concreta (no cruza entre barberías).
+model Client {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String
+  strikes   Int      @default(0) // cancelaciones tardías + no-shows
+  createdAt DateTime @default(now())
+
+  appointments Appointment[]
+
+  @@unique([shopId, phone])
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("OWNER")
+  shopId       String
+  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+}
+
+// Un empleado/barbero de la barbería. El cliente puede elegirlo por nombre.
+model Barber {
+  id                String   @id @default(cuid())
+  shopId            String
+  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name              String
+  active            Boolean  @default(true)
+  commissionPercent Int      @default(50)
+  workStart         String   @default("09:00") // HH:mm
+  workEnd           String   @default("19:00") // HH:mm
+  workDays          String   @default("1,2,3,4,5,6") // 0=domingo..6=sábado
+  createdAt         DateTime @default(now())
+
+  appointments Appointment[]
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  shopId          String
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name            String
+  durationMinutes Int      @default(30)
+  price           Float
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  appointments Appointment[]
+}
+
+model Appointment {
+  id                 String   @id @default(cuid())
+  shopId             String
+  shop               Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  barberId           String
+  barber             Barber   @relation(fields: [barberId], references: [id])
+  serviceId          String
+  service            Service  @relation(fields: [serviceId], references: [id])
+  clientId           String
+  client             Client   @relation(fields: [clientId], references: [id])
+  clientName         String
+  clientPhone        String
+  startTime          DateTime
+  endTime            DateTime
+  status             String   @default("CONFIRMED") // CONFIRMED, CANCELLED, COMPLETED, NO_SHOW
+  source             String   @default("ONLINE") // ONLINE, WALK_IN
+  anyBarberRequested Boolean  @default(false)
+  lateCancellation   Boolean  @default(false)
+  createdAt          DateTime @default(now())
+
+  @@index([barberId, startTime])
+  @@index([shopId, startTime])
+}

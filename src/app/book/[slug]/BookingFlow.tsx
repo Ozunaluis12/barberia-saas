@@ -1,0 +1,261 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { fetchSlots, createBooking } from "@/app/actions/booking";
+
+type Service = { id: string; name: string; durationMinutes: number; price: number };
+type Barber = { id: string; name: string };
+type Slot = { time: string; barberId: string; barberName: string };
+
+const ANY_BARBER = "__ANY__";
+
+function nextDays(count: number): { value: string; label: string }[] {
+  const days = [];
+  const formatter = new Intl.DateTimeFormat("es", { weekday: "short", day: "numeric", month: "short" });
+  for (let i = 0; i < count; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const value = d.toISOString().slice(0, 10);
+    days.push({ value, label: formatter.format(d) });
+  }
+  return days;
+}
+
+export default function BookingFlow({
+  shopSlug,
+  services,
+  barbers,
+}: {
+  shopSlug: string;
+  services: Service[];
+  barbers: Barber[];
+}) {
+  const [step, setStep] = useState(1);
+  const [serviceId, setServiceId] = useState<string | null>(null);
+  const [barberId, setBarberId] = useState<string | null>(null); // null = ANY_BARBER selected
+  const [day, setDay] = useState<string>(nextDays(14)[0].value);
+  const [time, setTime] = useState<string | null>(null);
+  const [slots, setSlots] = useState<Slot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<
+    { ok: true; barberName: string; startTime: string } | { ok: false; error: string } | null
+  >(null);
+
+  const days = useMemo(() => nextDays(14), []);
+  const selectedService = services.find((s) => s.id === serviceId) ?? null;
+
+  useEffect(() => {
+    if (step !== 3 || !serviceId) return;
+    setLoadingSlots(true);
+    setTime(null);
+    fetchSlots({ shopSlug, serviceId, barberId, day })
+      .then(setSlots)
+      .finally(() => setLoadingSlots(false));
+  }, [step, serviceId, barberId, day, shopSlug]);
+
+  async function handleConfirm() {
+    if (!serviceId || !time) return;
+    setSubmitting(true);
+    const res = await createBooking({
+      shopSlug,
+      serviceId,
+      barberId,
+      day,
+      time,
+      clientName,
+      clientPhone,
+    });
+    setSubmitting(false);
+    setResult(res);
+    if (res.ok) setStep(5);
+  }
+
+  if (step === 5 && result?.ok) {
+    const date = new Date(result.startTime);
+    return (
+      <div className="rounded-lg border border-gold/40 bg-charcoal p-8 text-center">
+        <h2 className="text-2xl font-bold text-gold">¡Cita confirmada!</h2>
+        <p className="mt-4 text-cream/80">
+          Te atenderá <span className="font-semibold text-cream">{result.barberName}</span>
+        </p>
+        <p className="mt-1 text-cream/80">
+          {date.toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" })} a las{" "}
+          {date.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
+        </p>
+        <p className="mt-6 text-sm text-cream/50">Te esperamos. ¡Gracias por reservar!</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-white/10 bg-charcoal p-6">
+      <ol className="mb-6 flex gap-2 text-xs text-cream/50">
+        {["Servicio", "Barbero", "Horario", "Tus datos"].map((label, i) => (
+          <li
+            key={label}
+            className={`rounded-full px-3 py-1 ${
+              step === i + 1 ? "bg-gold text-ink font-semibold" : "bg-ink"
+            }`}
+          >
+            {i + 1}. {label}
+          </li>
+        ))}
+      </ol>
+
+      {step === 1 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold">¿Qué servicio quieres?</h2>
+          {services.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => {
+                setServiceId(s.id);
+                setStep(2);
+              }}
+              className="flex w-full items-center justify-between rounded-md border border-white/10 bg-ink px-4 py-3 text-left hover:border-gold"
+            >
+              <span>
+                <span className="font-medium">{s.name}</span>
+                <span className="ml-2 text-sm text-cream/50">{s.durationMinutes} min</span>
+              </span>
+              <span className="font-semibold text-gold">${s.price.toFixed(2)}</span>
+            </button>
+          ))}
+          {services.length === 0 && (
+            <p className="text-sm text-cream/50">Esta barbería aún no tiene servicios activos.</p>
+          )}
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold">¿Con quién quieres cortarte?</h2>
+          <button
+            onClick={() => {
+              setBarberId(null);
+              setStep(3);
+            }}
+            className="flex w-full flex-col rounded-md border border-gold bg-gold/10 px-4 py-3 text-left hover:bg-gold/20"
+          >
+            <span className="font-medium text-gold">Cualquiera disponible</span>
+            <span className="text-xs text-cream/60">
+              El sistema te asigna al barbero libre más pronto, repartiendo la carga de forma justa.
+            </span>
+          </button>
+          {barbers.map((b) => (
+            <button
+              key={b.id}
+              onClick={() => {
+                setBarberId(b.id);
+                setStep(3);
+              }}
+              className="w-full rounded-md border border-white/10 bg-ink px-4 py-3 text-left hover:border-gold"
+            >
+              {b.name}
+            </button>
+          ))}
+          <button onClick={() => setStep(1)} className="text-sm text-cream/50 hover:text-cream">
+            ← Volver
+          </button>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Elige día y hora</h2>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {days.map((d) => (
+              <button
+                key={d.value}
+                onClick={() => setDay(d.value)}
+                className={`shrink-0 rounded-md border px-3 py-2 text-sm capitalize ${
+                  day === d.value
+                    ? "border-gold bg-gold text-ink font-semibold"
+                    : "border-white/10 bg-ink hover:border-gold"
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+
+          {loadingSlots && <p className="text-sm text-cream/50">Buscando horarios...</p>}
+          {!loadingSlots && slots.length === 0 && (
+            <p className="text-sm text-cream/50">No hay horarios disponibles ese día.</p>
+          )}
+          <div className="grid grid-cols-4 gap-2">
+            {slots.map((s) => (
+              <button
+                key={`${s.time}-${s.barberId}`}
+                onClick={() => setTime(s.time)}
+                className={`rounded-md border px-2 py-2 text-sm ${
+                  time === s.time
+                    ? "border-gold bg-gold text-ink font-semibold"
+                    : "border-white/10 bg-ink hover:border-gold"
+                }`}
+              >
+                {s.time}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex justify-between pt-2">
+            <button onClick={() => setStep(2)} className="text-sm text-cream/50 hover:text-cream">
+              ← Volver
+            </button>
+            <button
+              disabled={!time}
+              onClick={() => setStep(4)}
+              className="rounded-md bg-gold px-5 py-2 font-semibold text-ink disabled:opacity-40"
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 4 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Tus datos</h2>
+          <div className="rounded-md bg-ink px-4 py-3 text-sm text-cream/70">
+            {selectedService?.name} · {day} · {time}
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">Nombre</label>
+            <input
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">Teléfono</label>
+            <input
+              value={clientPhone}
+              onChange={(e) => setClientPhone(e.target.value)}
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
+          {result && !result.ok && (
+            <p className="rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">{result.error}</p>
+          )}
+          <div className="flex justify-between pt-2">
+            <button onClick={() => setStep(3)} className="text-sm text-cream/50 hover:text-cream">
+              ← Volver
+            </button>
+            <button
+              disabled={!clientName.trim() || !clientPhone.trim() || submitting}
+              onClick={handleConfirm}
+              className="rounded-md bg-gold px-5 py-2 font-semibold text-ink disabled:opacity-40"
+            >
+              {submitting ? "Reservando..." : "Confirmar cita"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
