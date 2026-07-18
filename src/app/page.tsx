@@ -38,8 +38,9 @@ const DIFERENCIADORES = [
       "Barbero, estilista, doctor/a, veterinario/a, entrenador/a, técnico... el panel y la reserva usan el término correcto para tu tipo de negocio.",
   },
   {
-    title: "Pensado para crecer a varias sucursales",
-    detail: "Multi-sucursal desde el día uno, no como un parche pagado aparte.",
+    title: "Historial de sanciones por cliente",
+    detail:
+      "Si un cliente cancela tarde o no se presenta, queda registrado automáticamente y visible para todo el equipo antes de confirmarle otra cita — algo que ninguna de esas plataformas resuelve.",
   },
 ];
 
@@ -139,32 +140,33 @@ export default function HomePage() {
       <section className="mx-auto max-w-4xl px-6 py-16" id="precios">
         <h2 className="text-center text-3xl font-bold">Precio simple, sin letra chica</h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2">
-          <div className="rounded-lg border border-white/10 p-8">
-            <h3 className="text-xl font-bold">Gratis</h3>
-            <p className="mt-1 text-cream/70">Para un negocio empezando</p>
+          <div className="rounded-lg border border-gold bg-gold/5 p-8">
+            <h3 className="text-xl font-bold text-gold">Gratis</h3>
+            <p className="mt-1 text-cream/70">Todo lo que necesitas para empezar, hoy mismo</p>
             <p className="mt-4 text-3xl font-bold">$0</p>
             <ul className="mt-6 space-y-2 text-sm text-cream/80">
-              <li>Hasta 2 miembros del equipo</li>
-              <li>Reservas online ilimitadas</li>
-              <li>Reseñas y reportes de desempeño</li>
+              <li>Equipo y reservas online ilimitadas</li>
+              <li>Citas sin cita previa (walk-in) y online juntas</li>
+              <li>Reseñas, reportes de desempeño y comisiones</li>
+              <li>Historial de clientes con sanciones por cancelación tardía</li>
             </ul>
           </div>
-          <div className="rounded-lg border border-gold bg-gold/5 p-8">
-            <h3 className="text-xl font-bold text-gold">Pro</h3>
-            <p className="mt-1 text-cream/70">Para equipos y varias sucursales</p>
+          <div className="rounded-lg border border-white/10 p-8">
+            <h3 className="text-xl font-bold">Pro</h3>
+            <p className="mt-1 text-cream/70">En construcción — todavía no disponible</p>
             <p className="mt-4 text-3xl font-bold">
               $19.99<span className="text-base font-normal text-cream/60">/mes por sucursal</span>
             </p>
             <ul className="mt-6 space-y-2 text-sm text-cream/80">
-              <li>Equipo ilimitado</li>
-              <li>Multi-sucursal</li>
-              <li>Recordatorios automáticos</li>
-              <li>Soporte y reportes incluidos</li>
+              <li>Multi-sucursal (próximamente)</li>
+              <li>Recordatorios automáticos por WhatsApp/SMS (próximamente)</li>
+              <li>Cobro con tarjeta en línea (próximamente)</li>
             </ul>
           </div>
         </div>
         <p className="mt-6 text-center text-sm text-cream/50">
-          Sin comisión por cliente nuevo. Sin cargos ocultos. Nunca.
+          Sin comisión por cliente nuevo. Sin cargos ocultos. Nunca. Mientras el plan Pro está en
+          desarrollo, todo el producto es gratis para cualquier tamaño de equipo.
         </p>
       </section>
 

@@ -21,7 +21,6 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **Comisión de cada miembro del equipo configurable** (u opcional, si el
   negocio no paga por comisión) y calculada automáticamente.
 - **Reseñas de clientes** después de cada cita completada.
-- **Multi-sucursal desde el día uno.**
 - **Política de cancelación con sanciones**: los clientes acumulan strikes por
   cancelaciones tardías o no-shows, visibles en su historial.
 - **Instalable como app** (PWA) desde el navegador del celular.
@@ -163,7 +162,10 @@ mano en el dashboard (o aceptar que Render cree recursos nuevos `turnify-db`/
 
 ## Planes
 
-- **Gratis** — hasta 2 miembros del equipo, reservas online ilimitadas, reseñas
-  y reportes de desempeño.
-- **Pro** — $19.99/mes por sucursal, equipo ilimitado, multi-sucursal,
-  recordatorios automáticos, soporte y reportes incluidos.
+- **Gratis** — todo el producto hoy: equipo y reservas ilimitadas, walk-ins,
+  reseñas, reportes de desempeño y comisiones, historial de clientes con
+  sanciones. El campo `plan` existe en el modelo de datos pero **no hay
+  ninguna limitación ni cobro implementado todavía**.
+- **Pro** (en construcción, sin fecha) — multi-sucursal, recordatorios
+  automáticos por WhatsApp/SMS y cobro en línea. Ninguno de los tres está
+  construido; no anunciar como disponible hasta que lo estén.
