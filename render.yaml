@@ -1,6 +1,6 @@
 databases:
   - name: corteya-db
-    plan: free
+    plan: starter
     databaseName: corteya
     user: corteya
 
