@@ -1,6 +1,6 @@
 databases:
   - name: corteya-db
-    plan: starter
+    plan: basic-256mb
     databaseName: corteya
     user: corteya
 
