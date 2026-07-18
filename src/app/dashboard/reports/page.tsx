@@ -37,7 +37,7 @@ export default async function ReportsPage({
       revenue: 0,
     };
     entry.count += 1;
-    entry.revenue += a.service.price;
+    entry.revenue += a.priceCharged ?? a.service.price;
     byStaff.set(a.staffId, entry);
   }
 

@@ -28,7 +28,10 @@ export default async function DashboardHome() {
     prisma.service.count({ where: { businessId: session.businessId, active: true } }),
   ]);
 
-  const estimatedRevenue = todayAppointments.reduce((sum, a) => sum + a.service.price, 0);
+  const estimatedRevenue = todayAppointments.reduce(
+    (sum, a) => sum + (a.priceCharged ?? a.service.price),
+    0
+  );
 
   return (
     <div>

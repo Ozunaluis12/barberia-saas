@@ -2,9 +2,14 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
 const COOKIE_NAME = "turnify_session";
-const secret = new TextEncoder().encode(
-  process.env.SESSION_SECRET ?? "dev-secret-change-in-production"
-);
+
+if (!process.env.SESSION_SECRET) {
+  throw new Error(
+    "SESSION_SECRET no está configurado. Defínelo en las variables de entorno " +
+      "(.env en local, o en las env vars del servicio en producción) antes de iniciar la app."
+  );
+}
+const secret = new TextEncoder().encode(process.env.SESSION_SECRET);
 
 export type SessionPayload = {
   userId: string;
