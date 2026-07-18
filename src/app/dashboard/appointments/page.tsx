@@ -1,6 +1,7 @@
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
-import { updateAppointmentStatus } from "@/app/actions/appointments";
+import { updateAppointmentStatus, markAppointmentPaid } from "@/app/actions/appointments";
+import { getVocabulary } from "@/lib/vocabulary";
 import WalkInForm from "./WalkInForm";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -12,19 +13,21 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function AppointmentsPage() {
   const session = await requireSession();
+  const business = await prisma.business.findUnique({ where: { id: session.businessId } });
+  const vocab = getVocabulary(business?.category ?? "OTHER");
 
-  const [appointments, services, barbers] = await Promise.all([
+  const [appointments, services, staffMembers] = await Promise.all([
     prisma.appointment.findMany({
       where: {
-        shopId: session.shopId,
+        businessId: session.businessId,
         startTime: { gte: new Date(new Date().setHours(0, 0, 0, 0)) },
       },
-      include: { barber: true, service: true },
+      include: { staff: true, service: true },
       orderBy: { startTime: "asc" },
       take: 100,
     }),
-    prisma.service.findMany({ where: { shopId: session.shopId, active: true } }),
-    prisma.barber.findMany({ where: { shopId: session.shopId, active: true } }),
+    prisma.service.findMany({ where: { businessId: session.businessId, active: true } }),
+    prisma.staff.findMany({ where: { businessId: session.businessId, active: true } }),
   ]);
 
   return (
@@ -36,7 +39,8 @@ export default async function AppointmentsPage() {
       <div className="mt-6">
         <WalkInForm
           services={services.map((s) => ({ id: s.id, name: s.name }))}
-          barbers={barbers.map((b) => ({ id: b.id, name: b.name }))}
+          staff={staffMembers.map((s) => ({ id: s.id, name: s.name }))}
+          vocab={{ staffSingular: vocab.staffSingular, walkInLabel: vocab.walkInLabel }}
         />
       </div>
 
@@ -46,9 +50,10 @@ export default async function AppointmentsPage() {
             <tr>
               <th className="px-4 py-2">Fecha</th>
               <th className="px-4 py-2">Cliente</th>
-              <th className="px-4 py-2">Barbero</th>
+              <th className="px-4 py-2">{vocab.staffSingular}</th>
               <th className="px-4 py-2">Servicio</th>
               <th className="px-4 py-2">Estado</th>
+              <th className="px-4 py-2">Pago</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
@@ -61,15 +66,33 @@ export default async function AppointmentsPage() {
                 </td>
                 <td className="px-4 py-2">
                   {a.clientName}
-                  {a.anyBarberRequested && (
+                  {a.anyStaffRequested && (
                     <span className="ml-2 rounded-full bg-gold/20 px-2 py-0.5 text-[10px] text-gold">
                       auto-asignado
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-2">{a.barber.name}</td>
+                <td className="px-4 py-2">{a.staff.name}</td>
                 <td className="px-4 py-2">{a.service.name}</td>
                 <td className="px-4 py-2 text-cream/70">{STATUS_LABEL[a.status] ?? a.status}</td>
+                <td className="px-4 py-2">
+                  {a.paymentStatus === "PAID" ? (
+                    <span className="rounded-full bg-green-500/20 px-2 py-1 text-xs text-green-400">
+                      Pagado
+                    </span>
+                  ) : (a.status === "CONFIRMED" || a.status === "COMPLETED") ? (
+                    <div className="flex gap-2 text-xs">
+                      <form action={markAppointmentPaid.bind(null, a.id, "CASH")}>
+                        <button className="text-gold hover:underline">Efectivo</button>
+                      </form>
+                      <form action={markAppointmentPaid.bind(null, a.id, "CARD_IN_PERSON")}>
+                        <button className="text-gold hover:underline">Tarjeta</button>
+                      </form>
+                    </div>
+                  ) : (
+                    <span className="text-cream/40">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-2 text-right">
                   {a.status === "CONFIRMED" && (
                     <div className="flex justify-end gap-2 text-xs">
@@ -89,7 +112,7 @@ export default async function AppointmentsPage() {
             ))}
             {appointments.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-cream/40" colSpan={6}>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={7}>
                   No hay citas próximas.
                 </td>
               </tr>

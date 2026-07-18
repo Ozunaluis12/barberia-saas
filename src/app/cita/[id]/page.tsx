@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { getPublicAppointment } from "@/app/actions/clientCancel";
+import { getVocabulary } from "@/lib/vocabulary";
 import CancelButton from "./CancelButton";
+import ReviewForm from "./ReviewForm";
 
 const STATUS_LABEL: Record<string, string> = {
   CONFIRMED: "Confirmada",
@@ -18,10 +20,12 @@ export default async function ClientAppointmentPage({
   const appt = await getPublicAppointment(id);
   if (!appt) notFound();
 
+  const vocab = getVocabulary(appt.business.category);
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-ink px-4 py-10 text-cream">
       <div className="w-full max-w-md rounded-lg border border-white/10 bg-charcoal p-8">
-        <p className="text-sm uppercase tracking-widest text-gold">{appt.shop.name}</p>
+        <p className="text-sm uppercase tracking-widest text-gold">{appt.business.name}</p>
         <h1 className="mt-2 text-2xl font-bold">Tu cita</h1>
 
         <div className="mt-6 space-y-2 text-sm text-cream/80">
@@ -29,7 +33,7 @@ export default async function ClientAppointmentPage({
             <span className="text-cream/50">Servicio:</span> {appt.service.name}
           </p>
           <p>
-            <span className="text-cream/50">Barbero:</span> {appt.barber.name}
+            <span className="text-cream/50">{vocab.staffSingular}:</span> {appt.staff.name}
           </p>
           <p>
             <span className="text-cream/50">Fecha:</span>{" "}
@@ -52,8 +56,24 @@ export default async function ClientAppointmentPage({
           <div className="mt-8">
             <CancelButton
               appointmentId={appt.id}
-              noticeHours={appt.shop.cancellationNoticeHours}
+              noticeHours={appt.business.cancellationNoticeHours}
             />
+          </div>
+        )}
+
+        {appt.status === "COMPLETED" && (
+          <div className="mt-8">
+            {appt.review ? (
+              <div className="rounded-md border border-white/10 bg-ink p-4 text-sm">
+                <p className="text-gold">{"★".repeat(appt.review.rating)}</p>
+                {appt.review.comment && (
+                  <p className="mt-2 text-cream/70">{appt.review.comment}</p>
+                )}
+                <p className="mt-2 text-xs text-cream/40">¡Gracias por tu reseña!</p>
+              </div>
+            ) : (
+              <ReviewForm appointmentId={appt.id} />
+            )}
           </div>
         )}
       </div>

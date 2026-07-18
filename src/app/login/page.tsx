@@ -12,7 +12,7 @@ export default async function LoginPage({
     <main className="flex min-h-screen items-center justify-center bg-ink px-4 text-cream">
       <div className="w-full max-w-md rounded-lg border border-white/10 bg-charcoal p-8">
         <Link href="/" className="text-lg font-bold text-gold">
-          CorteYa
+          Turnify
         </Link>
         <h1 className="mt-4 text-2xl font-bold">Iniciar sesión</h1>
 
@@ -52,7 +52,7 @@ export default async function LoginPage({
         <p className="mt-6 text-center text-sm text-cream/60">
           ¿No tienes cuenta?{" "}
           <Link href="/signup" className="text-gold hover:underline">
-            Crea tu barbería
+            Crea tu negocio
           </Link>
         </p>
       </div>

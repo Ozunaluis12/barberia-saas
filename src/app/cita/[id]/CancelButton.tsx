@@ -30,7 +30,7 @@ export default function CancelButton({
         {result.wasLate ? (
           <p className="mt-2 text-yellow-400">
             Cancelaste con menos de {noticeHours} horas de anticipación, así que quedó
-            registrada como cancelación tardía en tu historial con esta barbería.
+            registrada como cancelación tardía en tu historial con este negocio.
           </p>
         ) : (
           <p className="mt-2 text-cream/60">Gracias por avisar con tiempo.</p>

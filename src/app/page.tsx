@@ -1,34 +1,45 @@
 import Link from "next/link";
 
+const NEGOCIOS = [
+  "Barberías",
+  "Salones de belleza",
+  "Spas",
+  "Consultorios médicos",
+  "Veterinarias",
+  "Talleres",
+  "Gimnasios",
+  "Y cualquier negocio con citas",
+];
+
 const DIFERENCIADORES = [
   {
     title: "Cero comisiones ocultas",
     detail:
-      "Precio plano por barbería. Nunca te cobramos un porcentaje por un cliente que ya era tuyo (a diferencia de Fresha o StyleSeat, que cobran hasta 20-25% incluso por clientes de boca a boca).",
+      "Precio plano por negocio. Nunca te cobramos un porcentaje por un cliente que ya era tuyo (a diferencia de Fresha o StyleSeat, que cobran hasta 20-25% incluso por clientes de boca a boca).",
   },
   {
-    title: "El cliente elige a su barbero",
+    title: "El cliente elige a su especialista",
     detail:
-      "O deja que el sistema asigne automáticamente al barbero disponible con menos carga de trabajo ese día, para repartir las citas de forma justa entre todo el equipo.",
+      "O deja que el sistema asigne automáticamente a quien esté disponible con menos carga de trabajo ese día, para repartir las citas de forma justa entre todo el equipo.",
   },
   {
-    title: "Walk-ins y citas online en el mismo calendario",
+    title: "Citas sin cita previa y online en el mismo calendario",
     detail:
-      "A diferencia de StyleSeat y Vagaro, que no manejan bien la fila de clientes sin cita, en CorteYa un walk-in y una reserva online conviven en el mismo horario sin choques.",
+      "A diferencia de StyleSeat y Vagaro, que no manejan bien la fila de clientes sin cita, en Turnify una visita sin cita y una reserva online conviven en el mismo horario sin choques.",
   },
   {
-    title: "Comisiones de cada barbero, transparentes",
+    title: "Reseñas, reportes y pagos en un solo lugar",
     detail:
-      "Cada barbero tiene su % de comisión configurado. El panel calcula automáticamente cuánto le corresponde a cada quien, sin depender de una hoja de cálculo aparte.",
+      "Tus clientes dejan reseña después de cada cita, tú ves el desempeño de tu equipo y llevas el control de qué se pagó y cómo — sin depender de hojas de cálculo aparte.",
+  },
+  {
+    title: "Se adapta al vocabulario de tu rubro",
+    detail:
+      "Barbero, estilista, doctor/a, veterinario/a, entrenador/a, técnico... el panel y la reserva usan el término correcto para tu tipo de negocio.",
   },
   {
     title: "Pensado para crecer a varias sucursales",
-    detail:
-      "Multi-sucursal desde el día uno, no como un parche pagado aparte.",
-  },
-  {
-    title: "Reportes y soporte incluidos",
-    detail: "Sin cobros extra por ver tus propios reportes o por hablar con soporte.",
+    detail: "Multi-sucursal desde el día uno, no como un parche pagado aparte.",
   },
 ];
 
@@ -37,7 +48,7 @@ export default function HomePage() {
     <main className="min-h-screen bg-ink text-cream">
       <header className="border-b border-white/10">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <span className="text-xl font-bold tracking-tight text-gold">CorteYa</span>
+          <span className="text-xl font-bold tracking-tight text-gold">Turnify</span>
           <nav className="flex items-center gap-4 text-sm">
             <Link href="/book/demo-barberia" className="hover:text-gold">
               Ver demo
@@ -49,7 +60,7 @@ export default function HomePage() {
               href="/signup"
               className="rounded-md bg-gold px-4 py-2 font-semibold text-ink hover:bg-gold/90"
             >
-              Crear mi barbería
+              Crear mi negocio
             </Link>
           </nav>
         </div>
@@ -57,21 +68,21 @@ export default function HomePage() {
 
       <section className="mx-auto max-w-6xl px-6 py-20 text-center">
         <h1 className="mx-auto max-w-3xl text-4xl font-bold leading-tight sm:text-5xl">
-          Agenda de citas para barberías con{" "}
-          <span className="text-gold">varios barberos</span>, sin comisiones que te
+          Agenda de citas para cualquier negocio con{" "}
+          <span className="text-gold">equipo de trabajo</span>, sin comisiones que te
           roben tus ganancias
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-cream/80">
-          Tus clientes eligen con quién cortarse el cabello — o dejan que CorteYa
-          asigne al barbero disponible más justo ese día. Tú administras barberos,
-          servicios, walk-ins y comisiones desde un solo panel.
+          Tus clientes eligen con quién quieren su cita — o dejan que Turnify asigne al
+          especialista disponible más justo ese día. Tú administras personal, servicios,
+          citas sin previa cita y comisiones desde un solo panel.
         </p>
         <div className="mt-8 flex justify-center gap-4">
           <Link
             href="/signup"
             className="rounded-md bg-gold px-6 py-3 font-semibold text-ink hover:bg-gold/90"
           >
-            Crear mi barbería gratis
+            Crear mi negocio gratis
           </Link>
           <Link
             href="/book/demo-barberia"
@@ -84,6 +95,26 @@ export default function HomePage() {
 
       <section className="border-t border-white/10 bg-charcoal/60">
         <div className="mx-auto max-w-6xl px-6 py-16">
+          <h2 className="text-center text-3xl font-bold">Para qué tipo de negocios sirve</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-cream/70">
+            El mismo panel, el mismo flujo de reserva — sin desarrollar una versión distinta
+            para cada rubro.
+          </p>
+          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {NEGOCIOS.map((n) => (
+              <div
+                key={n}
+                className="rounded-lg border border-white/10 bg-ink px-4 py-5 text-center text-sm font-medium text-cream/80"
+              >
+                {n}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-white/10">
+        <div className="mx-auto max-w-6xl px-6 py-16">
           <h2 className="text-center text-3xl font-bold">
             Lo que la competencia hace mal — y nosotros resolvemos
           </h2>
@@ -95,7 +126,7 @@ export default function HomePage() {
             {DIFERENCIADORES.map((d) => (
               <div
                 key={d.title}
-                className="rounded-lg border border-white/10 bg-ink p-6"
+                className="rounded-lg border border-white/10 bg-charcoal p-6"
               >
                 <h3 className="font-semibold text-gold">{d.title}</h3>
                 <p className="mt-2 text-sm text-cream/70">{d.detail}</p>
@@ -110,12 +141,12 @@ export default function HomePage() {
         <div className="mt-10 grid gap-6 sm:grid-cols-2">
           <div className="rounded-lg border border-white/10 p-8">
             <h3 className="text-xl font-bold">Gratis</h3>
-            <p className="mt-1 text-cream/70">Para una barbería empezando</p>
+            <p className="mt-1 text-cream/70">Para un negocio empezando</p>
             <p className="mt-4 text-3xl font-bold">$0</p>
             <ul className="mt-6 space-y-2 text-sm text-cream/80">
-              <li>Hasta 2 barberos</li>
+              <li>Hasta 2 miembros del equipo</li>
               <li>Reservas online ilimitadas</li>
-              <li>Panel de comisiones</li>
+              <li>Reseñas y reportes de desempeño</li>
             </ul>
           </div>
           <div className="rounded-lg border border-gold bg-gold/5 p-8">
@@ -125,7 +156,7 @@ export default function HomePage() {
               $19.99<span className="text-base font-normal text-cream/60">/mes por sucursal</span>
             </p>
             <ul className="mt-6 space-y-2 text-sm text-cream/80">
-              <li>Barberos ilimitados</li>
+              <li>Equipo ilimitado</li>
               <li>Multi-sucursal</li>
               <li>Recordatorios automáticos</li>
               <li>Soporte y reportes incluidos</li>
@@ -138,8 +169,8 @@ export default function HomePage() {
       </section>
 
       <footer className="border-t border-white/10 py-8 text-center text-sm text-cream/50">
-        CorteYa — hecho para barberías que quieren crecer sin que la plataforma se
-        quede con sus ganancias.
+        Turnify — hecho para negocios de servicios que quieren crecer sin que la
+        plataforma se quede con sus ganancias.
       </footer>
     </main>
   );

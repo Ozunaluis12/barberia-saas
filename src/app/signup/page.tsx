@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signupAction } from "@/app/actions/auth";
+import { CATEGORY_OPTIONS } from "@/lib/vocabulary";
 
 const ERRORS: Record<string, string> = {
   DATOS_INVALIDOS: "Revisa los datos: la contraseña debe tener al menos 6 caracteres.",
@@ -14,12 +15,12 @@ export default async function SignupPage({
   const { error } = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-ink px-4 text-cream">
+    <main className="flex min-h-screen items-center justify-center bg-ink px-4 py-10 text-cream">
       <div className="w-full max-w-md rounded-lg border border-white/10 bg-charcoal p-8">
         <Link href="/" className="text-lg font-bold text-gold">
-          CorteYa
+          Turnify
         </Link>
-        <h1 className="mt-4 text-2xl font-bold">Crea tu barbería</h1>
+        <h1 className="mt-4 text-2xl font-bold">Crea tu negocio</h1>
         <p className="mt-1 text-sm text-cream/60">
           Empieza gratis. Sin tarjeta de crédito.
         </p>
@@ -32,13 +33,27 @@ export default async function SignupPage({
 
         <form action={signupAction} className="mt-6 space-y-4">
           <div>
-            <label className="text-sm text-cream/70">Nombre de la barbería</label>
+            <label className="text-sm text-cream/70">Nombre del negocio</label>
             <input
-              name="shopName"
+              name="businessName"
               required
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
-              placeholder="Barbería Estilo Urbano"
+              placeholder="Estudio Bella"
             />
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">Tipo de negocio</label>
+            <select
+              name="category"
+              defaultValue="OTHER"
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            >
+              {CATEGORY_OPTIONS.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="text-sm text-cream/70">Tu nombre</label>
@@ -74,7 +89,7 @@ export default async function SignupPage({
             type="submit"
             className="w-full rounded-md bg-gold px-4 py-2 font-semibold text-ink hover:bg-gold/90"
           >
-            Crear mi barbería
+            Crear mi negocio
           </button>
         </form>
 

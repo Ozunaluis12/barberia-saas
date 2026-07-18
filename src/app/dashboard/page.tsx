@@ -1,8 +1,11 @@
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
+import { getVocabulary } from "@/lib/vocabulary";
 
 export default async function DashboardHome() {
   const session = await requireSession();
+  const business = await prisma.business.findUnique({ where: { id: session.businessId } });
+  const vocab = getVocabulary(business?.category ?? "OTHER");
 
   const now = new Date();
   const todayStart = new Date(now);
@@ -12,17 +15,17 @@ export default async function DashboardHome() {
 
   const todayAppointments = await prisma.appointment.findMany({
     where: {
-      shopId: session.shopId,
+      businessId: session.businessId,
       startTime: { gte: todayStart, lte: todayEnd },
       status: { not: "CANCELLED" },
     },
-    include: { barber: true, service: true },
+    include: { staff: true, service: true },
     orderBy: { startTime: "asc" },
   });
 
-  const [barberCount, serviceCount] = await Promise.all([
-    prisma.barber.count({ where: { shopId: session.shopId, active: true } }),
-    prisma.service.count({ where: { shopId: session.shopId, active: true } }),
+  const [staffCount, serviceCount] = await Promise.all([
+    prisma.staff.count({ where: { businessId: session.businessId, active: true } }),
+    prisma.service.count({ where: { businessId: session.businessId, active: true } }),
   ]);
 
   const estimatedRevenue = todayAppointments.reduce((sum, a) => sum + a.service.price, 0);
@@ -41,9 +44,9 @@ export default async function DashboardHome() {
           <p className="mt-1 text-3xl font-bold text-gold">${estimatedRevenue.toFixed(2)}</p>
         </div>
         <div className="rounded-lg border border-white/10 bg-charcoal p-5">
-          <p className="text-sm text-cream/60">Barberos activos / servicios</p>
+          <p className="text-sm text-cream/60">{vocab.staffPlural} activos / servicios</p>
           <p className="mt-1 text-3xl font-bold text-gold">
-            {barberCount} / {serviceCount}
+            {staffCount} / {serviceCount}
           </p>
         </div>
       </div>
@@ -55,7 +58,7 @@ export default async function DashboardHome() {
             <tr>
               <th className="px-4 py-2">Hora</th>
               <th className="px-4 py-2">Cliente</th>
-              <th className="px-4 py-2">Barbero</th>
+              <th className="px-4 py-2">{vocab.staffSingular}</th>
               <th className="px-4 py-2">Servicio</th>
               <th className="px-4 py-2">Origen</th>
             </tr>
@@ -67,10 +70,10 @@ export default async function DashboardHome() {
                   {a.startTime.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
                 </td>
                 <td className="px-4 py-2">{a.clientName}</td>
-                <td className="px-4 py-2">{a.barber.name}</td>
+                <td className="px-4 py-2">{a.staff.name}</td>
                 <td className="px-4 py-2">{a.service.name}</td>
                 <td className="px-4 py-2 text-cream/60">
-                  {a.source === "WALK_IN" ? "Walk-in" : "Online"}
+                  {a.source === "WALK_IN" ? vocab.walkInLabel : "Online"}
                 </td>
               </tr>
             ))}

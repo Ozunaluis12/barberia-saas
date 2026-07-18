@@ -4,8 +4,8 @@ const SLOT_STEP_MINUTES = 15;
 
 export type Slot = {
   time: string; // "HH:mm"
-  barberId: string;
-  barberName: string;
+  staffId: string;
+  staffName: string;
 };
 
 function parseHHMM(value: string): { h: number; m: number } {
@@ -28,9 +28,9 @@ function minutesToHHMM(totalMinutes: number): string {
   return `${h}:${m}`;
 }
 
-/** Franjas libres de un barbero concreto para un día y duración de servicio dados. */
-async function freeSlotsForBarber(
-  barberId: string,
+/** Franjas libres de un miembro del personal concreto para un día y duración de servicio dados. */
+async function freeSlotsForStaff(
+  staffId: string,
   workStart: string,
   workEnd: string,
   workDays: string,
@@ -45,7 +45,7 @@ async function freeSlotsForBarber(
 
   const existing = await prisma.appointment.findMany({
     where: {
-      barberId,
+      staffId,
       status: { not: "CANCELLED" },
       startTime: { gte: dayStart, lt: dayEnd },
     },
@@ -75,67 +75,67 @@ async function freeSlotsForBarber(
 }
 
 /**
- * Disponibilidad para un día: si se pide un barbero específico, sus huecos libres.
- * Si barberId es null ("cualquiera disponible"), fusiona los huecos de todos los
- * barberos activos y, para cada hueco, asigna el barbero con menos citas ese día
- * (balanceo de carga) para que ningún barbero quede siempre de último recurso.
+ * Disponibilidad para un día: si se pide una persona específica, sus huecos libres.
+ * Si staffId es null ("cualquiera disponible"), fusiona los huecos de todo el
+ * personal activo y, para cada hueco, asigna a quien tenga menos citas ese día
+ * (balanceo de carga) para que nadie quede siempre de último recurso.
  */
 export async function getAvailableSlots(params: {
-  shopId: string;
+  businessId: string;
   serviceId: string;
-  barberId: string | null;
+  staffId: string | null;
   day: string; // YYYY-MM-DD
 }): Promise<Slot[]> {
-  const { shopId, serviceId, barberId, day } = params;
+  const { businessId, serviceId, staffId, day } = params;
 
   const service = await prisma.service.findFirst({
-    where: { id: serviceId, shopId },
+    where: { id: serviceId, businessId },
   });
   if (!service) return [];
 
-  const barbers = await prisma.barber.findMany({
+  const staffMembers = await prisma.staff.findMany({
     where: {
-      shopId,
+      businessId,
       active: true,
-      ...(barberId ? { id: barberId } : {}),
+      ...(staffId ? { id: staffId } : {}),
     },
   });
-  if (barbers.length === 0) return [];
+  if (staffMembers.length === 0) return [];
 
   const dayStart = new Date(`${day}T00:00:00`);
   const dayEnd = new Date(`${day}T23:59:59`);
 
   const loadCounts = new Map<string, number>();
-  for (const b of barbers) {
+  for (const s of staffMembers) {
     const count = await prisma.appointment.count({
       where: {
-        barberId: b.id,
+        staffId: s.id,
         status: { not: "CANCELLED" },
         startTime: { gte: dayStart, lte: dayEnd },
       },
     });
-    loadCounts.set(b.id, count);
+    loadCounts.set(s.id, count);
   }
 
-  const perBarberSlots = await Promise.all(
-    barbers.map(async (b) => ({
-      barber: b,
-      times: await freeSlotsForBarber(
-        b.id,
-        b.workStart,
-        b.workEnd,
-        b.workDays,
+  const perStaffSlots = await Promise.all(
+    staffMembers.map(async (s) => ({
+      staff: s,
+      times: await freeSlotsForStaff(
+        s.id,
+        s.workStart,
+        s.workEnd,
+        s.workDays,
         day,
         service.durationMinutes
       ),
     }))
   );
 
-  const byTime = new Map<string, { barberId: string; barberName: string }[]>();
-  for (const { barber, times } of perBarberSlots) {
+  const byTime = new Map<string, { staffId: string; staffName: string }[]>();
+  for (const { staff, times } of perStaffSlots) {
     for (const t of times) {
       const list = byTime.get(t) ?? [];
-      list.push({ barberId: barber.id, barberName: barber.name });
+      list.push({ staffId: staff.id, staffName: staff.name });
       byTime.set(t, list);
     }
   }
@@ -145,9 +145,9 @@ export async function getAvailableSlots(params: {
   for (const t of sortedTimes) {
     const candidates = byTime.get(t)!;
     const chosen = candidates.sort(
-      (a, b) => (loadCounts.get(a.barberId) ?? 0) - (loadCounts.get(b.barberId) ?? 0)
+      (a, b) => (loadCounts.get(a.staffId) ?? 0) - (loadCounts.get(b.staffId) ?? 0)
     )[0];
-    result.push({ time: t, barberId: chosen.barberId, barberName: chosen.barberName });
+    result.push({ time: t, staffId: chosen.staffId, staffName: chosen.staffName });
   }
 
   return result;

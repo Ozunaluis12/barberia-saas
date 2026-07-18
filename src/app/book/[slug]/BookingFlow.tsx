@@ -4,10 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchSlots, createBooking } from "@/app/actions/booking";
 
 type Service = { id: string; name: string; durationMinutes: number; price: number };
-type Barber = { id: string; name: string };
-type Slot = { time: string; barberId: string; barberName: string };
-
-const ANY_BARBER = "__ANY__";
+type StaffMember = { id: string; name: string };
+type Slot = { time: string; staffId: string; staffName: string };
+type Vocab = {
+  staffSingular: string;
+  bookingQuestion: string;
+  anyStaffLabel: string;
+  anyStaffDescription: string;
+};
 
 function nextDays(count: number): { value: string; label: string }[] {
   const days = [];
@@ -22,19 +26,21 @@ function nextDays(count: number): { value: string; label: string }[] {
 }
 
 export default function BookingFlow({
-  shopSlug,
+  businessSlug,
   services,
-  barbers,
+  staff,
   cancellationNoticeHours,
+  vocab,
 }: {
-  shopSlug: string;
+  businessSlug: string;
   services: Service[];
-  barbers: Barber[];
+  staff: StaffMember[];
   cancellationNoticeHours: number;
+  vocab: Vocab;
 }) {
   const [step, setStep] = useState(1);
   const [serviceId, setServiceId] = useState<string | null>(null);
-  const [barberId, setBarberId] = useState<string | null>(null); // null = ANY_BARBER selected
+  const [staffId, setStaffId] = useState<string | null>(null); // null = cualquiera disponible
   const [day, setDay] = useState<string>(nextDays(14)[0].value);
   const [time, setTime] = useState<string | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -43,7 +49,7 @@ export default function BookingFlow({
   const [clientPhone, setClientPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<
-    | { ok: true; barberName: string; startTime: string; appointmentId: string }
+    | { ok: true; staffName: string; startTime: string; appointmentId: string }
     | { ok: false; error: string }
     | null
   >(null);
@@ -55,18 +61,18 @@ export default function BookingFlow({
     if (step !== 3 || !serviceId) return;
     setLoadingSlots(true);
     setTime(null);
-    fetchSlots({ shopSlug, serviceId, barberId, day })
+    fetchSlots({ businessSlug, serviceId, staffId, day })
       .then(setSlots)
       .finally(() => setLoadingSlots(false));
-  }, [step, serviceId, barberId, day, shopSlug]);
+  }, [step, serviceId, staffId, day, businessSlug]);
 
   async function handleConfirm() {
     if (!serviceId || !time) return;
     setSubmitting(true);
     const res = await createBooking({
-      shopSlug,
+      businessSlug,
       serviceId,
-      barberId,
+      staffId,
       day,
       time,
       clientName,
@@ -83,7 +89,7 @@ export default function BookingFlow({
       <div className="rounded-lg border border-gold/40 bg-charcoal p-8 text-center">
         <h2 className="text-2xl font-bold text-gold">¡Cita confirmada!</h2>
         <p className="mt-4 text-cream/80">
-          Te atenderá <span className="font-semibold text-cream">{result.barberName}</span>
+          Te atenderá <span className="font-semibold text-cream">{result.staffName}</span>
         </p>
         <p className="mt-1 text-cream/80">
           {date.toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" })} a las{" "}
@@ -110,7 +116,7 @@ export default function BookingFlow({
   return (
     <div className="rounded-lg border border-white/10 bg-charcoal p-6">
       <ol className="mb-6 flex gap-2 text-xs text-cream/50">
-        {["Servicio", "Barbero", "Horario", "Tus datos"].map((label, i) => (
+        {["Servicio", vocab.staffSingular, "Horario", "Tus datos"].map((label, i) => (
           <li
             key={label}
             className={`rounded-full px-3 py-1 ${
@@ -142,36 +148,34 @@ export default function BookingFlow({
             </button>
           ))}
           {services.length === 0 && (
-            <p className="text-sm text-cream/50">Esta barbería aún no tiene servicios activos.</p>
+            <p className="text-sm text-cream/50">Este negocio aún no tiene servicios activos.</p>
           )}
         </div>
       )}
 
       {step === 2 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold">¿Con quién quieres cortarte?</h2>
+          <h2 className="text-lg font-semibold">{vocab.bookingQuestion}</h2>
           <button
             onClick={() => {
-              setBarberId(null);
+              setStaffId(null);
               setStep(3);
             }}
             className="flex w-full flex-col rounded-md border border-gold bg-gold/10 px-4 py-3 text-left hover:bg-gold/20"
           >
-            <span className="font-medium text-gold">Cualquiera disponible</span>
-            <span className="text-xs text-cream/60">
-              El sistema te asigna al barbero libre más pronto, repartiendo la carga de forma justa.
-            </span>
+            <span className="font-medium text-gold">{vocab.anyStaffLabel}</span>
+            <span className="text-xs text-cream/60">{vocab.anyStaffDescription}</span>
           </button>
-          {barbers.map((b) => (
+          {staff.map((s) => (
             <button
-              key={b.id}
+              key={s.id}
               onClick={() => {
-                setBarberId(b.id);
+                setStaffId(s.id);
                 setStep(3);
               }}
               className="w-full rounded-md border border-white/10 bg-ink px-4 py-3 text-left hover:border-gold"
             >
-              {b.name}
+              {s.name}
             </button>
           ))}
           <button onClick={() => setStep(1)} className="text-sm text-cream/50 hover:text-cream">
@@ -206,7 +210,7 @@ export default function BookingFlow({
           <div className="grid grid-cols-4 gap-2">
             {slots.map((s) => (
               <button
-                key={`${s.time}-${s.barberId}`}
+                key={`${s.time}-${s.staffId}`}
                 onClick={() => setTime(s.time)}
                 className={`rounded-md border px-2 py-2 text-sm ${
                   time === s.time

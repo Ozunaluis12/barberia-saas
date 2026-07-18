@@ -13,7 +13,7 @@ export async function createService(formData: FormData) {
   if (!name || durationMinutes <= 0 || price < 0) return;
 
   await prisma.service.create({
-    data: { shopId: session.shopId, name, durationMinutes, price },
+    data: { businessId: session.businessId, name, durationMinutes, price },
   });
 
   revalidatePath("/dashboard/services");
@@ -21,7 +21,7 @@ export async function createService(formData: FormData) {
 
 export async function toggleServiceActive(serviceId: string) {
   const session = await requireSession();
-  const service = await prisma.service.findFirst({ where: { id: serviceId, shopId: session.shopId } });
+  const service = await prisma.service.findFirst({ where: { id: serviceId, businessId: session.businessId } });
   if (!service) return;
   await prisma.service.update({ where: { id: serviceId }, data: { active: !service.active } });
   revalidatePath("/dashboard/services");

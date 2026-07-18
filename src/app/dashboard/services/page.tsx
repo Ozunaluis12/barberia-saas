@@ -1,11 +1,14 @@
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { createService, toggleServiceActive } from "@/app/actions/services";
+import { getVocabulary } from "@/lib/vocabulary";
 
 export default async function ServicesPage() {
   const session = await requireSession();
+  const business = await prisma.business.findUnique({ where: { id: session.businessId } });
+  const vocab = getVocabulary(business?.category ?? "OTHER");
   const services = await prisma.service.findMany({
-    where: { shopId: session.shopId },
+    where: { businessId: session.businessId },
     orderBy: { createdAt: "asc" },
   });
 
@@ -67,7 +70,7 @@ export default async function ServicesPage() {
             <input
               name="name"
               required
-              placeholder="Corte clásico"
+              placeholder={vocab.servicePlaceholder}
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             />
           </div>

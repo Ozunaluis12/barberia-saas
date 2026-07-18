@@ -23,7 +23,7 @@ export default async function ClientsPage() {
   const session = await requireSession();
 
   const clients = await prisma.client.findMany({
-    where: { shopId: session.shopId },
+    where: { businessId: session.businessId },
     include: {
       appointments: {
         orderBy: { startTime: "desc" },
@@ -39,7 +39,7 @@ export default async function ClientsPage() {
     <div>
       <h1 className="text-2xl font-bold">Clientes</h1>
       <p className="mt-1 text-sm text-cream/60">
-        Cada cancelación tardía o inasistencia queda registrada aquí para que cualquier barbero del
+        Cada cancelación tardía o inasistencia queda registrada aquí para que cualquier miembro del
         equipo la vea antes de confirmarle otra cita a ese cliente.
       </p>
 

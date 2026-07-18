@@ -7,37 +7,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Una barbería (tenant). Todo cuelga de aquí para soportar multi-sucursal/SaaS.
-model Shop {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  phone     String?
-  address   String?
-  plan      String   @default("GRATIS") // GRATIS, PRO
-  cancellationNoticeHours Int @default(3)
-  createdAt DateTime @default(now())
+// Un negocio (tenant): barbería, salón, spa, clínica, veterinaria, taller, gimnasio, etc.
+// Todo cuelga de aquí para soportar multi-sucursal/SaaS.
+model Business {
+  id                      String   @id @default(cuid())
+  name                    String
+  slug                    String   @unique
+  category                String   @default("OTHER") // BARBERSHOP, HAIR_SALON, SPA, MEDICAL_CLINIC, VETERINARY, WORKSHOP, GYM, OTHER
+  phone                   String?
+  address                 String?
+  plan                    String   @default("GRATIS") // GRATIS, PRO
+  cancellationNoticeHours Int      @default(3)
+  reminderChannel         String   @default("NONE") // NONE, EMAIL, SMS, WHATSAPP
+  reminderHoursBefore     Int      @default(24)
+  onlinePaymentsEnabled   Boolean  @default(false) // reservado para cuando se conecte un proveedor de pagos real
+  createdAt               DateTime @default(now())
 
   users        User[]
-  barbers      Barber[]
+  staff        Staff[]
   services     Service[]
   appointments Appointment[]
   clients      Client[]
+  reviews      Review[]
 }
 
-// Historial de un cliente dentro de una barbería concreta (no cruza entre barberías).
+// Historial de un cliente dentro de un negocio concreto (no cruza entre negocios).
 model Client {
-  id        String   @id @default(cuid())
-  shopId    String
-  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  name      String
-  phone     String
-  strikes   Int      @default(0) // cancelaciones tardías + no-shows
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  phone      String
+  strikes    Int      @default(0) // cancelaciones tardías + no-shows
+  createdAt  DateTime @default(now())
 
   appointments Appointment[]
+  reviews      Review[]
 
-  @@unique([shopId, phone])
+  @@unique([businessId, phone])
 }
 
 model User {
@@ -46,31 +53,33 @@ model User {
   passwordHash String
   name         String
   role         String   @default("OWNER")
-  shopId       String
-  shop         Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
 }
 
-// Un empleado/barbero de la barbería. El cliente puede elegirlo por nombre.
-model Barber {
+// Un miembro del personal (barbero, estilista, doctor, veterinario, entrenador, técnico...).
+// El cliente puede elegirlo por nombre o dejar que el sistema asigne a quien tenga menos carga.
+model Staff {
   id                String   @id @default(cuid())
-  shopId            String
-  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  businessId        String
+  business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name              String
   active            Boolean  @default(true)
-  commissionPercent Int      @default(50)
+  commissionPercent Int? // null = este negocio no maneja comisión por empleado
   workStart         String   @default("09:00") // HH:mm
   workEnd           String   @default("19:00") // HH:mm
   workDays          String   @default("1,2,3,4,5,6") // 0=domingo..6=sábado
   createdAt         DateTime @default(now())
 
   appointments Appointment[]
+  reviews      Review[]
 }
 
 model Service {
   id              String   @id @default(cuid())
-  shopId          String
-  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name            String
   durationMinutes Int      @default(30)
   price           Float
@@ -81,25 +90,45 @@ model Service {
 }
 
 model Appointment {
-  id                 String   @id @default(cuid())
-  shopId             String
-  shop               Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  barberId           String
-  barber             Barber   @relation(fields: [barberId], references: [id])
-  serviceId          String
-  service            Service  @relation(fields: [serviceId], references: [id])
-  clientId           String
-  client             Client   @relation(fields: [clientId], references: [id])
-  clientName         String
-  clientPhone        String
-  startTime          DateTime
-  endTime            DateTime
-  status             String   @default("CONFIRMED") // CONFIRMED, CANCELLED, COMPLETED, NO_SHOW
-  source             String   @default("ONLINE") // ONLINE, WALK_IN
-  anyBarberRequested Boolean  @default(false)
-  lateCancellation   Boolean  @default(false)
-  createdAt          DateTime @default(now())
+  id                String      @id @default(cuid())
+  businessId        String
+  business          Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staffId           String
+  staff             Staff       @relation(fields: [staffId], references: [id])
+  serviceId         String
+  service           Service     @relation(fields: [serviceId], references: [id])
+  clientId          String
+  client            Client      @relation(fields: [clientId], references: [id])
+  clientName        String
+  clientPhone       String
+  startTime         DateTime
+  endTime           DateTime
+  status            String      @default("CONFIRMED") // CONFIRMED, CANCELLED, COMPLETED, NO_SHOW
+  source            String      @default("ONLINE") // ONLINE, WALK_IN
+  anyStaffRequested Boolean     @default(false)
+  lateCancellation  Boolean     @default(false)
+  priceCharged      Float? // snapshot del precio del servicio al momento de la reserva
+  paymentMethod     String      @default("UNPAID") // UNPAID, CASH, CARD_IN_PERSON, ONLINE
+  paymentStatus     String      @default("PENDING") // PENDING, PAID, REFUNDED
+  createdAt         DateTime    @default(now())
+  review            Review?
 
-  @@index([barberId, startTime])
-  @@index([shopId, startTime])
+  @@index([staffId, startTime])
+  @@index([businessId, startTime])
+}
+
+// Reseña que un cliente deja después de una cita completada.
+model Review {
+  id            String      @id @default(cuid())
+  businessId    String
+  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  clientId      String
+  client        Client      @relation(fields: [clientId], references: [id])
+  staffId       String?
+  staff         Staff?      @relation(fields: [staffId], references: [id])
+  rating        Int // 1 a 5
+  comment       String?
+  createdAt     DateTime    @default(now())
 }

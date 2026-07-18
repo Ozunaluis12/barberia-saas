@@ -1,15 +1,15 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const COOKIE_NAME = "corteya_session";
+const COOKIE_NAME = "turnify_session";
 const secret = new TextEncoder().encode(
   process.env.SESSION_SECRET ?? "dev-secret-change-in-production"
 );
 
 export type SessionPayload = {
   userId: string;
-  shopId: string;
-  shopSlug: string;
+  businessId: string;
+  businessSlug: string;
   role: string;
 };
 

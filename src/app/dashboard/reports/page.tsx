@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
+import { getVocabulary } from "@/lib/vocabulary";
 
 export default async function ReportsPage({
   searchParams,
@@ -7,6 +8,8 @@ export default async function ReportsPage({
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   const session = await requireSession();
+  const business = await prisma.business.findUnique({ where: { id: session.businessId } });
+  const vocab = getVocabulary(business?.category ?? "OTHER");
   const { from, to } = await searchParams;
 
   const rangeStart = from ? new Date(`${from}T00:00:00`) : new Date(new Date().setDate(new Date().getDate() - 30));
@@ -14,43 +17,46 @@ export default async function ReportsPage({
 
   const appointments = await prisma.appointment.findMany({
     where: {
-      shopId: session.shopId,
+      businessId: session.businessId,
       status: "COMPLETED",
       startTime: { gte: rangeStart, lte: rangeEnd },
     },
-    include: { barber: true, service: true },
+    include: { staff: true, service: true },
   });
 
-  const byBarber = new Map<
+  const byStaff = new Map<
     string,
-    { name: string; commissionPercent: number; count: number; revenue: number }
+    { name: string; commissionPercent: number | null; count: number; revenue: number }
   >();
 
   for (const a of appointments) {
-    const entry = byBarber.get(a.barberId) ?? {
-      name: a.barber.name,
-      commissionPercent: a.barber.commissionPercent,
+    const entry = byStaff.get(a.staffId) ?? {
+      name: a.staff.name,
+      commissionPercent: a.staff.commissionPercent,
       count: 0,
       revenue: 0,
     };
     entry.count += 1;
     entry.revenue += a.service.price;
-    byBarber.set(a.barberId, entry);
+    byStaff.set(a.staffId, entry);
   }
 
-  const rows = Array.from(byBarber.values()).map((r) => ({
-    ...r,
-    commission: r.revenue * (r.commissionPercent / 100),
-    shopShare: r.revenue * (1 - r.commissionPercent / 100),
-  }));
+  const rows = Array.from(byStaff.values()).map((r) => {
+    const commission = r.commissionPercent === null ? null : r.revenue * (r.commissionPercent / 100);
+    return {
+      ...r,
+      commission,
+      businessShare: r.revenue - (commission ?? 0),
+    };
+  });
 
   const totals = rows.reduce(
     (acc, r) => ({
       revenue: acc.revenue + r.revenue,
-      commission: acc.commission + r.commission,
-      shopShare: acc.shopShare + r.shopShare,
+      commission: acc.commission + (r.commission ?? 0),
+      businessShare: acc.businessShare + r.businessShare,
     }),
-    { revenue: 0, commission: 0, shopShare: 0 }
+    { revenue: 0, commission: 0, businessShare: 0 }
   );
 
   const fromValue = rangeStart.toISOString().slice(0, 10);
@@ -58,10 +64,10 @@ export default async function ReportsPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Comisiones por barbero</h1>
+      <h1 className="text-2xl font-bold">Reporte de desempeño por {vocab.staffSingular.toLowerCase()}</h1>
       <p className="mt-1 text-sm text-cream/60">
-        Calculado solo sobre citas marcadas como completadas. Ningún costo oculto para ti ni para tus
-        barberos: lo que ves aquí es lo que se paga.
+        Calculado solo sobre citas marcadas como completadas. Si no configuraste comisión para
+        alguien, aquí solo se muestra el ingreso que generó.
       </p>
 
       <form className="mt-6 flex items-end gap-4">
@@ -90,12 +96,12 @@ export default async function ReportsPage({
         <table className="w-full text-sm">
           <thead className="bg-charcoal text-left text-cream/60">
             <tr>
-              <th className="px-4 py-2">Barbero</th>
+              <th className="px-4 py-2">{vocab.staffSingular}</th>
               <th className="px-4 py-2">Citas completadas</th>
               <th className="px-4 py-2">Ingreso generado</th>
               <th className="px-4 py-2">% comisión</th>
-              <th className="px-4 py-2">Le corresponde al barbero</th>
-              <th className="px-4 py-2">Se queda la barbería</th>
+              <th className="px-4 py-2">Le corresponde</th>
+              <th className="px-4 py-2">Se queda el negocio</th>
             </tr>
           </thead>
           <tbody>
@@ -104,9 +110,11 @@ export default async function ReportsPage({
                 <td className="px-4 py-2 font-medium">{r.name}</td>
                 <td className="px-4 py-2">{r.count}</td>
                 <td className="px-4 py-2">${r.revenue.toFixed(2)}</td>
-                <td className="px-4 py-2">{r.commissionPercent}%</td>
-                <td className="px-4 py-2 text-gold">${r.commission.toFixed(2)}</td>
-                <td className="px-4 py-2">${r.shopShare.toFixed(2)}</td>
+                <td className="px-4 py-2">{r.commissionPercent === null ? "—" : `${r.commissionPercent}%`}</td>
+                <td className="px-4 py-2 text-gold">
+                  {r.commission === null ? "—" : `$${r.commission.toFixed(2)}`}
+                </td>
+                <td className="px-4 py-2">${r.businessShare.toFixed(2)}</td>
               </tr>
             ))}
             {rows.length === 0 && (
@@ -126,7 +134,7 @@ export default async function ReportsPage({
                 <td className="px-4 py-2">${totals.revenue.toFixed(2)}</td>
                 <td className="px-4 py-2"></td>
                 <td className="px-4 py-2 text-gold">${totals.commission.toFixed(2)}</td>
-                <td className="px-4 py-2">${totals.shopShare.toFixed(2)}</td>
+                <td className="px-4 py-2">${totals.businessShare.toFixed(2)}</td>
               </tr>
             </tfoot>
           )}

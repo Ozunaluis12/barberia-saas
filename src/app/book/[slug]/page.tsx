@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { getVocabulary } from "@/lib/vocabulary";
 import BookingFlow from "./BookingFlow";
 
 export default async function BookPage({
@@ -8,34 +9,42 @@ export default async function BookPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const shop = await prisma.shop.findUnique({
+  const business = await prisma.business.findUnique({
     where: { slug },
     include: {
       services: { where: { active: true }, orderBy: { name: "asc" } },
-      barbers: { where: { active: true }, orderBy: { name: "asc" } },
+      staff: { where: { active: true }, orderBy: { name: "asc" } },
     },
   });
 
-  if (!shop) notFound();
+  if (!business) notFound();
+
+  const vocab = getVocabulary(business.category);
 
   return (
     <main className="min-h-screen bg-ink px-4 py-10 text-cream">
       <div className="mx-auto max-w-2xl">
         <div className="mb-8 text-center">
           <p className="text-sm uppercase tracking-widest text-gold">Reservar cita</p>
-          <h1 className="mt-1 text-3xl font-bold">{shop.name}</h1>
-          {shop.address && <p className="mt-1 text-cream/60">{shop.address}</p>}
+          <h1 className="mt-1 text-3xl font-bold">{business.name}</h1>
+          {business.address && <p className="mt-1 text-cream/60">{business.address}</p>}
         </div>
         <BookingFlow
-          shopSlug={shop.slug}
-          services={shop.services.map((s) => ({
+          businessSlug={business.slug}
+          services={business.services.map((s) => ({
             id: s.id,
             name: s.name,
             durationMinutes: s.durationMinutes,
             price: s.price,
           }))}
-          barbers={shop.barbers.map((b) => ({ id: b.id, name: b.name }))}
-          cancellationNoticeHours={shop.cancellationNoticeHours}
+          staff={business.staff.map((s) => ({ id: s.id, name: s.name }))}
+          cancellationNoticeHours={business.cancellationNoticeHours}
+          vocab={{
+            staffSingular: vocab.staffSingular,
+            bookingQuestion: vocab.bookingQuestion,
+            anyStaffLabel: vocab.anyStaffLabel,
+            anyStaffDescription: vocab.anyStaffDescription,
+          }}
         />
       </div>
     </main>
