@@ -21,6 +21,7 @@ export default async function ClientAppointmentPage({
   if (!appt) notFound();
 
   const vocab = getVocabulary(appt.business.category);
+  const isUpcoming = appt.startTime.getTime() > Date.now();
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-ink px-4 py-10 text-cream">
@@ -52,13 +53,19 @@ export default async function ClientAppointmentPage({
           </p>
         </div>
 
-        {appt.status === "CONFIRMED" && (
+        {appt.status === "CONFIRMED" && isUpcoming && (
           <div className="mt-8">
             <CancelButton
               appointmentId={appt.id}
               noticeHours={appt.business.cancellationNoticeHours}
             />
           </div>
+        )}
+
+        {appt.status === "CONFIRMED" && !isUpcoming && (
+          <p className="mt-8 text-center text-sm text-cream/50">
+            Esta cita ya pasó. Si no pudiste asistir, contacta directamente al negocio.
+          </p>
         )}
 
         {appt.status === "COMPLETED" && (

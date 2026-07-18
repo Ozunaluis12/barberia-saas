@@ -32,6 +32,9 @@ export async function cancelAppointmentByClient(appointmentId: string): Promise<
   if (appt.status !== "CONFIRMED") {
     return { ok: false, error: "Esta cita ya no está activa." };
   }
+  if (appt.startTime.getTime() <= Date.now()) {
+    return { ok: false, error: "Esta cita ya pasó y no se puede cancelar desde aquí." };
+  }
 
   const noticeHours = appt.business.cancellationNoticeHours;
   const hoursUntilStart = (appt.startTime.getTime() - Date.now()) / (60 * 60 * 1000);
