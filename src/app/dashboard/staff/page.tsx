@@ -1,20 +1,24 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { createStaff, toggleStaffActive } from "@/app/actions/staff";
 import { getVocabulary } from "@/lib/vocabulary";
+import { DAY_LABELS } from "@/lib/days";
 
-const DAY_LABELS = [
-  { value: "0", label: "Dom" },
-  { value: "1", label: "Lun" },
-  { value: "2", label: "Mar" },
-  { value: "3", label: "Mié" },
-  { value: "4", label: "Jue" },
-  { value: "5", label: "Vie" },
-  { value: "6", label: "Sáb" },
-];
+const ERRORS: Record<string, string> = {
+  NOMBRE_REQUERIDO: "El nombre es obligatorio.",
+  COMISION_INVALIDA: "La comisión debe ser un número entre 0 y 100.",
+  HORARIO_INVALIDO: "Revisa el horario: la hora de inicio debe ser antes que la de fin.",
+  NO_ENCONTRADO: "No se encontró a esa persona.",
+};
 
-export default async function StaffPage() {
+export default async function StaffPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const session = await requireSession();
+  const { error } = await searchParams;
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");
 
@@ -26,6 +30,12 @@ export default async function StaffPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">{vocab.staffPlural}</h1>
+
+      {error && (
+        <p className="mt-4 rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          {ERRORS[error] ?? "Ocurrió un error, intenta de nuevo."}
+        </p>
+      )}
 
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
         <table className="w-full text-sm">
@@ -58,11 +68,16 @@ export default async function StaffPage() {
                   </span>
                 </td>
                 <td className="px-4 py-2 text-right">
-                  <form action={toggleStaffActive.bind(null, s.id)}>
-                    <button className="text-xs text-gold hover:underline">
-                      {s.active ? "Desactivar" : "Activar"}
-                    </button>
-                  </form>
+                  <div className="flex justify-end gap-3">
+                    <Link href={`/dashboard/staff/${s.id}`} className="text-xs text-gold hover:underline">
+                      Editar
+                    </Link>
+                    <form action={toggleStaffActive.bind(null, s.id)}>
+                      <button className="text-xs text-gold hover:underline">
+                        {s.active ? "Desactivar" : "Activar"}
+                      </button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             ))}

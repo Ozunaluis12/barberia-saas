@@ -1,10 +1,23 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { createService, toggleServiceActive } from "@/app/actions/services";
 import { getVocabulary } from "@/lib/vocabulary";
 
-export default async function ServicesPage() {
+const ERRORS: Record<string, string> = {
+  NOMBRE_REQUERIDO: "El nombre es obligatorio.",
+  DURACION_INVALIDA: "La duración debe ser un número mayor a 0.",
+  PRECIO_INVALIDO: "El precio no puede ser negativo.",
+  NO_ENCONTRADO: "No se encontró ese servicio.",
+};
+
+export default async function ServicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const session = await requireSession();
+  const { error } = await searchParams;
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");
   const services = await prisma.service.findMany({
@@ -15,6 +28,12 @@ export default async function ServicesPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold">Servicios</h1>
+
+      {error && (
+        <p className="mt-4 rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          {ERRORS[error] ?? "Ocurrió un error, intenta de nuevo."}
+        </p>
+      )}
 
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
         <table className="w-full text-sm">
@@ -43,11 +62,19 @@ export default async function ServicesPage() {
                   </span>
                 </td>
                 <td className="px-4 py-2 text-right">
-                  <form action={toggleServiceActive.bind(null, s.id)}>
-                    <button className="text-xs text-gold hover:underline">
-                      {s.active ? "Desactivar" : "Activar"}
-                    </button>
-                  </form>
+                  <div className="flex justify-end gap-3">
+                    <Link
+                      href={`/dashboard/services/${s.id}`}
+                      className="text-xs text-gold hover:underline"
+                    >
+                      Editar
+                    </Link>
+                    <form action={toggleServiceActive.bind(null, s.id)}>
+                      <button className="text-xs text-gold hover:underline">
+                        {s.active ? "Desactivar" : "Activar"}
+                      </button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             ))}

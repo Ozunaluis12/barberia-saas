@@ -27,6 +27,7 @@ export default function WalkInForm({
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !serviceId) return;
@@ -42,6 +43,7 @@ export default function WalkInForm({
     e.preventDefault();
     if (!chosenSlot || !clientName.trim()) return;
     setLoading(true);
+    setError(null);
     const fd = new FormData();
     fd.set("staffId", chosenSlot.staffId);
     fd.set("serviceId", serviceId);
@@ -49,8 +51,20 @@ export default function WalkInForm({
     fd.set("clientPhone", clientPhone);
     fd.set("day", day);
     fd.set("time", chosenSlot.time);
-    await createWalkIn(fd);
+    const result = await createWalkIn(fd);
     setLoading(false);
+    if (!result.ok) {
+      setError(result.error);
+      // Volvemos a cargar los horarios: lo más probable es que alguien más se haya
+      // adelantado y ese hueco ya no exista.
+      setChosenSlot(null);
+      getWalkInSlots({
+        serviceId,
+        staffId: staffChoice === "ANY" ? null : staffChoice,
+        day,
+      } as never).then(setSlots);
+      return;
+    }
     setOpen(false);
     setClientName("");
     setClientPhone("");
@@ -165,6 +179,8 @@ export default function WalkInForm({
           className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2"
         />
       </div>
+
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
       <button
         type="submit"
