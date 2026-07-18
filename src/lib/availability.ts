@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/db";
+import type { Prisma, PrismaClient } from "@prisma/client";
 
 const SLOT_STEP_MINUTES = 15;
+
+/** Cliente de Prisma normal o el de una transacción en curso (para poder recalcular bajo lock). */
+type DbClient = PrismaClient | Prisma.TransactionClient;
 
 export type Slot = {
   time: string; // "HH:mm"
@@ -30,6 +34,7 @@ function minutesToHHMM(totalMinutes: number): string {
 
 /** Franjas libres de un miembro del personal concreto para un día y duración de servicio dados. */
 async function freeSlotsForStaff(
+  db: DbClient,
   staffId: string,
   workStart: string,
   workEnd: string,
@@ -43,7 +48,7 @@ async function freeSlotsForStaff(
   const dayStart = dateAt(day, workStart);
   const dayEnd = dateAt(day, workEnd);
 
-  const existing = await prisma.appointment.findMany({
+  const existing = await db.appointment.findMany({
     where: {
       staffId,
       status: { not: "CANCELLED" },
@@ -80,20 +85,23 @@ async function freeSlotsForStaff(
  * personal activo y, para cada hueco, asigna a quien tenga menos citas ese día
  * (balanceo de carga) para que nadie quede siempre de último recurso.
  */
-export async function getAvailableSlots(params: {
-  businessId: string;
-  serviceId: string;
-  staffId: string | null;
-  day: string; // YYYY-MM-DD
-}): Promise<Slot[]> {
+export async function getAvailableSlots(
+  params: {
+    businessId: string;
+    serviceId: string;
+    staffId: string | null;
+    day: string; // YYYY-MM-DD
+  },
+  db: DbClient = prisma
+): Promise<Slot[]> {
   const { businessId, serviceId, staffId, day } = params;
 
-  const service = await prisma.service.findFirst({
+  const service = await db.service.findFirst({
     where: { id: serviceId, businessId },
   });
   if (!service) return [];
 
-  const staffMembers = await prisma.staff.findMany({
+  const staffMembers = await db.staff.findMany({
     where: {
       businessId,
       active: true,
@@ -107,7 +115,7 @@ export async function getAvailableSlots(params: {
 
   const loadCounts = new Map<string, number>();
   for (const s of staffMembers) {
-    const count = await prisma.appointment.count({
+    const count = await db.appointment.count({
       where: {
         staffId: s.id,
         status: { not: "CANCELLED" },
@@ -121,6 +129,7 @@ export async function getAvailableSlots(params: {
     staffMembers.map(async (s) => ({
       staff: s,
       times: await freeSlotsForStaff(
+        db,
         s.id,
         s.workStart,
         s.workEnd,

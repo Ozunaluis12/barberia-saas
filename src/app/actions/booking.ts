@@ -45,44 +45,56 @@ export async function createBooking(params: {
   });
   if (!service) return { ok: false, error: "Servicio no válido." };
 
-  // Recalculamos disponibilidad en el momento de confirmar para evitar choques de horario.
-  const slots = await getAvailableSlots({
-    businessId: business.id,
-    serviceId: params.serviceId,
-    staffId: params.staffId,
-    day: params.day,
-  });
-  const match = slots.find((s) => s.time === params.time);
-  if (!match) {
-    return { ok: false, error: "Ese horario ya no está disponible, por favor elige otro." };
-  }
-
-  const startTime = combineDayAndTime(params.day, params.time);
-  const endTime = new Date(startTime.getTime() + service.durationMinutes * 60000);
-
   const client = await findOrCreateClient(business.id, params.clientName, params.clientPhone);
 
-  const appointment = await prisma.appointment.create({
-    data: {
-      businessId: business.id,
-      staffId: match.staffId,
-      serviceId: service.id,
-      clientId: client.id,
-      clientName: params.clientName.trim(),
-      clientPhone: params.clientPhone.trim(),
-      startTime,
-      endTime,
-      status: "CONFIRMED",
-      source: "ONLINE",
-      anyStaffRequested: params.staffId === null,
-      priceCharged: service.price,
-    },
-  });
+  // Todo lo demás corre dentro de una transacción con un lock exclusivo por negocio,
+  // para que dos reservas simultáneas no puedan leer el mismo hueco como libre y
+  // terminar chocando (condición de carrera).
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${business.id})::bigint)`;
 
-  return {
-    ok: true,
-    staffName: match.staffName,
-    startTime: startTime.toISOString(),
-    appointmentId: appointment.id,
-  };
+      const slots = await getAvailableSlots(
+        {
+          businessId: business.id,
+          serviceId: params.serviceId,
+          staffId: params.staffId,
+          day: params.day,
+        },
+        tx
+      );
+      const match = slots.find((s) => s.time === params.time);
+      if (!match) {
+        return { ok: false, error: "Ese horario ya no está disponible, por favor elige otro." };
+      }
+
+      const startTime = combineDayAndTime(params.day, params.time);
+      const endTime = new Date(startTime.getTime() + service.durationMinutes * 60000);
+
+      const appointment = await tx.appointment.create({
+        data: {
+          businessId: business.id,
+          staffId: match.staffId,
+          serviceId: service.id,
+          clientId: client.id,
+          clientName: params.clientName.trim(),
+          clientPhone: params.clientPhone.trim(),
+          startTime,
+          endTime,
+          status: "CONFIRMED",
+          source: "ONLINE",
+          anyStaffRequested: params.staffId === null,
+          priceCharged: service.price,
+        },
+      });
+
+      return {
+        ok: true,
+        staffName: match.staffName,
+        startTime: startTime.toISOString(),
+        appointmentId: appointment.id,
+      };
+    },
+    { timeout: 15000, maxWait: 15000 }
+  );
 }
