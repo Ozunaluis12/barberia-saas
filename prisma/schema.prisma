@@ -127,6 +127,7 @@ model Appointment {
   priceCharged      Float? // snapshot del precio del servicio al momento de la reserva
   paymentMethod     String      @default("UNPAID") // UNPAID, CASH, CARD_IN_PERSON, ONLINE
   paymentStatus     String      @default("PENDING") // PENDING, PAID, REFUNDED
+  reminderSentAt    DateTime? // evita mandar el mismo recordatorio dos veces
   createdAt         DateTime    @default(now())
   review            Review?
 

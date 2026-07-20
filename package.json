@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start -p ${PORT:-3000}",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "send-reminders": "tsx scripts/send-reminders.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",
