@@ -93,6 +93,14 @@ export default async function SignupPage({
           </button>
         </form>
 
+        <p className="mt-4 text-center text-xs text-cream/40">
+          Al crear tu cuenta aceptas nuestros{" "}
+          <Link href="/legal" className="text-gold hover:underline">
+            términos y política de privacidad
+          </Link>
+          .
+        </p>
+
         <p className="mt-6 text-center text-sm text-cream/60">
           ¿Ya tienes cuenta?{" "}
           <Link href="/login" className="text-gold hover:underline">

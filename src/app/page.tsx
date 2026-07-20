@@ -171,8 +171,13 @@ export default function HomePage() {
       </section>
 
       <footer className="border-t border-white/10 py-8 text-center text-sm text-cream/50">
-        Turnify — hecho para negocios de servicios que quieren crecer sin que la
-        plataforma se quede con sus ganancias.
+        <p>
+          Turnify — hecho para negocios de servicios que quieren crecer sin que la plataforma se
+          quede con sus ganancias.
+        </p>
+        <Link href="/legal" className="mt-2 inline-block text-gold hover:underline">
+          Términos y privacidad
+        </Link>
       </footer>
     </main>
   );
