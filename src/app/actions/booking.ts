@@ -45,7 +45,7 @@ export async function createBooking(params: {
   });
   if (!service) return { ok: false, error: "Servicio no válido." };
 
-  const client = await findOrCreateClient(business.id, params.clientName, params.clientPhone);
+  const client = await findOrCreateClient(business.organizationId, params.clientName, params.clientPhone);
 
   // Todo lo demás corre dentro de una transacción con un lock exclusivo por negocio,
   // para que dos reservas simultáneas no puedan leer el mismo hueco como libre y

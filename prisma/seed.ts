@@ -63,26 +63,32 @@ async function seedBusiness(config: SeedBusinessConfig) {
 
   const passwordHash = await bcrypt.hash("demo1234", 10);
 
-  const business = await prisma.business.create({
+  const organization = await prisma.organization.create({
     data: {
       name: config.name,
-      slug: config.slug,
-      category: config.category,
-      address: config.address,
-      users: {
+      locations: {
         create: {
-          name: "Dueño Demo",
-          email: config.ownerEmail,
-          passwordHash,
-          role: "OWNER",
+          name: config.name,
+          slug: config.slug,
+          category: config.category,
+          address: config.address,
+          users: {
+            create: {
+              name: "Dueño Demo",
+              email: config.ownerEmail,
+              passwordHash,
+              role: "OWNER",
+            },
+          },
+          services: { create: config.services },
+          staff: { create: config.staff },
         },
       },
-      services: { create: config.services },
-      staff: { create: config.staff },
     },
-    include: { staff: true, services: true },
+    include: { locations: { include: { staff: true, services: true } } },
   });
 
+  const business = organization.locations[0];
   const [staffA, staffB] = business.staff;
   const [serviceA, serviceB] = business.services;
 
@@ -93,16 +99,21 @@ async function seedBusiness(config: SeedBusinessConfig) {
   const yesterday = new Date(today.getTime() - 24 * 60 * 60000);
 
   const clientA = await prisma.client.create({
-    data: { businessId: business.id, name: "Miguel Ángel", phone: `${config.slug}-555-0101` },
+    data: { organizationId: organization.id, name: "Miguel Ángel", phone: `${config.slug}-555-0101` },
   });
   const clientB = await prisma.client.create({
-    data: { businessId: business.id, name: "Pedro Salinas", phone: `${config.slug}-555-0102` },
+    data: { organizationId: organization.id, name: "Pedro Salinas", phone: `${config.slug}-555-0102` },
   });
   const clientRisky = await prisma.client.create({
-    data: { businessId: business.id, name: "Roberto Núñez", phone: `${config.slug}-555-0103`, strikes: 2 },
+    data: {
+      organizationId: organization.id,
+      name: "Roberto Núñez",
+      phone: `${config.slug}-555-0103`,
+      strikes: 2,
+    },
   });
   const clientHappy = await prisma.client.create({
-    data: { businessId: business.id, name: "Sofía Ramírez", phone: `${config.slug}-555-0104` },
+    data: { organizationId: organization.id, name: "Sofía Ramírez", phone: `${config.slug}-555-0104` },
   });
 
   await prisma.appointment.create({

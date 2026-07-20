@@ -26,7 +26,7 @@ export async function createWalkIn(formData: FormData): Promise<CreateWalkInResu
   const staff = await prisma.staff.findFirst({ where: { id: staffId, businessId: session.businessId } });
   if (!service || !staff) return { ok: false, error: "Servicio o persona no válidos." };
 
-  const client = await findOrCreateClient(session.businessId, clientName, clientPhone || "N/A");
+  const client = await findOrCreateClient(session.organizationId, clientName, clientPhone || "N/A");
 
   // Mismo lock que en la reserva pública: revalida que el hueco siga libre antes de
   // insertar, por si dos personas del equipo registran una cita al mismo tiempo.

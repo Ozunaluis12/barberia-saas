@@ -10,12 +10,12 @@ function normalizePhone(phone: string): string {
   return digits.length >= 7 ? digits : phone.trim();
 }
 
-export async function findOrCreateClient(businessId: string, name: string, phone: string) {
+export async function findOrCreateClient(organizationId: string, name: string, phone: string) {
   const cleanPhone = normalizePhone(phone);
   return prisma.client.upsert({
-    where: { businessId_phone: { businessId, phone: cleanPhone } },
+    where: { organizationId_phone: { organizationId, phone: cleanPhone } },
     update: { name: name.trim() },
-    create: { businessId, name: name.trim(), phone: cleanPhone },
+    create: { organizationId, name: name.trim(), phone: cleanPhone },
   });
 }
 

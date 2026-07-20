@@ -7,10 +7,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Un negocio (tenant): barbería, salón, spa, clínica, veterinaria, taller, gimnasio, etc.
-// Todo cuelga de aquí para soportar multi-sucursal/SaaS.
+// La marca/dueño completo. Puede tener una o varias sucursales (Business).
+// Los clientes y su historial de sanciones viven aquí, no en la sucursal,
+// para que se compartan entre todas las ubicaciones del mismo dueño.
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  locations Business[]
+  clients   Client[]
+}
+
+// Una sucursal/ubicación física: barbería, salón, spa, clínica, veterinaria,
+// taller, gimnasio, etc. Cada una tiene su propio personal, servicios y
+// horarios, y su propia página pública de reservas.
 model Business {
   id                      String   @id @default(cuid())
+  organizationId          String
+  organization            Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name                    String
   slug                    String   @unique
   category                String   @default("OTHER") // BARBERSHOP, HAIR_SALON, SPA, MEDICAL_CLINIC, VETERINARY, WORKSHOP, GYM, OTHER
@@ -27,24 +42,24 @@ model Business {
   staff        Staff[]
   services     Service[]
   appointments Appointment[]
-  clients      Client[]
   reviews      Review[]
 }
 
-// Historial de un cliente dentro de un negocio concreto (no cruza entre negocios).
+// Historial de un cliente a nivel de organización: si canceló tarde o no
+// llegó en una sucursal, se ve en todas las sucursales del mismo dueño.
 model Client {
-  id         String   @id @default(cuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  name       String
-  phone      String
-  strikes    Int      @default(0) // cancelaciones tardías + no-shows
-  createdAt  DateTime @default(now())
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  phone          String
+  strikes        Int      @default(0) // cancelaciones tardías + no-shows
+  createdAt      DateTime @default(now())
 
   appointments Appointment[]
   reviews      Review[]
 
-  @@unique([businessId, phone])
+  @@unique([organizationId, phone])
 }
 
 model User {
@@ -52,9 +67,9 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
-  role         String   @default("OWNER") // OWNER (acceso total) o STAFF (sin reportes/config/personal/servicios)
+  role         String   @default("OWNER") // OWNER (ve/administra todas las sucursales) o STAFF (asignado a una sola)
   active       Boolean  @default(true)
-  businessId   String
+  businessId   String // sucursal "de origen"; el dueño puede cambiar de sucursal activa dentro de su sesión
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
 

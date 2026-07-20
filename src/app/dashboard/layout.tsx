@@ -20,6 +20,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { href: "/dashboard/reviews", label: "Reseñas" },
     ...(isOwner ? [{ href: "/dashboard/reports", label: "Reportes" }] : []),
     ...(isOwner ? [{ href: "/dashboard/team", label: "Equipo" }] : []),
+    ...(isOwner ? [{ href: "/dashboard/locations", label: "Sucursales" }] : []),
     ...(isOwner ? [{ href: "/dashboard/settings", label: "Configuración" }] : []),
   ];
 
@@ -29,6 +30,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="px-2 py-2">
           <p className="text-lg font-bold text-gold">Turnify</p>
           <p className="truncate text-sm text-cream/60">{business?.name}</p>
+          {isOwner && (
+            <Link href="/dashboard/locations" className="text-xs text-gold hover:underline">
+              Cambiar de sucursal →
+            </Link>
+          )}
         </div>
         <nav className="mt-6 space-y-1">
           {nav.map((item) => (

@@ -23,12 +23,12 @@ export default async function ClientsPage() {
   const session = await requireSession();
 
   const clients = await prisma.client.findMany({
-    where: { businessId: session.businessId },
+    where: { organizationId: session.organizationId },
     include: {
       appointments: {
         orderBy: { startTime: "desc" },
         take: 1,
-        select: { startTime: true, status: true },
+        select: { startTime: true, status: true, business: { select: { name: true } } },
       },
       _count: { select: { appointments: true } },
     },
@@ -48,7 +48,7 @@ export default async function ClientsPage() {
       </div>
       <p className="mt-1 text-sm text-cream/60">
         Cada cancelación tardía o inasistencia queda registrada aquí para que cualquier miembro del
-        equipo la vea antes de confirmarle otra cita a ese cliente.
+        equipo la vea antes de confirmarle otra cita a ese cliente — sin importar en cuál sucursal.
       </p>
 
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
@@ -59,6 +59,7 @@ export default async function ClientsPage() {
               <th className="px-4 py-2">Teléfono</th>
               <th className="px-4 py-2">Citas totales</th>
               <th className="px-4 py-2">Última cita</th>
+              <th className="px-4 py-2">Última sucursal</th>
               <th className="px-4 py-2">Estado</th>
             </tr>
           </thead>
@@ -77,12 +78,15 @@ export default async function ClientsPage() {
                       })
                     : "—"}
                 </td>
+                <td className="px-4 py-2 text-cream/70">
+                  {c.appointments[0]?.business.name ?? "—"}
+                </td>
                 <td className="px-4 py-2">{riskBadge(c.strikes)}</td>
               </tr>
             ))}
             {clients.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-cream/40" colSpan={5}>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={6}>
                   Aún no tienes clientes registrados.
                 </td>
               </tr>

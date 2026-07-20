@@ -13,7 +13,8 @@ const secret = new TextEncoder().encode(process.env.SESSION_SECRET);
 
 export type SessionPayload = {
   userId: string;
-  businessId: string;
+  organizationId: string;
+  businessId: string; // sucursal activa en esta sesión (el dueño puede cambiarla)
   businessSlug: string;
   role: string;
 };

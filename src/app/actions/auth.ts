@@ -48,26 +48,33 @@ export async function signupAction(formData: FormData) {
 
   const passwordHash = await hashPassword(password);
 
-  const business = await prisma.business.create({
+  const organization = await prisma.organization.create({
     data: {
       name: businessName,
-      slug,
-      category,
-      users: {
+      locations: {
         create: {
-          name: ownerName,
-          email,
-          passwordHash,
-          role: "OWNER",
+          name: businessName,
+          slug,
+          category,
+          users: {
+            create: {
+              name: ownerName,
+              email,
+              passwordHash,
+              role: "OWNER",
+            },
+          },
         },
       },
     },
-    include: { users: true },
+    include: { locations: { include: { users: true } } },
   });
 
+  const business = organization.locations[0];
   const user = business.users[0];
   await createSession({
     userId: user.id,
+    organizationId: organization.id,
     businessId: business.id,
     businessSlug: business.slug,
     role: user.role,
@@ -89,6 +96,7 @@ export async function loginAction(formData: FormData) {
 
   await createSession({
     userId: user!.id,
+    organizationId: user!.business.organizationId,
     businessId: user!.businessId,
     businessSlug: user!.business.slug,
     role: user!.role,

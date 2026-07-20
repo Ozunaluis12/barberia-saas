@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
 
   if (type === "clients") {
     const clients = await prisma.client.findMany({
-      where: { businessId: session.businessId },
+      where: { organizationId: session.organizationId },
       orderBy: { createdAt: "asc" },
     });
     csv += toCsvRow(["Nombre", "Teléfono", "Sanciones", "Citas totales", "Cliente desde"]);
