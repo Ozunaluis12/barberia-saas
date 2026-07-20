@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireSession } from "@/lib/guard";
+import { requireOwner } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { createService, toggleServiceActive } from "@/app/actions/services";
 import { getVocabulary } from "@/lib/vocabulary";
@@ -16,7 +16,7 @@ export default async function ServicesPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const session = await requireSession();
+  const session = await requireOwner();
   const { error } = await searchParams;
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");

@@ -83,6 +83,9 @@ export async function loginAction(formData: FormData) {
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     redirect("/login?error=CREDENCIALES_INVALIDAS");
   }
+  if (!user!.active) {
+    redirect("/login?error=CUENTA_DESACTIVADA");
+  }
 
   await createSession({
     userId: user!.id,

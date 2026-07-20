@@ -1,4 +1,4 @@
-import { requireSession } from "@/lib/guard";
+import { requireOwner } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
 
@@ -7,7 +7,7 @@ export default async function ReportsPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
-  const session = await requireSession();
+  const session = await requireOwner();
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");
   const { from, to } = await searchParams;

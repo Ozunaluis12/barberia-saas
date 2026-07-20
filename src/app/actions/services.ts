@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireSession } from "@/lib/guard";
+import { requireOwner } from "@/lib/guard";
 
 type ParsedService =
   | { error: "NOMBRE_REQUERIDO" | "DURACION_INVALIDA" | "PRECIO_INVALIDO" }
@@ -24,7 +24,7 @@ function parseServiceInput(formData: FormData): ParsedService {
 }
 
 export async function createService(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireOwner();
   const parsed = parseServiceInput(formData);
   if ("error" in parsed) redirect(`/dashboard/services?error=${parsed.error}`);
 
@@ -34,7 +34,7 @@ export async function createService(formData: FormData) {
 }
 
 export async function updateService(serviceId: string, formData: FormData) {
-  const session = await requireSession();
+  const session = await requireOwner();
   const service = await prisma.service.findFirst({ where: { id: serviceId, businessId: session.businessId } });
   if (!service) redirect("/dashboard/services?error=NO_ENCONTRADO");
 
@@ -47,7 +47,7 @@ export async function updateService(serviceId: string, formData: FormData) {
 }
 
 export async function toggleServiceActive(serviceId: string) {
-  const session = await requireSession();
+  const session = await requireOwner();
   const service = await prisma.service.findFirst({ where: { id: serviceId, businessId: session.businessId } });
   if (!service) return;
   await prisma.service.update({ where: { id: serviceId }, data: { active: !service.active } });

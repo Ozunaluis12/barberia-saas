@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireSession } from "@/lib/guard";
+import { requireOwner } from "@/lib/guard";
 import { BUSINESS_CATEGORIES } from "@/lib/vocabulary";
 
 export async function updateBusinessSettings(formData: FormData) {
-  const session = await requireSession();
+  const session = await requireOwner();
   const phone = String(formData.get("phone") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
   const cancellationNoticeHours = Math.max(0, Number(formData.get("cancellationNoticeHours") ?? 3));

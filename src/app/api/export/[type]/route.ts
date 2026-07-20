@@ -18,6 +18,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
   if (!session) return new NextResponse("No autorizado", { status: 401 });
 
   const { type } = await params;
+
+  if (type === "reports" && session.role !== "OWNER") {
+    return new NextResponse("No autorizado", { status: 403 });
+  }
+
   let csv = "";
   let filename = "export.csv";
 

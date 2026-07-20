@@ -1,10 +1,10 @@
-import { requireSession } from "@/lib/guard";
+import { requireOwner } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { updateBusinessSettings } from "@/app/actions/settings";
 import { CATEGORY_OPTIONS } from "@/lib/vocabulary";
 
 export default async function SettingsPage() {
-  const session = await requireSession();
+  const session = await requireOwner();
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   if (!business) return null;
 

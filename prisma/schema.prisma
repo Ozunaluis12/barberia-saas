@@ -52,7 +52,8 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
-  role         String   @default("OWNER")
+  role         String   @default("OWNER") // OWNER (acceso total) o STAFF (sin reportes/config/personal/servicios)
+  active       Boolean  @default(true)
   businessId   String
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())

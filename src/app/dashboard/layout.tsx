@@ -9,15 +9,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");
 
+  const isOwner = session.role === "OWNER";
+
   const nav = [
     { href: "/dashboard", label: "Resumen" },
     { href: "/dashboard/appointments", label: "Citas" },
-    { href: "/dashboard/staff", label: vocab.staffPlural },
-    { href: "/dashboard/services", label: "Servicios" },
+    ...(isOwner ? [{ href: "/dashboard/staff", label: vocab.staffPlural }] : []),
+    ...(isOwner ? [{ href: "/dashboard/services", label: "Servicios" }] : []),
     { href: "/dashboard/clients", label: "Clientes" },
     { href: "/dashboard/reviews", label: "Reseñas" },
-    { href: "/dashboard/reports", label: "Reportes" },
-    { href: "/dashboard/settings", label: "Configuración" },
+    ...(isOwner ? [{ href: "/dashboard/reports", label: "Reportes" }] : []),
+    ...(isOwner ? [{ href: "/dashboard/team", label: "Equipo" }] : []),
+    ...(isOwner ? [{ href: "/dashboard/settings", label: "Configuración" }] : []),
   ];
 
   return (
