@@ -37,7 +37,15 @@ export default async function ClientsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Clientes</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Clientes</h1>
+        <a
+          href="/api/export/clients"
+          className="rounded-md border border-white/20 px-3 py-1.5 text-sm hover:border-gold hover:text-gold"
+        >
+          Exportar CSV
+        </a>
+      </div>
       <p className="mt-1 text-sm text-cream/60">
         Cada cancelación tardía o inasistencia queda registrada aquí para que cualquier miembro del
         equipo la vea antes de confirmarle otra cita a ese cliente.

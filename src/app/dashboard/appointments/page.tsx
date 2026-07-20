@@ -34,6 +34,12 @@ export default async function AppointmentsPage() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Citas</h1>
+        <a
+          href="/api/export/appointments"
+          className="rounded-md border border-white/20 px-3 py-1.5 text-sm hover:border-gold hover:text-gold"
+        >
+          Exportar CSV
+        </a>
       </div>
 
       <div className="mt-6">

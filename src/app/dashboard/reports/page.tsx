@@ -90,6 +90,12 @@ export default async function ReportsPage({
           />
         </div>
         <button className="rounded-md bg-gold px-4 py-2 font-semibold text-ink">Filtrar</button>
+        <a
+          href={`/api/export/reports?from=${fromValue}&to=${toValue}`}
+          className="rounded-md border border-white/20 px-4 py-2 text-sm hover:border-gold hover:text-gold"
+        >
+          Exportar CSV
+        </a>
       </form>
 
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
