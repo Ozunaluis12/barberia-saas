@@ -1,9 +1,12 @@
 "use server";
 
+import crypto from "crypto";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 import { createSession, clearSession } from "@/lib/session";
+import { sendPasswordResetEmail } from "@/lib/email";
 import { BUSINESS_CATEGORIES } from "@/lib/vocabulary";
 
 const DIACRITICS_REGEX = new RegExp("[\\u0300-\\u036f]", "g");
@@ -93,4 +96,68 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   await clearSession();
   redirect("/login");
+}
+
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+async function getOrigin(): Promise<string> {
+  const h = await headers();
+  const host = h.get("host") ?? "localhost:3000";
+  const protocol = host.startsWith("localhost") ? "http" : "https";
+  return `${protocol}://${host}`;
+}
+
+/**
+ * Siempre redirige al mismo "revisa tu correo" exista o no la cuenta, para no
+ * filtrar qué correos están registrados en el sistema.
+ */
+export async function requestPasswordReset(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (user) {
+    // Invalidamos tokens anteriores sin usar para que no queden varios enlaces activos.
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } });
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    await prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        tokenHash: hashToken(rawToken),
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      },
+    });
+
+    const origin = await getOrigin();
+    await sendPasswordResetEmail(email, `${origin}/reset-password/${rawToken}`);
+  }
+
+  redirect("/forgot-password?sent=1");
+}
+
+export type ResetPasswordResult = { ok: true } | { ok: false; error: string };
+
+export async function resetPassword(rawToken: string, formData: FormData): Promise<ResetPasswordResult> {
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 6) {
+    return { ok: false, error: "La contraseña debe tener al menos 6 caracteres." };
+  }
+
+  const resetToken = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash: hashToken(rawToken) },
+  });
+
+  if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+    return { ok: false, error: "Este enlace ya no es válido. Solicita uno nuevo." };
+  }
+
+  const passwordHash = await hashPassword(password);
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: resetToken.userId }, data: { passwordHash } }),
+    prisma.passwordResetToken.update({ where: { id: resetToken.id }, data: { usedAt: new Date() } }),
+  ]);
+
+  return { ok: true };
 }

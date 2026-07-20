@@ -56,6 +56,22 @@ model User {
   businessId   String
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
+
+  resetTokens PasswordResetToken[]
+}
+
+// Token de un solo uso para el flujo de "olvidé mi contraseña". Se guarda el hash,
+// nunca el token en texto plano (igual que con las contraseñas).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 // Un miembro del personal (barbero, estilista, doctor, veterinario, entrenador, técnico...).
