@@ -16,6 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const nav = [
     { href: "/dashboard", label: "Resumen" },
     { href: "/dashboard/appointments", label: "Citas" },
+    { href: "/dashboard/calendar", label: "Calendario" },
     ...(can("staff") ? [{ href: "/dashboard/staff", label: vocab.staffPlural }] : []),
     ...(can("catalog") ? [{ href: "/dashboard/catalog", label: "Catálogo" }] : []),
     { href: "/dashboard/clients", label: "Clientes" },
