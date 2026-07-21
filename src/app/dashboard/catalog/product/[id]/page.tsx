@@ -2,15 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireOwner } from "@/lib/guard";
 import { prisma } from "@/lib/db";
-import { updateService } from "@/app/actions/services";
+import { updateProduct } from "@/app/actions/products";
 
 const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
-  DURACION_INVALIDA: "La duración debe ser un número mayor a 0.",
   PRECIO_INVALIDO: "El precio no puede ser negativo.",
 };
 
-export default async function EditServicePage({
+export default async function EditProductPage({
   params,
   searchParams,
 }: {
@@ -21,15 +20,15 @@ export default async function EditServicePage({
   const { id } = await params;
   const { error } = await searchParams;
 
-  const service = await prisma.service.findFirst({ where: { id, businessId: session.businessId } });
-  if (!service) notFound();
+  const product = await prisma.product.findFirst({ where: { id, businessId: session.businessId } });
+  if (!product) notFound();
 
   return (
     <div>
-      <Link href="/dashboard/services" className="text-sm text-cream/50 hover:text-cream">
+      <Link href="/dashboard/catalog" className="text-sm text-cream/50 hover:text-cream">
         ← Volver
       </Link>
-      <h1 className="mt-2 text-2xl font-bold">Editar servicio</h1>
+      <h1 className="mt-2 text-2xl font-bold">Editar producto</h1>
 
       {error && (
         <p className="mt-4 rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
@@ -38,7 +37,7 @@ export default async function EditServicePage({
       )}
 
       <form
-        action={updateService.bind(null, service.id)}
+        action={updateProduct.bind(null, product.id)}
         className="mt-6 max-w-lg space-y-4 rounded-lg border border-white/10 bg-charcoal p-6"
       >
         <div>
@@ -46,32 +45,29 @@ export default async function EditServicePage({
           <input
             name="name"
             required
-            defaultValue={service.name}
+            defaultValue={product.name}
             className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm text-cream/70">Duración (minutos)</label>
-            <input
-              type="number"
-              name="durationMinutes"
-              defaultValue={service.durationMinutes}
-              min={5}
-              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
-            />
-          </div>
-          <div>
-            <label className="text-sm text-cream/70">Precio</label>
-            <input
-              type="number"
-              name="price"
-              step="0.01"
-              min={0}
-              defaultValue={service.price}
-              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
-            />
-          </div>
+        <div>
+          <label className="text-sm text-cream/70">Descripción (opcional)</label>
+          <textarea
+            name="description"
+            rows={2}
+            defaultValue={product.description ?? ""}
+            className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+          />
+        </div>
+        <div>
+          <label className="text-sm text-cream/70">Precio</label>
+          <input
+            type="number"
+            name="price"
+            step="0.01"
+            min={0}
+            defaultValue={product.price}
+            className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+          />
         </div>
         <button
           type="submit"

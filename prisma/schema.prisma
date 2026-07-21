@@ -41,6 +41,7 @@ model Business {
   users        User[]
   staff        Staff[]
   services     Service[]
+  products     Product[]
   appointments Appointment[]
   reviews      Review[]
 }
@@ -113,12 +114,29 @@ model Service {
   businessId      String
   business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name            String
+  description     String?
+  imageUrl        String?
   durationMinutes Int      @default(30)
   price           Float
   active          Boolean  @default(true)
   createdAt       DateTime @default(now())
 
   appointments Appointment[]
+}
+
+// Producto físico que el negocio vende además de sus servicios (ej. shampoo,
+// cera, cremas). No participa en el flujo de reserva de citas — es solo
+// catálogo/venta directa en el local.
+model Product {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  imageUrl    String?
+  price       Float
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
 }
 
 model Appointment {
