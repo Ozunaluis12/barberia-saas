@@ -9,9 +9,9 @@ function waLink(message: string) {
 }
 
 type IconName =
-  | "scissors"
-  | "comb"
-  | "droplet"
+  | "barberpole"
+  | "mirror"
+  | "leaf"
   | "pulse"
   | "paw"
   | "wrench"
@@ -29,30 +29,27 @@ function CategoryIcon({ name, className }: { name: IconName; className?: string 
     strokeLinejoin: "round" as const,
   };
   switch (name) {
-    case "scissors":
+    case "barberpole":
       return (
         <svg {...common}>
-          <circle cx="6" cy="6" r="3" />
-          <circle cx="6" cy="18" r="3" />
-          <line x1="20" y1="4" x2="8.12" y2="15.88" />
-          <line x1="14.47" y1="14.48" x2="20" y2="20" />
-          <line x1="8.12" y1="8.12" x2="12" y2="12" />
+          <rect x="8" y="2" width="8" height="3" rx="1.2" />
+          <rect x="8" y="19" width="8" height="3" rx="1.2" />
+          <rect x="9" y="5" width="6" height="14" rx="3" />
+          <path d="M9 8l6 3M9 13l6 3" />
         </svg>
       );
-    case "comb":
+    case "mirror":
       return (
         <svg {...common}>
-          <path d="M4 4h16v4H4z" />
-          <line x1="6" y1="8" x2="6" y2="20" />
-          <line x1="10" y1="8" x2="10" y2="20" />
-          <line x1="14" y1="8" x2="14" y2="20" />
-          <line x1="18" y1="8" x2="18" y2="20" />
+          <circle cx="12" cy="9" r="6" />
+          <path d="M12 15v6M9 21h6" />
         </svg>
       );
-    case "droplet":
+    case "leaf":
       return (
         <svg {...common}>
-          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+          <path d="M12 20c-4.4-1-8-5-8-10a8 8 0 0 1 8-8c4.4 0 8 3.6 8 8 0 5-3.6 9-8 10z" />
+          <path d="M12 20V4" />
         </svg>
       );
     case "pulse":
@@ -108,7 +105,7 @@ export type CategoryInfo = {
 
 export const CATEGORIAS: CategoryInfo[] = [
   {
-    icon: "scissors",
+    icon: "barberpole",
     title: "Barbería",
     summary:
       "Tus clientes reservan su corte online y eligen a su barbero de confianza. Controla comisiones y walk-ins desde el mismo panel.",
@@ -122,7 +119,7 @@ export const CATEGORIAS: CategoryInfo[] = [
     ],
   },
   {
-    icon: "comb",
+    icon: "mirror",
     title: "Salón de belleza",
     summary:
       "Agenda cortes, color y tratamientos con cada estilista. Tus clientas ven horarios reales y reservan en segundos.",
@@ -136,7 +133,7 @@ export const CATEGORIAS: CategoryInfo[] = [
     ],
   },
   {
-    icon: "droplet",
+    icon: "leaf",
     title: "Spa",
     summary:
       "Organiza masajes, faciales y tratamientos por especialista, sin choques de horario ni llamadas de ida y vuelta.",
