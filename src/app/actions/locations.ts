@@ -66,6 +66,7 @@ export async function switchLocation(businessId: string) {
     businessId: target.id,
     businessSlug: target.slug,
     role: session.role,
+    permissions: session.permissions,
   });
 
   redirect("/dashboard");

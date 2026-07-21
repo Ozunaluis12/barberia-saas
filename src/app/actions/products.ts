@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireOwner } from "@/lib/guard";
+import { requirePermission } from "@/lib/guard";
 
 type ParsedProduct =
   | { error: "NOMBRE_REQUERIDO" | "PRECIO_INVALIDO" }
@@ -21,7 +21,7 @@ function parseProductInput(formData: FormData): ParsedProduct {
 }
 
 export async function createProduct(formData: FormData) {
-  const session = await requireOwner();
+  const session = await requirePermission("catalog");
   const parsed = parseProductInput(formData);
   if ("error" in parsed) redirect(`/dashboard/catalog?error=${parsed.error}`);
 
@@ -31,7 +31,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function updateProduct(productId: string, formData: FormData) {
-  const session = await requireOwner();
+  const session = await requirePermission("catalog");
   const product = await prisma.product.findFirst({ where: { id: productId, businessId: session.businessId } });
   if (!product) redirect("/dashboard/catalog?error=NO_ENCONTRADO");
 
@@ -44,7 +44,7 @@ export async function updateProduct(productId: string, formData: FormData) {
 }
 
 export async function toggleProductActive(productId: string) {
-  const session = await requireOwner();
+  const session = await requirePermission("catalog");
   const product = await prisma.product.findFirst({ where: { id: productId, businessId: session.businessId } });
   if (!product) return;
   await prisma.product.update({ where: { id: productId }, data: { active: !product.active } });

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireOwner } from "@/lib/guard";
+import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { updateStaff } from "@/app/actions/staff";
 import { getVocabulary } from "@/lib/vocabulary";
@@ -19,7 +19,7 @@ export default async function EditStaffPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const session = await requireOwner();
+  const session = await requirePermission("staff");
   const { id } = await params;
   const { error } = await searchParams;
 

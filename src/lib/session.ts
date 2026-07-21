@@ -17,6 +17,7 @@ export type SessionPayload = {
   businessId: string; // sucursal activa en esta sesión (el dueño puede cambiarla)
   businessSlug: string;
   role: string;
+  permissions: string; // CSV, solo relevante para role === "STAFF"
 };
 
 export async function createSession(payload: SessionPayload) {

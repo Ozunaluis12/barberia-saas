@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireOwner } from "@/lib/guard";
+import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { createService, toggleServiceActive } from "@/app/actions/services";
 import { createProduct, toggleProductActive } from "@/app/actions/products";
@@ -17,7 +17,7 @@ export default async function CatalogPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const session = await requireOwner();
+  const session = await requirePermission("catalog");
   const { error } = await searchParams;
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");

@@ -10,18 +10,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const vocab = getVocabulary(business?.category ?? "OTHER");
 
   const isOwner = session.role === "OWNER";
+  const perms = session.permissions ? session.permissions.split(",") : [];
+  const can = (key: string) => isOwner || perms.includes(key);
 
   const nav = [
     { href: "/dashboard", label: "Resumen" },
     { href: "/dashboard/appointments", label: "Citas" },
-    ...(isOwner ? [{ href: "/dashboard/staff", label: vocab.staffPlural }] : []),
-    ...(isOwner ? [{ href: "/dashboard/catalog", label: "Catálogo" }] : []),
+    ...(can("staff") ? [{ href: "/dashboard/staff", label: vocab.staffPlural }] : []),
+    ...(can("catalog") ? [{ href: "/dashboard/catalog", label: "Catálogo" }] : []),
     { href: "/dashboard/clients", label: "Clientes" },
     { href: "/dashboard/reviews", label: "Reseñas" },
-    ...(isOwner ? [{ href: "/dashboard/reports", label: "Reportes" }] : []),
+    ...(can("reports") ? [{ href: "/dashboard/reports", label: "Reportes" }] : []),
     ...(isOwner ? [{ href: "/dashboard/team", label: "Equipo" }] : []),
     ...(isOwner ? [{ href: "/dashboard/locations", label: "Sucursales" }] : []),
-    ...(isOwner ? [{ href: "/dashboard/settings", label: "Configuración" }] : []),
+    ...(can("settings") ? [{ href: "/dashboard/settings", label: "Configuración" }] : []),
   ];
 
   return (

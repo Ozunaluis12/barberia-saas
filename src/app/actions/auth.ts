@@ -78,6 +78,7 @@ export async function signupAction(formData: FormData) {
     businessId: business.id,
     businessSlug: business.slug,
     role: user.role,
+    permissions: user.permissions,
   });
   redirect("/dashboard");
 }
@@ -100,6 +101,7 @@ export async function loginAction(formData: FormData) {
     businessId: user!.businessId,
     businessSlug: user!.business.slug,
     role: user!.role,
+    permissions: user!.permissions,
   });
   redirect("/dashboard");
 }

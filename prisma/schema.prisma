@@ -69,6 +69,7 @@ model User {
   passwordHash String
   name         String
   role         String   @default("OWNER") // OWNER (ve/administra todas las sucursales) o STAFF (asignado a una sola)
+  permissions  String   @default("") // CSV para cuentas STAFF: staff,catalog,reports,settings (Equipo y Sucursales son siempre exclusivas del dueño)
   active       Boolean  @default(true)
   businessId   String // sucursal "de origen"; el dueño puede cambiar de sucursal activa dentro de su sesión
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)

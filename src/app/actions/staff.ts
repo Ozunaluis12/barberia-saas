@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireOwner } from "@/lib/guard";
+import { requirePermission } from "@/lib/guard";
 
 type ParsedStaff =
   | { error: "NOMBRE_REQUERIDO" | "COMISION_INVALIDA" | "HORARIO_INVALIDO" }
@@ -43,7 +43,7 @@ function parseStaffInput(formData: FormData): ParsedStaff {
 }
 
 export async function createStaff(formData: FormData) {
-  const session = await requireOwner();
+  const session = await requirePermission("staff");
   const parsed = parseStaffInput(formData);
   if ("error" in parsed) redirect(`/dashboard/staff?error=${parsed.error}`);
 
@@ -53,7 +53,7 @@ export async function createStaff(formData: FormData) {
 }
 
 export async function updateStaff(staffId: string, formData: FormData) {
-  const session = await requireOwner();
+  const session = await requirePermission("staff");
   const staff = await prisma.staff.findFirst({ where: { id: staffId, businessId: session.businessId } });
   if (!staff) redirect("/dashboard/staff?error=NO_ENCONTRADO");
 
@@ -66,7 +66,7 @@ export async function updateStaff(staffId: string, formData: FormData) {
 }
 
 export async function toggleStaffActive(staffId: string) {
-  const session = await requireOwner();
+  const session = await requirePermission("staff");
   const staff = await prisma.staff.findFirst({ where: { id: staffId, businessId: session.businessId } });
   if (!staff) return;
   await prisma.staff.update({ where: { id: staffId }, data: { active: !staff.active } });

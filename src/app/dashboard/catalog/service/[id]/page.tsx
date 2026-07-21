@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireOwner } from "@/lib/guard";
+import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { updateService } from "@/app/actions/services";
 
@@ -17,7 +17,7 @@ export default async function EditServicePage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
-  const session = await requireOwner();
+  const session = await requirePermission("catalog");
   const { id } = await params;
   const { error } = await searchParams;
 
