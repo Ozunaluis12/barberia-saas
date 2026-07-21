@@ -23,7 +23,19 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   belleza o spa.
 - **Comisión de cada miembro del equipo configurable** (u opcional, si el
   negocio no paga por comisión) y calculada automáticamente.
+- **Catálogo de servicios y productos**, cada uno con descripción y precio
+  propios, sin que los productos participen del flujo de reserva.
+- **Permisos granulares por cuenta de Personal**: el dueño elige, por persona,
+  si puede ver Personal, Catálogo, Reportes y/o Configuración — Equipo y
+  Sucursales son siempre exclusivas del dueño.
 - **Reseñas de clientes** después de cada cita completada.
+- **Historial de procedimientos por cliente**: quién fue la última persona que
+  lo atendió, y el detalle de cada visita anterior.
+- **Calendario por sucursal**, con una vista que junta las citas de todas las
+  sucursales del mismo dueño.
+- **Caja registradora**: apertura y cierre por empleado o general, con lo
+  esperado calculado automáticamente y el historial de cierres guardado para
+  siempre.
 - **Política de cancelación con sanciones**: los clientes acumulan strikes por
   cancelaciones tardías o no-shows, visibles en su historial.
 - **Instalable como app** (PWA) desde el navegador del celular.
@@ -37,18 +49,28 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 
 ## Modelo de datos
 
-- **Business** — el negocio (tenant): tiene un `category` (rubro), plan
+- **Organization** — el dueño/marca completo. Puede tener una o varias
+  sucursales (`Business`). `Client` vive aquí, no en la sucursal, para
+  compartirse entre todas las ubicaciones del mismo dueño.
+- **Business** — una sucursal/ubicación: tiene un `category` (rubro), plan
   (`GRATIS`/`PRO`), política de cancelación, canal de recordatorios y si tiene
   pagos en línea habilitados.
-- **User** — dueño/usuario con acceso al panel.
-- **Staff** — miembro del equipo, con % de comisión opcional, horario y días
-  laborales.
-- **Service** — servicio ofrecido, con duración y precio.
-- **Client** — historial de un cliente dentro de un negocio, con contador de
-  `strikes`.
+- **User** — cuenta con acceso al panel. `role` es `OWNER` o `STAFF`;
+  `permissions` (CSV) define qué secciones adicionales puede ver una cuenta
+  `STAFF` (`staff`, `catalog`, `reports`, `settings`).
+- **Staff** — miembro del equipo (el roster, no la cuenta de acceso), con % de
+  comisión opcional, horario y días laborales.
+- **Service** — servicio agendable, con duración, precio y descripción
+  opcional.
+- **Product** — producto físico en venta (sin relación con las citas), con
+  descripción y precio propios.
+- **Client** — historial de un cliente dentro de una organización, con
+  contador de `strikes`.
 - **Appointment** — cita, con estado (`CONFIRMED`, `CANCELLED`, `COMPLETED`,
-  `NO_SHOW`), origen (`ONLINE`/`WALK_IN`), método y estado de pago.
+  `NO_SHOW`), origen (`ONLINE`/`WALK_IN`), método/estado de pago y `paidAt`.
 - **Review** — reseña (1 a 5) que un cliente deja tras una cita completada.
+- **CashSession** — apertura/cierre de caja por empleado o general, con monto
+  esperado (calculado), contado y la diferencia.
 
 El vocabulario que se muestra en pantalla (cómo se llama al personal, la
 pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive en
@@ -63,6 +85,11 @@ pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive e
   canal y horas de anticipación en Configuración, y `src/lib/notifications.ts`
   tiene el punto de extensión listo, pero todavía no envía nada de verdad hasta
   que se conecte un proveedor (Twilio, WhatsApp Business API, Resend, etc.).
+- **Fotos de personal/servicios/productos** — `Service.imageUrl` y
+  `Product.imageUrl` ya existen en el esquema (listos, sin usar todavía);
+  `Staff` aún no tiene su campo de foto. Falta conectar Cloudinary (cuenta +
+  `CLOUDINARY_CLOUD_NAME`/`CLOUDINARY_API_KEY`/`CLOUDINARY_API_SECRET`) antes
+  de construir la subida de imágenes.
 
 ## Estructura del proyecto
 
@@ -76,14 +103,19 @@ src/
     cita/[id]/              confirmación, cancelación y reseña de una cita
     dashboard/
       page.tsx              resumen
-      staff/                 gestión del equipo
-      services/              gestión de servicios
+      staff/                 gestión del roster (con [id] para editar)
+      catalog/                servicios y productos ([service]/[product] para editar)
       appointments/          agenda + registro de citas sin cita previa
-      clients/               historial de clientes y strikes
+      calendar/               agenda por sucursal o todas juntas
+      register/               caja: abrir/cerrar turnos, historial de cierres
+      clients/                historial de clientes ([id] = detalle/procedimientos)
       reviews/                reseñas de clientes
       reports/                reportes de desempeño por miembro del equipo
+      team/                   cuentas de Personal y sus permisos ([id] = editar)
+      locations/              sucursales de la organización
       settings/               configuración del negocio (rubro, recordatorios, pagos)
-    actions/                server actions (auth, booking, appointments, reviews, etc.)
+    actions/                server actions (auth, booking, appointments, reviews,
+                            products, team, cashRegister, etc.)
   lib/
     db.ts                   cliente de Prisma
     auth.ts / session.ts    hash de contraseñas y sesión JWT
