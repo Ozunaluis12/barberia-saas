@@ -43,6 +43,27 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   siempre.
 - **Política de cancelación con sanciones**: los clientes acumulan strikes por
   cancelaciones tardías o no-shows, visibles en su historial.
+- **Excepciones de horario por staff**: vacaciones o incapacidades puntuales
+  que bloquean la reserva ese rango de fechas, sin tocar el horario semanal fijo.
+- **Programa de puntos de fidelidad**: configurable por negocio (puntos por
+  visita, umbral de recompensa), se suman solos al completar una cita y se
+  canjean desde la ficha del cliente.
+- **Control de inventario de productos**: stock opcional por producto, con
+  botón de venta que lo descuenta y que además alimenta el esperado de la
+  caja general cuando el pago fue en efectivo.
+- **Nómina por período de pago**: cierre congelado de la comisión de cada
+  miembro del equipo para un rango de fechas, con historial, para no
+  recalcular (ni pagar dos veces) el mismo período.
+- **Lista de espera**: si un día no tiene cupo, el cliente puede pedir que le
+  avisen por WhatsApp — al cancelarse una cita de ese día/servicio, se le
+  notifica automáticamente.
+- **Difusión masiva por WhatsApp**: el dueño manda un mismo mensaje/promoción
+  a todos los clientes que no lo hayan desactivado.
+- **Citas recurrentes**: el cliente puede pedir repetir su cita cada 1/2/4
+  semanas con el mismo especialista, agendando lo que tenga cupo.
+- **Panel de analítica**: horas pico, servicios/productos más vendidos y tasa
+  de clientes recurrentes.
+- **Reporte de caja en PDF** descargable, además del CSV existente.
 - **Instalable como app** (PWA) desde el navegador del celular.
 
 ## Stack
@@ -53,6 +74,8 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - Autenticación propia con `bcryptjs` (hash de contraseñas) y `jose` (sesión JWT)
 - [Cloudinary](https://cloudinary.com/) para fotos de personal, servicios y productos
 - [Resend](https://resend.com/) para correo transaccional (recuperación de contraseña)
+- [Twilio](https://www.twilio.com/) para WhatsApp (recordatorios, lista de espera, difusión)
+- [pdfkit](https://pdfkit.org/) para el reporte de caja en PDF
 
 ## Modelo de datos
 
@@ -60,24 +83,31 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   sucursales (`Business`). `Client` vive aquí, no en la sucursal, para
   compartirse entre todas las ubicaciones del mismo dueño.
 - **Business** — una sucursal/ubicación: tiene un `category` (rubro), plan
-  (`GRATIS`/`PRO`), política de cancelación, canal de recordatorios y si tiene
-  pagos en línea habilitados.
+  (`GRATIS`/`PRO`), política de cancelación, canal de recordatorios, si tiene
+  pagos en línea habilitados y la configuración del programa de fidelidad.
 - **User** — cuenta con acceso al panel. `role` es `OWNER` o `STAFF`;
   `permissions` (CSV) define qué secciones adicionales puede ver una cuenta
   `STAFF` (`staff`, `catalog`, `reports`, `settings`).
 - **Staff** — miembro del equipo (el roster, no la cuenta de acceso), con % de
-  comisión opcional, horario y días laborales.
+  comisión opcional, horario y días laborales, y rangos de `StaffTimeOff`
+  (vacaciones/incapacidad) que bloquean la reserva esos días.
 - **Service** — servicio agendable, con duración, precio y descripción
   opcional.
 - **Product** — producto físico en venta (sin relación con las citas), con
-  descripción y precio propios.
+  descripción, precio y stock opcional propios; cada venta queda en `ProductSale`.
 - **Client** — historial de un cliente dentro de una organización, con
-  contador de `strikes`.
+  contador de `strikes`, puntos de fidelidad y si acepta difusión por WhatsApp.
 - **Appointment** — cita, con estado (`CONFIRMED`, `CANCELLED`, `COMPLETED`,
-  `NO_SHOW`), origen (`ONLINE`/`WALK_IN`), método/estado de pago y `paidAt`.
+  `NO_SHOW`), origen (`ONLINE`/`WALK_IN`), método/estado de pago, `paidAt` y
+  `recurrenceGroupId` opcional si pertenece a una serie recurrente.
 - **Review** — reseña (1 a 5) que un cliente deja tras una cita completada.
 - **CashSession** — apertura/cierre de caja por empleado o general, con monto
-  esperado (calculado), contado y la diferencia.
+  esperado (calculado, incluye ventas de producto en efectivo), contado y la
+  diferencia.
+- **PayrollPayout** — cierre congelado de comisión de un staff para un rango
+  de fechas, para no recalcular el mismo período dos veces.
+- **WaitlistEntry** — cliente esperando que se libere un horario en un día
+  sin cupo; se le avisa por WhatsApp al cancelarse una cita que calce.
 
 El vocabulario que se muestra en pantalla (cómo se llama al personal, la
 pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive en
@@ -88,10 +118,12 @@ pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive e
 - **Pagos en línea** — el modelo ya tiene `paymentMethod`/`paymentStatus` y hoy
   se puede marcar una cita como pagada en efectivo o tarjeta desde el panel.
   Falta conectar un proveedor real (ej. Stripe) para cobrar en línea.
-- **Recordatorios por WhatsApp/SMS/correo** — cada negocio puede configurar
-  canal y horas de anticipación en Configuración, y `src/lib/notifications.ts`
-  tiene el punto de extensión listo, pero todavía no envía nada de verdad hasta
-  que se conecte un proveedor (Twilio, WhatsApp Business API, Resend, etc.).
+- **Recordatorios y difusión por SMS/correo** — el canal WhatsApp ya envía de
+  verdad vía Twilio (recordatorios, lista de espera y difusión masiva) cuando
+  `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_FROM` están
+  configuradas; `src/lib/notifications.ts` tiene el punto de extensión listo
+  para SMS y correo, pero esos dos canales todavía solo registran el mensaje
+  en el log.
 
 ## Estructura del proyecto
 
@@ -111,23 +143,28 @@ src/
       catalog/                catálogo de productos, con foto ([id] para editar)
       appointments/          agenda + registro de citas sin cita previa
       calendar/               agenda por sucursal o todas juntas
-      register/               caja: abrir/cerrar turnos, historial de cierres
-      clients/                historial de clientes ([id] = detalle/procedimientos)
+      register/               caja: abrir/cerrar turnos, historial de cierres + PDF
+      clients/                historial de clientes ([id] = detalle, puntos, opt-in WhatsApp)
       reviews/                reseñas de clientes
-      reports/                reportes de desempeño por miembro del equipo
+      reports/                reportes de comisión + cierre de nómina por período
+      analytics/              horas pico, más vendidos, clientes recurrentes
+      waitlist/                lista de espera por día/servicio
+      broadcast/               difusión masiva por WhatsApp (solo dueño)
       team/                   cuentas de Personal y sus permisos ([id] = editar)
       locations/              sucursales de la organización
-      settings/               configuración del negocio (rubro, recordatorios, pagos)
+      settings/               configuración del negocio (rubro, recordatorios, fidelidad, pagos)
     actions/                server actions (auth, booking, appointments, reviews,
-                            products, team, cashRegister, etc.)
+                            products, team, cashRegister, payroll, loyalty,
+                            broadcast, clients, etc.)
   lib/
     db.ts                   cliente de Prisma
     auth.ts / session.ts    hash de contraseñas y sesión JWT
-    availability.ts         cálculo de huecos libres y balanceo del equipo
+    availability.ts         cálculo de huecos libres, balanceo del equipo y excepciones de horario
     guard.ts                protección de rutas del dashboard
     vocabulary.ts           vocabulario dinámico según el rubro del negocio
     images.ts               subida de fotos a Cloudinary
-    notifications.ts        punto de extensión para recordatorios (sin proveedor aún)
+    notifications.ts        envío de WhatsApp (Twilio) + punto de extensión para SMS/correo
+    waitlist.ts             aviso automático a la lista de espera al liberarse un horario
 prisma/
   schema.prisma             modelo de datos
   seed.ts                   datos de ejemplo (barbería, salón y spa)
