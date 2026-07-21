@@ -90,7 +90,7 @@ src/
     notifications.ts        punto de extensión para recordatorios (sin proveedor aún)
 prisma/
   schema.prisma             modelo de datos
-  seed.ts                   datos de ejemplo (una barbería y un spa)
+  seed.ts                   datos de ejemplo (un negocio por cada categoría)
 ```
 
 ## Cómo correrlo en local
@@ -122,10 +122,20 @@ prisma/
    npm run dev
    ```
 
-   La app queda disponible en `http://localhost:3000`. El seed crea dos
-   negocios de ejemplo: `/book/demo-barberia` (barbería) y `/book/demo-spa`
-   (spa) — cada uno con su propio login (ver la salida del seed para las
-   credenciales).
+   La app queda disponible en `http://localhost:3000`. El seed crea un
+   negocio de ejemplo por cada categoría, con su propia reserva pública y su
+   propio login al panel:
+
+   | Categoría          | Reserva pública           | Login del panel        | Contraseña       |
+   | ------------------ | -------------------------- | ----------------------- | ---------------- |
+   | Barbería            | `/book/demo-barberia`      | `barberia@demo.com`     | `Barberia123`     |
+   | Salón de belleza    | `/book/demo-salon`         | `salon@demo.com`        | `Salon123`        |
+   | Spa                 | `/book/demo-spa`           | `spa@demo.com`          | `Spa123`          |
+   | Consultorio médico  | `/book/demo-clinica`       | `clinica@demo.com`      | `Clinica123`      |
+   | Veterinaria         | `/book/demo-veterinaria`   | `veterinaria@demo.com`  | `Veterinaria123`  |
+   | Taller              | `/book/demo-taller`        | `taller@demo.com`       | `Taller123`       |
+   | Gimnasio            | `/book/demo-gimnasio`      | `gimnasio@demo.com`     | `Gimnasio123`     |
+   | Otro / genérico     | `/book/demo-otro`          | `otro@demo.com`         | `Otro123`         |
 
 ## Scripts disponibles
 

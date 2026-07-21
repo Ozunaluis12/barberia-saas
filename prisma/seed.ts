@@ -12,6 +12,7 @@ type SeedBusinessConfig = {
   category: string;
   address: string;
   ownerEmail: string;
+  ownerPassword: string;
   services: SeedService[];
   staff: SeedStaff[];
 };
@@ -22,7 +23,8 @@ const DEMO_BUSINESSES: SeedBusinessConfig[] = [
     name: "Barbería Estilo Urbano",
     category: "BARBERSHOP",
     address: "Av. Principal 123",
-    ownerEmail: "demo@turnify.app",
+    ownerEmail: "barberia@demo.com",
+    ownerPassword: "Barberia123",
     services: [
       { name: "Corte clásico", durationMinutes: 30, price: 12 },
       { name: "Corte + barba", durationMinutes: 45, price: 18 },
@@ -36,11 +38,29 @@ const DEMO_BUSINESSES: SeedBusinessConfig[] = [
     ],
   },
   {
+    slug: "demo-salon",
+    name: "Salón Bella Imagen",
+    category: "HAIR_SALON",
+    address: "Calle 45 # 12-30",
+    ownerEmail: "salon@demo.com",
+    ownerPassword: "Salon123",
+    services: [
+      { name: "Corte y peinado", durationMinutes: 45, price: 20 },
+      { name: "Color y mechas", durationMinutes: 90, price: 55 },
+      { name: "Tratamiento capilar", durationMinutes: 60, price: 35 },
+    ],
+    staff: [
+      { name: "Camila Reyes", commissionPercent: 45, workStart: "09:00", workEnd: "18:00" },
+      { name: "Valentina Ruiz", commissionPercent: 45, workStart: "10:00", workEnd: "19:00" },
+    ],
+  },
+  {
     slug: "demo-spa",
     name: "Spa Serenidad",
     category: "SPA",
     address: "Calle Los Almendros 45",
-    ownerEmail: "demo-spa@turnify.app",
+    ownerEmail: "spa@demo.com",
+    ownerPassword: "Spa123",
     services: [
       { name: "Masaje relajante", durationMinutes: 60, price: 35 },
       { name: "Facial hidratante", durationMinutes: 45, price: 28 },
@@ -52,16 +72,115 @@ const DEMO_BUSINESSES: SeedBusinessConfig[] = [
       { name: "Marcos Vidal", commissionPercent: null, workStart: "11:00", workEnd: "19:00" },
     ],
   },
+  {
+    slug: "demo-clinica",
+    name: "Consultorio Médico Vitalis",
+    category: "MEDICAL_CLINIC",
+    address: "Carrera 8 # 20-15",
+    ownerEmail: "clinica@demo.com",
+    ownerPassword: "Clinica123",
+    services: [
+      { name: "Consulta general", durationMinutes: 30, price: 25 },
+      { name: "Control de rutina", durationMinutes: 20, price: 15 },
+      { name: "Consulta especializada", durationMinutes: 45, price: 40 },
+    ],
+    staff: [
+      { name: "Dra. Patricia Gómez", commissionPercent: null, workStart: "08:00", workEnd: "16:00" },
+      { name: "Dr. Andrés Salazar", commissionPercent: null, workStart: "12:00", workEnd: "20:00" },
+    ],
+  },
+  {
+    slug: "demo-veterinaria",
+    name: "Veterinaria Patas Amigas",
+    category: "VETERINARY",
+    address: "Av. Los Robles 200",
+    ownerEmail: "veterinaria@demo.com",
+    ownerPassword: "Veterinaria123",
+    services: [
+      { name: "Consulta general", durationMinutes: 30, price: 20 },
+      { name: "Vacunación", durationMinutes: 15, price: 12 },
+      { name: "Baño y peluquería canina", durationMinutes: 60, price: 18 },
+    ],
+    staff: [
+      { name: "Dra. Camila Reyes", commissionPercent: null, workStart: "09:00", workEnd: "17:00" },
+      { name: "Dr. Felipe Suárez", commissionPercent: null, workStart: "10:00", workEnd: "18:00" },
+    ],
+  },
+  {
+    slug: "demo-taller",
+    name: "Taller Mecánica Express",
+    category: "WORKSHOP",
+    address: "Zona Industrial, Bodega 12",
+    ownerEmail: "taller@demo.com",
+    ownerPassword: "Taller123",
+    services: [
+      { name: "Cambio de aceite", durationMinutes: 30, price: 30 },
+      { name: "Revisión general", durationMinutes: 60, price: 40 },
+      { name: "Alineación y balanceo", durationMinutes: 45, price: 35 },
+    ],
+    staff: [
+      { name: "Julián Torres", commissionPercent: 30, workStart: "08:00", workEnd: "17:00" },
+      { name: "Édgar Ramírez", commissionPercent: 30, workStart: "08:00", workEnd: "17:00" },
+    ],
+  },
+  {
+    slug: "demo-gimnasio",
+    name: "Gimnasio PowerFit",
+    category: "GYM",
+    address: "Av. Deportiva 88",
+    ownerEmail: "gimnasio@demo.com",
+    ownerPassword: "Gimnasio123",
+    services: [
+      { name: "Entrenamiento personalizado", durationMinutes: 60, price: 20 },
+      { name: "Clase grupal", durationMinutes: 45, price: 10 },
+      { name: "Evaluación física", durationMinutes: 30, price: 15 },
+    ],
+    staff: [
+      { name: "Diego Molina", commissionPercent: 40, workStart: "06:00", workEnd: "14:00" },
+      { name: "Natalia Cárdenas", commissionPercent: 40, workStart: "14:00", workEnd: "21:00" },
+    ],
+  },
+  {
+    slug: "demo-otro",
+    name: "Negocio Demo General",
+    category: "OTHER",
+    address: "Calle Principal 1",
+    ownerEmail: "otro@demo.com",
+    ownerPassword: "Otro123",
+    services: [
+      { name: "Servicio general", durationMinutes: 30, price: 20 },
+      { name: "Consulta", durationMinutes: 20, price: 10 },
+    ],
+    staff: [
+      { name: "Especialista A", commissionPercent: null, workStart: "09:00", workEnd: "18:00" },
+      { name: "Especialista B", commissionPercent: null, workStart: "10:00", workEnd: "19:00" },
+    ],
+  },
 ];
 
 async function seedBusiness(config: SeedBusinessConfig) {
-  const existing = await prisma.business.findUnique({ where: { slug: config.slug } });
+  const existing = await prisma.business.findUnique({
+    where: { slug: config.slug },
+    include: { users: true },
+  });
+
   if (existing) {
-    console.log(`"${config.name}" ya existe, no se vuelve a crear.`);
+    // El negocio ya existe: solo nos aseguramos de que el login del dueño
+    // demo coincida con la convención actual (correo/contraseña pueden
+    // haber cambiado de nombre entre corridas del seed).
+    const owner = existing.users.find((u) => u.role === "OWNER");
+    if (owner) {
+      const passwordHash = await bcrypt.hash(config.ownerPassword, 10);
+      await prisma.user.update({
+        where: { id: owner.id },
+        data: { email: config.ownerEmail, passwordHash },
+      });
+    }
+    console.log(`"${config.name}" ya existía — login actualizado a ${config.ownerEmail}.`);
     return;
   }
 
-  const passwordHash = await bcrypt.hash("demo1234", 10);
+  const passwordHash = await bcrypt.hash(config.ownerPassword, 10);
 
   const organization = await prisma.organization.create({
     data: {
@@ -135,16 +254,16 @@ async function seedBusiness(config: SeedBusinessConfig) {
   await prisma.appointment.create({
     data: {
       businessId: business.id,
-      staffId: staffB.id,
-      serviceId: serviceB.id,
+      staffId: (staffB ?? staffA).id,
+      serviceId: (serviceB ?? serviceA).id,
       clientId: clientB.id,
       clientName: clientB.name,
       clientPhone: clientB.phone,
       startTime: in3h,
-      endTime: new Date(in3h.getTime() + serviceB.durationMinutes * 60000),
+      endTime: new Date(in3h.getTime() + (serviceB ?? serviceA).durationMinutes * 60000),
       status: "CONFIRMED",
       source: "WALK_IN",
-      priceCharged: serviceB.price,
+      priceCharged: (serviceB ?? serviceA).price,
     },
   });
 
@@ -190,13 +309,13 @@ async function seedBusiness(config: SeedBusinessConfig) {
       clientId: clientHappy.id,
       staffId: staffA.id,
       rating: 5,
-      comment: "Excelente atención, quedé muy contenta.",
+      comment: "Excelente atención, quedé muy contento.",
     },
   });
 
   console.log(`"${config.name}" creado:`);
   console.log(`  URL de reservas: /book/${config.slug}`);
-  console.log(`  Login panel: ${config.ownerEmail} / demo1234`);
+  console.log(`  Login panel: ${config.ownerEmail} / ${config.ownerPassword}`);
 }
 
 async function main() {
