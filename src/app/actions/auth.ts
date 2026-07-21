@@ -2,11 +2,10 @@
 
 import crypto from "crypto";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 import { createSession, clearSession } from "@/lib/session";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { sendPasswordResetPin } from "@/lib/email";
 import { BUSINESS_CATEGORIES } from "@/lib/vocabulary";
 
 const DIACRITICS_REGEX = new RegExp("[\\u0300-\\u036f]", "g");
@@ -111,15 +110,13 @@ export async function logoutAction() {
   redirect("/login");
 }
 
-function hashToken(token: string): string {
-  return crypto.createHash("sha256").update(token).digest("hex");
+/** El hash incluye el userId para que dos personas con el mismo PIN de 6 dígitos no colisionen. */
+function hashPin(userId: string, pin: string): string {
+  return crypto.createHash("sha256").update(`${userId}:${pin}`).digest("hex");
 }
 
-async function getOrigin(): Promise<string> {
-  const h = await headers();
-  const host = h.get("host") ?? "localhost:3000";
-  const protocol = host.startsWith("localhost") ? "http" : "https";
-  return `${protocol}://${host}`;
+function generatePin(): string {
+  return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
 }
 
 /**
@@ -131,39 +128,51 @@ export async function requestPasswordReset(formData: FormData) {
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (user) {
-    // Invalidamos tokens anteriores sin usar para que no queden varios enlaces activos.
+    // Invalidamos códigos anteriores sin usar para que no queden varios activos.
     await prisma.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } });
 
-    const rawToken = crypto.randomBytes(32).toString("hex");
+    const pin = generatePin();
     await prisma.passwordResetToken.create({
       data: {
         userId: user.id,
-        tokenHash: hashToken(rawToken),
-        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        tokenHash: hashPin(user.id, pin),
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
       },
     });
 
-    const origin = await getOrigin();
-    await sendPasswordResetEmail(email, `${origin}/reset-password/${rawToken}`);
+    await sendPasswordResetPin(email, pin);
   }
 
-  redirect("/forgot-password?sent=1");
+  redirect(`/reset-password?email=${encodeURIComponent(email)}&sent=1`);
 }
 
 export type ResetPasswordResult = { ok: true } | { ok: false; error: string };
 
-export async function resetPassword(rawToken: string, formData: FormData): Promise<ResetPasswordResult> {
+const GENERIC_PIN_ERROR = "Ese código es inválido o ya venció. Solicita uno nuevo.";
+
+export async function verifyResetPin(formData: FormData): Promise<ResetPasswordResult> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const pin = String(formData.get("pin") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+
   if (password.length < 6) {
     return { ok: false, error: "La contraseña debe tener al menos 6 caracteres." };
   }
 
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return { ok: false, error: GENERIC_PIN_ERROR };
+
   const resetToken = await prisma.passwordResetToken.findUnique({
-    where: { tokenHash: hashToken(rawToken) },
+    where: { tokenHash: hashPin(user.id, pin) },
   });
 
-  if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
-    return { ok: false, error: "Este enlace ya no es válido. Solicita uno nuevo." };
+  if (
+    !resetToken ||
+    resetToken.userId !== user.id ||
+    resetToken.usedAt ||
+    resetToken.expiresAt < new Date()
+  ) {
+    return { ok: false, error: GENERIC_PIN_ERROR };
   }
 
   const passwordHash = await hashPassword(password);

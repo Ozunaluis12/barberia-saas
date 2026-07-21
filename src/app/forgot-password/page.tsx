@@ -18,14 +18,14 @@ export default async function ForgotPasswordPage({
 
         {sent ? (
           <p className="mt-6 rounded-md bg-green-500/10 px-3 py-3 text-sm text-green-400">
-            Si existe una cuenta con ese correo, te enviamos un enlace para restablecer tu
-            contraseña. Revisa tu bandeja de entrada (y spam).
+            Si existe una cuenta con ese correo, te enviamos un código de 6 dígitos. Revisa tu
+            bandeja de entrada (y spam).
           </p>
         ) : (
           <>
             <p className="mt-1 text-sm text-cream/60">
-              Escribe el correo con el que te registraste y te enviamos un enlace para elegir una
-              nueva contraseña.
+              Escribe el correo con el que te registraste y te enviamos un código de 6 dígitos
+              (vence en 15 minutos) para elegir una nueva contraseña.
             </p>
             <form action={requestPasswordReset} className="mt-6 space-y-4">
               <div>
@@ -41,7 +41,7 @@ export default async function ForgotPasswordPage({
                 type="submit"
                 className="w-full rounded-md bg-gold px-4 py-2 font-semibold text-ink hover:bg-gold/90"
               >
-                Enviar enlace de recuperación
+                Enviar código de recuperación
               </button>
             </form>
           </>

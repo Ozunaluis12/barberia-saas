@@ -5,9 +5,9 @@ const FROM_ADDRESS = process.env.RESEND_FROM_ADDRESS ?? "Turnify <onboarding@res
 
 export type SendResult = { sent: boolean; reason?: string };
 
-export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<SendResult> {
+export async function sendPasswordResetPin(to: string, pin: string): Promise<SendResult> {
   if (!resend) {
-    console.log(`[email:reset] Resend no configurado. Enlace para ${to}: ${resetUrl}`);
+    console.log(`[email:reset] Resend no configurado. PIN para ${to}: ${pin}`);
     return { sent: false, reason: "RESEND_API_KEY no configurado" };
   }
 
@@ -15,11 +15,11 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
     await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: "Recupera tu contraseña de Turnify",
+      subject: `${pin} es tu código para recuperar tu contraseña de Turnify`,
       html: `
-        <p>Recibimos una solicitud para restablecer tu contraseña.</p>
-        <p><a href="${resetUrl}">Haz clic aquí para elegir una nueva contraseña</a></p>
-        <p>Este enlace expira en 1 hora. Si tú no pediste esto, ignora este correo.</p>
+        <p>Usa este código para elegir una nueva contraseña:</p>
+        <p style="font-size: 32px; font-weight: bold; letter-spacing: 4px;">${pin}</p>
+        <p>Vence en 15 minutos. Si tú no pediste esto, ignora este correo.</p>
       `,
     });
     return { sent: true };
