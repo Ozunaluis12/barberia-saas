@@ -75,22 +75,13 @@ const PASOS = [
   },
 ];
 
-function BrowserFrame({
-  url,
-  children,
-}: {
-  url: string;
-  children: React.ReactNode;
-}) {
+function BrowserFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="overflow-hidden rounded-xl border border-white/10 bg-charcoal shadow-2xl shadow-black/40">
-      <div className="flex items-center gap-2 border-b border-white/10 bg-ink/60 px-3 py-2">
+      <div className="flex items-center gap-1.5 border-b border-white/10 bg-ink/60 px-3 py-2">
         <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
         <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
         <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-        <span className="ml-2 truncate rounded bg-white/5 px-2 py-0.5 text-[10px] text-cream/40">
-          {url}
-        </span>
       </div>
       <div className="p-4">{children}</div>
     </div>
@@ -162,7 +153,7 @@ export default function HomePage() {
         </div>
 
         <div className="mx-auto w-full max-w-sm">
-          <BrowserFrame url="turnify.app/book/tu-negocio">
+          <BrowserFrame>
             <ol className="mb-4 flex gap-1.5 text-[10px] text-cream/50">
               {["Servicio", "Especialista", "Horario", "Tus datos"].map((label, i) => (
                 <li
@@ -234,7 +225,7 @@ export default function HomePage() {
 
           <div className="mt-12 grid gap-8 lg:grid-cols-3">
             <div>
-              <BrowserFrame url="turnify.app/dashboard">
+              <BrowserFrame>
                 <p className="text-sm font-semibold">Resumen de hoy</p>
                 <div className="mt-3 grid grid-cols-3 gap-2">
                   <div className="rounded-md border border-white/10 bg-ink p-2">
@@ -271,7 +262,7 @@ export default function HomePage() {
             </div>
 
             <div>
-              <BrowserFrame url="turnify.app/dashboard/appointments">
+              <BrowserFrame>
                 <p className="text-sm font-semibold">Citas</p>
                 <div className="mt-3 space-y-2 text-[10px]">
                   <div className="rounded-md border border-white/10 bg-ink p-2">
@@ -306,7 +297,7 @@ export default function HomePage() {
             </div>
 
             <div>
-              <BrowserFrame url="turnify.app/dashboard/reviews">
+              <BrowserFrame>
                 <p className="text-sm font-semibold">Reseñas</p>
                 <div className="mt-3 space-y-2 text-[10px]">
                   <div className="rounded-md border border-white/10 bg-ink p-2">
