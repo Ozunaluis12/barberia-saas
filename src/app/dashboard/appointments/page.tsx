@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { updateAppointmentStatus, markAppointmentPaid } from "@/app/actions/appointments";
 import { getVocabulary } from "@/lib/vocabulary";
 import WalkInForm from "./WalkInForm";
+import CopyReviewLinkButton from "./CopyReviewLinkButton";
 
 const STATUS_LABEL: Record<string, string> = {
   CONFIRMED: "Confirmada",
@@ -111,6 +112,11 @@ export default async function AppointmentsPage() {
                       <form action={updateAppointmentStatus.bind(null, a.id, "CANCELLED")}>
                         <button className="text-red-400 hover:underline">Cancelar</button>
                       </form>
+                    </div>
+                  )}
+                  {a.status === "COMPLETED" && (
+                    <div className="flex justify-end">
+                      <CopyReviewLinkButton appointmentId={a.id} />
                     </div>
                   )}
                 </td>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { loginAction } from "@/app/actions/auth";
+import PasswordField from "./PasswordField";
 
 export default async function LoginPage({
   searchParams,
@@ -36,12 +37,7 @@ export default async function LoginPage({
           </div>
           <div>
             <label className="text-sm text-cream/70">Contraseña</label>
-            <input
-              type="password"
-              name="password"
-              required
-              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
-            />
+            <PasswordField />
           </div>
           <button
             type="submit"

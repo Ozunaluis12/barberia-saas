@@ -23,7 +23,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
     return new NextResponse("No autorizado", { status: 403 });
   }
 
-  let csv = "";
+  // BOM + directiva "sep=" para que Excel abra el archivo con columnas
+  // separadas y detecte UTF-8, sin importar la configuración regional del
+  // usuario (en locales en español Excel usa ";" como separador por
+  // defecto, lo que hacía que todo cayera en una sola columna).
+  let csv = "﻿sep=,\r\n";
   let filename = "export.csv";
 
   if (type === "clients") {

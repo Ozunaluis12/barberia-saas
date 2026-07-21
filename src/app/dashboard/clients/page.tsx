@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 
@@ -28,7 +29,12 @@ export default async function ClientsPage() {
       appointments: {
         orderBy: { startTime: "desc" },
         take: 1,
-        select: { startTime: true, status: true, business: { select: { name: true } } },
+        select: {
+          startTime: true,
+          status: true,
+          business: { select: { name: true } },
+          staff: { select: { name: true } },
+        },
       },
       _count: { select: { appointments: true } },
     },
@@ -59,6 +65,7 @@ export default async function ClientsPage() {
               <th className="px-4 py-2">Teléfono</th>
               <th className="px-4 py-2">Citas totales</th>
               <th className="px-4 py-2">Última cita</th>
+              <th className="px-4 py-2">Última atención por</th>
               <th className="px-4 py-2">Última sucursal</th>
               <th className="px-4 py-2">Estado</th>
             </tr>
@@ -66,7 +73,11 @@ export default async function ClientsPage() {
           <tbody>
             {clients.map((c) => (
               <tr key={c.id} className="border-t border-white/5">
-                <td className="px-4 py-2 font-medium">{c.name}</td>
+                <td className="px-4 py-2 font-medium">
+                  <Link href={`/dashboard/clients/${c.id}`} className="text-gold hover:underline">
+                    {c.name}
+                  </Link>
+                </td>
                 <td className="px-4 py-2 text-cream/70">{c.phone}</td>
                 <td className="px-4 py-2 text-cream/70">{c._count.appointments}</td>
                 <td className="px-4 py-2 text-cream/70">
@@ -79,6 +90,9 @@ export default async function ClientsPage() {
                     : "—"}
                 </td>
                 <td className="px-4 py-2 text-cream/70">
+                  {c.appointments[0]?.staff.name ?? "—"}
+                </td>
+                <td className="px-4 py-2 text-cream/70">
                   {c.appointments[0]?.business.name ?? "—"}
                 </td>
                 <td className="px-4 py-2">{riskBadge(c.strikes)}</td>
@@ -86,7 +100,7 @@ export default async function ClientsPage() {
             ))}
             {clients.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-cream/40" colSpan={6}>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={7}>
                   Aún no tienes clientes registrados.
                 </td>
               </tr>
