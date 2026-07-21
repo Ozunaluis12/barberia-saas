@@ -27,6 +27,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ...(can("reports") ? [{ href: "/dashboard/reports", label: "Reportes" }] : []),
     ...(isOwner ? [{ href: "/dashboard/team", label: "Equipo" }] : []),
     ...(isOwner ? [{ href: "/dashboard/locations", label: "Sucursales" }] : []),
+    ...(isOwner ? [{ href: "/dashboard/broadcast", label: "Difusión" }] : []),
     ...(can("settings") ? [{ href: "/dashboard/settings", label: "Configuración" }] : []),
   ];
 

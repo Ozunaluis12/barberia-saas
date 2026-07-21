@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { redeemLoyaltyReward } from "@/app/actions/loyalty";
+import { setClientMarketingOptIn } from "@/app/actions/clients";
 
 const STATUS_LABEL: Record<string, string> = {
   CONFIRMED: "Confirmada",
@@ -78,6 +79,19 @@ export default async function ClientDetailPage({
           {ERRORS[error] ?? "Ocurrió un error, intenta de nuevo."}
         </p>
       )}
+
+      <form
+        action={setClientMarketingOptIn.bind(null, client.id)}
+        className="mt-4 flex items-center gap-3 rounded-md border border-white/10 bg-charcoal px-4 py-3"
+      >
+        <label className="flex items-center gap-2 text-sm text-cream/70">
+          <input type="checkbox" name="marketingOptIn" defaultChecked={client.marketingOptIn} />
+          Recibir mensajes de difusión/promociones por WhatsApp
+        </label>
+        <button className="rounded-md border border-white/20 px-3 py-1 text-xs hover:border-gold hover:text-gold">
+          Guardar
+        </button>
+      </form>
 
       <h2 className="mt-8 text-lg font-semibold">Historial de procedimientos</h2>
       <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
