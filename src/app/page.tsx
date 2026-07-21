@@ -1,60 +1,10 @@
 import Link from "next/link";
+import CategoryShowcase from "./CategoryShowcase";
 
 const WHATSAPP_NUMBER = "573004177979";
 function waLink(message: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
-
-const CATEGORIAS = [
-  {
-    icon: "✂",
-    title: "Barbería",
-    detail:
-      "Tus clientes reservan su corte online y eligen a su barbero de confianza. Controla comisiones y walk-ins desde el mismo panel.",
-  },
-  {
-    icon: "✦",
-    title: "Salón de belleza",
-    detail:
-      "Agenda cortes, color y tratamientos con cada estilista. Tus clientas ven horarios reales y reservan en segundos.",
-  },
-  {
-    icon: "❀",
-    title: "Spa",
-    detail:
-      "Organiza masajes, faciales y tratamientos por especialista, sin choques de horario ni llamadas de ida y vuelta.",
-  },
-  {
-    icon: "✚",
-    title: "Consultorio médico",
-    detail:
-      "Tus pacientes agendan consulta con el doctor que prefieren. Recordatorios automáticos para bajar las inasistencias.",
-  },
-  {
-    icon: "♥",
-    title: "Veterinaria",
-    detail:
-      "Agenda consultas y vacunas por veterinario. Historial de cada mascota y su dueño, siempre a la mano.",
-  },
-  {
-    icon: "⚒",
-    title: "Taller",
-    detail:
-      "Recibe citas para mantenimiento y reparaciones por técnico. Controla tiempos de servicio y evita la fila en el mostrador.",
-  },
-  {
-    icon: "⚡",
-    title: "Gimnasio",
-    detail:
-      "Agenda clases y sesiones personalizadas por entrenador. Tus clientes reservan su cupo desde el celular.",
-  },
-  {
-    icon: "◆",
-    title: "Y cualquier negocio con citas",
-    detail:
-      "¿Tu negocio no está en la lista? Si trabajas con citas y un equipo, Turnify se adapta a tu operación.",
-  },
-];
 
 const BENEFICIOS = [
   {
@@ -393,22 +343,10 @@ export default function HomePage() {
             Un software para diferentes tipos de negocio
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-cream/70">
-            El mismo panel, el mismo flujo de reserva — adaptado a cómo trabaja cada rubro.
+            El mismo panel, el mismo flujo de reserva — adaptado a cómo trabaja cada rubro. Haz
+            clic en una tarjeta para ver el detalle.
           </p>
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {CATEGORIAS.map((c) => (
-              <div
-                key={c.title}
-                className="rounded-lg border border-white/10 bg-ink p-6"
-              >
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold/15 text-xl font-bold text-gold">
-                  {c.icon}
-                </span>
-                <h3 className="mt-4 font-semibold">{c.title}</h3>
-                <p className="mt-2 text-sm text-cream/70">{c.detail}</p>
-              </div>
-            ))}
-          </div>
+          <CategoryShowcase />
         </div>
       </section>
 
