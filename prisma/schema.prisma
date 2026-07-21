@@ -39,6 +39,7 @@ model Business {
   loyaltyEnabled          Boolean  @default(false)
   loyaltyPointsPerVisit   Int      @default(1)
   loyaltyRewardThreshold  Int      @default(10)
+  cashDiscrepancyAlertThreshold Float @default(5) // avisa por correo al dueño si el faltante/sobrante de una caja supera este monto
   createdAt               DateTime @default(now())
 
   users        User[]
@@ -82,10 +83,16 @@ model User {
   active       Boolean  @default(true)
   businessId   String // sucursal "de origen"; el dueño puede cambiar de sucursal activa dentro de su sesión
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  // A qué miembro del roster (Staff) corresponde esta cuenta de acceso, para
+  // poder exigir que cada quien solo abra/cierre su propia caja. Null = la
+  // cuenta no tiene un roster asociado (ej. el dueño, si no atiende clientes).
+  staffId      String?  @unique
+  linkedStaff  Staff?   @relation("UserStaffLink", fields: [staffId], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
 
   resetTokens    PasswordResetToken[]
-  openedSessions CashSession[]
+  openedSessions CashSession[] @relation("CashSessionOpenedBy")
+  closedSessions CashSession[] @relation("CashSessionClosedBy")
   productSales   ProductSale[]
   payrollPayouts PayrollPayout[]
 }
@@ -125,6 +132,7 @@ model Staff {
   timeOff         StaffTimeOff[]
   payrollPayouts  PayrollPayout[]
   waitlistEntries WaitlistEntry[]
+  linkedUser      User?           @relation("UserStaffLink")
 }
 
 // Rango de fechas en el que un miembro del personal no trabaja (vacaciones,
@@ -254,7 +262,9 @@ model CashSession {
   staffId        String?
   staff          Staff?    @relation(fields: [staffId], references: [id])
   openedByUserId String
-  openedBy       User      @relation(fields: [openedByUserId], references: [id])
+  openedBy       User      @relation("CashSessionOpenedBy", fields: [openedByUserId], references: [id])
+  closedByUserId String?
+  closedBy       User?     @relation("CashSessionClosedBy", fields: [closedByUserId], references: [id])
   openingAmount  Float     @default(0)
   countedAmount  Float?
   expectedAmount Float?

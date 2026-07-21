@@ -12,8 +12,18 @@ const STATUS_LABEL: Record<string, string> = {
   NO_SHOW: "No asistió",
 };
 
-export default async function AppointmentsPage() {
+const ERRORS: Record<string, string> = {
+  CAJA_CERRADA:
+    "No hay una caja abierta para registrar ese pago en efectivo. Abre una caja en la sección Caja primero.",
+};
+
+export default async function AppointmentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const session = await requireSession();
+  const { error } = await searchParams;
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");
 
@@ -42,6 +52,12 @@ export default async function AppointmentsPage() {
           Exportar CSV
         </a>
       </div>
+
+      {error && (
+        <p className="mt-4 rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          {ERRORS[error] ?? "Ocurrió un error, intenta de nuevo."}
+        </p>
+      )}
 
       <div className="mt-6">
         <WalkInForm

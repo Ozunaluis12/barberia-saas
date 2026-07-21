@@ -16,6 +16,23 @@ function parsePermissions(formData: FormData): string {
     .join(",");
 }
 
+async function resolveStaffLink(
+  formData: FormData,
+  businessId: string,
+  currentUserId?: string
+): Promise<string | null> {
+  const staffId = String(formData.get("staffId") ?? "").trim();
+  if (!staffId) return null;
+  // Debe ser del roster de este negocio y no estar ya vinculado a OTRA cuenta.
+  const staff = await prisma.staff.findFirst({
+    where: { id: staffId, businessId },
+    include: { linkedUser: true },
+  });
+  if (!staff) return null;
+  if (staff.linkedUser && staff.linkedUser.id !== currentUserId) return null;
+  return staff.id;
+}
+
 export async function createTeamMember(formData: FormData) {
   const session = await requireOwner();
   const name = String(formData.get("name") ?? "").trim();
@@ -30,9 +47,18 @@ export async function createTeamMember(formData: FormData) {
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) redirect("/dashboard/team?error=EMAIL_EN_USO");
 
+  const staffId = await resolveStaffLink(formData, session.businessId);
   const passwordHash = await hashPassword(password);
   await prisma.user.create({
-    data: { businessId: session.businessId, name, email, passwordHash, role: "STAFF", permissions },
+    data: {
+      businessId: session.businessId,
+      name,
+      email,
+      passwordHash,
+      role: "STAFF",
+      permissions,
+      staffId,
+    },
   });
 
   revalidatePath("/dashboard/team");
@@ -53,7 +79,8 @@ export async function updateTeamMemberPermissions(userId: string, formData: Form
   if (!user || user.role === "OWNER") redirect("/dashboard/team?error=NO_ENCONTRADO");
 
   const permissions = parsePermissions(formData);
-  await prisma.user.update({ where: { id: userId }, data: { permissions } });
+  const staffId = await resolveStaffLink(formData, session.businessId, userId);
+  await prisma.user.update({ where: { id: userId }, data: { permissions, staffId } });
   revalidatePath("/dashboard/team");
   redirect("/dashboard/team");
 }

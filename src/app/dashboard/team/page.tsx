@@ -23,10 +23,17 @@ export default async function TeamPage({
   const session = await requireOwner();
   const { error } = await searchParams;
 
-  const members = await prisma.user.findMany({
-    where: { businessId: session.businessId },
-    orderBy: { createdAt: "asc" },
-  });
+  const [members, unlinkedStaff] = await Promise.all([
+    prisma.user.findMany({
+      where: { businessId: session.businessId },
+      include: { linkedStaff: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.staff.findMany({
+      where: { businessId: session.businessId, linkedUser: null },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   return (
     <div>
@@ -51,6 +58,7 @@ export default async function TeamPage({
               <th className="px-4 py-2">Nombre</th>
               <th className="px-4 py-2">Correo</th>
               <th className="px-4 py-2">Rol</th>
+              <th className="px-4 py-2">Personal del roster</th>
               <th className="px-4 py-2">Permisos adicionales</th>
               <th className="px-4 py-2">Estado</th>
               <th className="px-4 py-2"></th>
@@ -64,6 +72,7 @@ export default async function TeamPage({
                 <td className="px-4 py-2 text-cream/70">
                   {m.role === "OWNER" ? "Dueño" : "Personal"}
                 </td>
+                <td className="px-4 py-2 text-cream/70">{m.linkedStaff?.name ?? "—"}</td>
                 <td className="px-4 py-2 text-cream/70">
                   {m.role === "OWNER"
                     ? "Todos"
@@ -132,6 +141,24 @@ export default async function TeamPage({
               minLength={6}
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             />
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">
+              Vincular con personal del roster (opcional, para que solo pueda abrir/cerrar su
+              propia caja)
+            </label>
+            <select
+              name="staffId"
+              defaultValue=""
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            >
+              <option value="">Sin vincular</option>
+              {unlinkedStaff.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="text-sm text-cream/70">Permisos adicionales</label>

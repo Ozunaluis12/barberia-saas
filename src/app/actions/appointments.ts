@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/guard";
@@ -124,6 +125,23 @@ export async function markAppointmentPaid(appointmentId: string, paymentMethod: 
     where: { id: appointmentId, businessId: session.businessId },
   });
   if (!appt) return;
+
+  // El efectivo solo se puede marcar mientras hay una caja abierta que lo vaya a
+  // contabilizar — si no, un empleado podría cobrar en efectivo y esperar a
+  // marcarlo hasta después de cerrar su caja, y ese dinero nunca aparecería
+  // como faltante en ningún cierre.
+  if (paymentMethod === "CASH") {
+    const openDrawer = await prisma.cashSession.findFirst({
+      where: {
+        businessId: session.businessId,
+        status: "OPEN",
+        OR: [{ staffId: null }, { staffId: appt.staffId }],
+      },
+    });
+    if (!openDrawer) {
+      redirect("/dashboard/appointments?error=CAJA_CERRADA");
+    }
+  }
 
   await prisma.appointment.update({
     where: { id: appointmentId },

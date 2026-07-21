@@ -23,6 +23,13 @@ export default async function EditTeamMemberPage({
   if (!member || member.role === "OWNER") notFound();
 
   const current = new Set(member.permissions ? member.permissions.split(",") : []);
+  const availableStaff = await prisma.staff.findMany({
+    where: {
+      businessId: session.businessId,
+      OR: [{ linkedUser: null }, { id: member.staffId ?? "" }],
+    },
+    orderBy: { name: "asc" },
+  });
 
   return (
     <div>
@@ -39,6 +46,24 @@ export default async function EditTeamMemberPage({
         action={updateTeamMemberPermissions.bind(null, member.id)}
         className="mt-6 max-w-lg space-y-4 rounded-lg border border-white/10 bg-charcoal p-6"
       >
+        <div>
+          <label className="text-sm text-cream/70">
+            Vincular con personal del roster (opcional, para que solo pueda abrir/cerrar su
+            propia caja)
+          </label>
+          <select
+            name="staffId"
+            defaultValue={member.staffId ?? ""}
+            className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+          >
+            <option value="">Sin vincular</option>
+            {availableStaff.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="flex flex-wrap gap-3">
           {Object.entries(PERMISSION_LABELS).map(([value, label]) => (
             <label key={value} className="flex items-center gap-1 text-sm">

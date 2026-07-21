@@ -22,6 +22,10 @@ export async function updateBusinessSettings(formData: FormData) {
   const loyaltyEnabled = formData.get("loyaltyEnabled") === "on";
   const loyaltyPointsPerVisit = Math.max(1, Number(formData.get("loyaltyPointsPerVisit") ?? 1));
   const loyaltyRewardThreshold = Math.max(1, Number(formData.get("loyaltyRewardThreshold") ?? 10));
+  const cashDiscrepancyAlertThreshold = Math.max(
+    0,
+    Number(formData.get("cashDiscrepancyAlertThreshold") ?? 5)
+  );
 
   await prisma.business.update({
     where: { id: session.businessId },
@@ -35,6 +39,7 @@ export async function updateBusinessSettings(formData: FormData) {
       loyaltyEnabled,
       loyaltyPointsPerVisit,
       loyaltyRewardThreshold,
+      cashDiscrepancyAlertThreshold,
     },
   });
 

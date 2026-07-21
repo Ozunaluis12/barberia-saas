@@ -18,6 +18,7 @@ export type SessionPayload = {
   businessSlug: string;
   role: string;
   permissions: string; // CSV, solo relevante para role === "STAFF"
+  staffId: string | null; // a qué miembro del roster corresponde esta cuenta (para cajas personales)
 };
 
 export async function createSession(payload: SessionPayload) {

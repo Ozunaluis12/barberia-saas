@@ -143,6 +143,25 @@ export default async function SettingsPage() {
           </div>
         </div>
 
+        <div className="max-w-lg rounded-lg border border-white/10 bg-charcoal p-6">
+          <h2 className="text-lg font-semibold">Caja</h2>
+          <p className="mt-1 text-sm text-cream/60">
+            Si al cerrar una caja la diferencia entre lo esperado y lo contado supera este monto
+            (a favor o en contra), te avisamos por correo.
+          </p>
+          <div className="mt-4">
+            <label className="text-sm text-cream/70">Umbral de alerta ($)</label>
+            <input
+              type="number"
+              name="cashDiscrepancyAlertThreshold"
+              step="0.01"
+              min={0}
+              defaultValue={business.cashDiscrepancyAlertThreshold}
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
+        </div>
+
         <button
           type="submit"
           className="rounded-md bg-gold px-4 py-2 font-semibold text-ink hover:bg-gold/90"
