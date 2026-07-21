@@ -38,7 +38,7 @@ export default async function RegisterPage({
         status: "CLOSED",
         ...(isOwner ? {} : { staffId: session.staffId }),
       },
-      include: { staff: true },
+      include: { staff: true, closedBy: true },
       orderBy: { closedAt: "desc" },
       take: 30,
     }),
@@ -190,6 +190,7 @@ export default async function RegisterPage({
               <th className="px-4 py-2">Esperado</th>
               <th className="px-4 py-2">Contado</th>
               <th className="px-4 py-2">Diferencia</th>
+              <th className="px-4 py-2">Cerrada por</th>
               <th className="px-4 py-2">Notas</th>
             </tr>
           </thead>
@@ -214,12 +215,13 @@ export default async function RegisterPage({
                   {(s.difference ?? 0) > 0 ? "+" : ""}
                   {(s.difference ?? 0).toFixed(2)}
                 </td>
+                <td className="px-4 py-2 text-cream/50">{s.closedBy?.name ?? "—"}</td>
                 <td className="px-4 py-2 text-cream/50">{s.notes ?? "—"}</td>
               </tr>
             ))}
             {closedSessions.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-cream/40" colSpan={6}>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={7}>
                   Aún no hay cierres registrados.
                 </td>
               </tr>
