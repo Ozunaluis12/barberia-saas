@@ -443,10 +443,9 @@ export default function HomePage() {
               rel="noopener noreferrer"
               className="rounded-md border border-white/20 px-6 py-3 font-semibold hover:border-gold hover:text-gold"
             >
-              Soporte por WhatsApp
+              Soporte
             </a>
           </div>
-          <p className="mt-4 text-sm text-cream/50">WhatsApp: +57 300 417 7979</p>
         </div>
       </section>
 
@@ -459,6 +458,18 @@ export default function HomePage() {
           Términos y privacidad
         </Link>
       </footer>
+
+      <a
+        href={waLink("Hola, necesito ayuda con Turnify.")}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Soporte por WhatsApp"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/40 transition hover:scale-105"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7">
+          <path d="M12 2C6.48 2 2 6.02 2 11c0 2.09.87 4 2.3 5.5L3 22l5.79-1.52C10.05 20.8 11 21 12 21c5.52 0 10-4.02 10-9S17.52 2 12 2zm0 16.5c-.94 0-1.85-.18-2.68-.53l-.19-.08-3.18.84.85-3.1-.12-.2A7.44 7.44 0 0 1 4.5 11 7.5 7.5 0 1 1 12 18.5z" />
+        </svg>
+      </a>
     </main>
   );
 }
