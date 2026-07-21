@@ -27,24 +27,24 @@ function parseServiceInput(formData: FormData): ParsedService {
 export async function createService(formData: FormData) {
   const session = await requirePermission("catalog");
   const parsed = parseServiceInput(formData);
-  if ("error" in parsed) redirect(`/dashboard/catalog?error=${parsed.error}`);
+  if ("error" in parsed) redirect(`/dashboard/services?error=${parsed.error}`);
 
   await prisma.service.create({ data: { businessId: session.businessId, ...parsed.data } });
-  revalidatePath("/dashboard/catalog");
-  redirect("/dashboard/catalog");
+  revalidatePath("/dashboard/services");
+  redirect("/dashboard/services");
 }
 
 export async function updateService(serviceId: string, formData: FormData) {
   const session = await requirePermission("catalog");
   const service = await prisma.service.findFirst({ where: { id: serviceId, businessId: session.businessId } });
-  if (!service) redirect("/dashboard/catalog?error=NO_ENCONTRADO");
+  if (!service) redirect("/dashboard/services?error=NO_ENCONTRADO");
 
   const parsed = parseServiceInput(formData);
-  if ("error" in parsed) redirect(`/dashboard/catalog/service/${serviceId}?error=${parsed.error}`);
+  if ("error" in parsed) redirect(`/dashboard/services/${serviceId}?error=${parsed.error}`);
 
   await prisma.service.update({ where: { id: serviceId }, data: parsed.data });
-  revalidatePath("/dashboard/catalog");
-  redirect("/dashboard/catalog");
+  revalidatePath("/dashboard/services");
+  redirect("/dashboard/services");
 }
 
 export async function toggleServiceActive(serviceId: string) {
@@ -52,5 +52,5 @@ export async function toggleServiceActive(serviceId: string) {
   const service = await prisma.service.findFirst({ where: { id: serviceId, businessId: session.businessId } });
   if (!service) return;
   await prisma.service.update({ where: { id: serviceId }, data: { active: !service.active } });
-  revalidatePath("/dashboard/catalog");
+  revalidatePath("/dashboard/services");
 }

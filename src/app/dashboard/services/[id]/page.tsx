@@ -26,7 +26,7 @@ export default async function EditServicePage({
 
   return (
     <div>
-      <Link href="/dashboard/catalog" className="text-sm text-cream/50 hover:text-cream">
+      <Link href="/dashboard/services" className="text-sm text-cream/50 hover:text-cream">
         ← Volver
       </Link>
       <h1 className="mt-2 text-2xl font-bold">Editar servicio</h1>

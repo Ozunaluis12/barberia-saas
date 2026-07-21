@@ -36,7 +36,7 @@ export async function updateProduct(productId: string, formData: FormData) {
   if (!product) redirect("/dashboard/catalog?error=NO_ENCONTRADO");
 
   const parsed = parseProductInput(formData);
-  if ("error" in parsed) redirect(`/dashboard/catalog/product/${productId}?error=${parsed.error}`);
+  if ("error" in parsed) redirect(`/dashboard/catalog/${productId}?error=${parsed.error}`);
 
   await prisma.product.update({ where: { id: productId }, data: parsed.data });
   revalidatePath("/dashboard/catalog");

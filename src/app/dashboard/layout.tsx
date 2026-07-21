@@ -19,6 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     { href: "/dashboard/calendar", label: "Calendario" },
     { href: "/dashboard/register", label: "Caja" },
     ...(can("staff") ? [{ href: "/dashboard/staff", label: vocab.staffPlural }] : []),
+    ...(can("catalog") ? [{ href: "/dashboard/services", label: "Servicios" }] : []),
     ...(can("catalog") ? [{ href: "/dashboard/catalog", label: "Catálogo" }] : []),
     { href: "/dashboard/clients", label: "Clientes" },
     { href: "/dashboard/reviews", label: "Reseñas" },
