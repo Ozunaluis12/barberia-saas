@@ -49,6 +49,7 @@ model Business {
   reviews      Review[]
   cashSessions CashSession[]
   productSales ProductSale[]
+  payrollPayouts PayrollPayout[]
 }
 
 // Historial de un cliente a nivel de organización: si canceló tarde o no
@@ -84,6 +85,7 @@ model User {
   resetTokens    PasswordResetToken[]
   openedSessions CashSession[]
   productSales   ProductSale[]
+  payrollPayouts PayrollPayout[]
 }
 
 // Token de un solo uso para el flujo de "olvidé mi contraseña". Se guarda el hash,
@@ -115,10 +117,11 @@ model Staff {
   workDays          String   @default("1,2,3,4,5,6") // 0=domingo..6=sábado
   createdAt         DateTime @default(now())
 
-  appointments Appointment[]
-  reviews      Review[]
-  cashSessions CashSession[]
-  timeOff      StaffTimeOff[]
+  appointments   Appointment[]
+  reviews        Review[]
+  cashSessions   CashSession[]
+  timeOff        StaffTimeOff[]
+  payrollPayouts PayrollPayout[]
 }
 
 // Rango de fechas en el que un miembro del personal no trabaja (vacaciones,
@@ -256,4 +259,24 @@ model CashSession {
   closedAt       DateTime?
 
   @@index([businessId, status])
+}
+
+// Cierre congelado de un período de nómina/comisión para un miembro del
+// personal: evita recalcular (y pagar dos veces) el mismo rango de fechas.
+model PayrollPayout {
+  id                String   @id @default(cuid())
+  businessId        String
+  business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staffId           String
+  staff             Staff    @relation(fields: [staffId], references: [id])
+  periodStart       DateTime
+  periodEnd         DateTime
+  revenue           Float
+  commissionPercent Int?
+  commissionAmount  Float
+  paidByUserId      String
+  paidBy            User     @relation(fields: [paidByUserId], references: [id])
+  createdAt         DateTime @default(now())
+
+  @@index([businessId, staffId, periodStart])
 }

@@ -1,16 +1,22 @@
 import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
+import { closePayrollPeriod } from "@/app/actions/payroll";
+
+const PAYROLL_ERRORS: Record<string, string> = {
+  RANGO_INVALIDO: "Elige un rango de fechas válido antes de cerrar el período.",
+  SIN_DATOS: "No hay citas completadas con ingreso en ese rango, no se cerró ningún pago.",
+};
 
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; error?: string; paid?: string }>;
 }) {
   const session = await requirePermission("reports");
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");
-  const { from, to } = await searchParams;
+  const { from, to, error, paid } = await searchParams;
 
   const rangeStart = from ? new Date(`${from}T00:00:00`) : new Date(new Date().setDate(new Date().getDate() - 30));
   const rangeEnd = to ? new Date(`${to}T23:59:59`) : new Date();
@@ -62,6 +68,13 @@ export default async function ReportsPage({
   const fromValue = rangeStart.toISOString().slice(0, 10);
   const toValue = rangeEnd.toISOString().slice(0, 10);
 
+  const payoutHistory = await prisma.payrollPayout.findMany({
+    where: { businessId: session.businessId },
+    include: { staff: true },
+    orderBy: { periodStart: "desc" },
+    take: 30,
+  });
+
   return (
     <div>
       <h1 className="text-2xl font-bold">Reporte de desempeño por {vocab.staffSingular.toLowerCase()}</h1>
@@ -96,6 +109,32 @@ export default async function ReportsPage({
         >
           Exportar CSV
         </a>
+      </form>
+
+      {error && (
+        <p className="mt-4 rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          {PAYROLL_ERRORS[error] ?? "Ocurrió un error, intenta de nuevo."}
+        </p>
+      )}
+      {paid && (
+        <p className="mt-4 rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-400">
+          Período cerrado y marcado como pagado.
+        </p>
+      )}
+
+      <form action={closePayrollPeriod} className="mt-4 flex items-center gap-3">
+        <input type="hidden" name="from" value={fromValue} />
+        <input type="hidden" name="to" value={toValue} />
+        <button
+          type="submit"
+          className="rounded-md border border-gold px-4 py-2 text-sm font-semibold text-gold hover:bg-gold/10"
+        >
+          Cerrar y marcar como pagado este período
+        </button>
+        <p className="text-xs text-cream/50">
+          Congela estos montos en el historial de abajo — útil para no calcular el mismo rango
+          dos veces.
+        </p>
       </form>
 
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
@@ -144,6 +183,48 @@ export default async function ReportsPage({
               </tr>
             </tfoot>
           )}
+        </table>
+      </div>
+
+      <h2 className="mt-10 text-lg font-semibold">Historial de pagos por período</h2>
+      <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
+        <table className="w-full text-sm">
+          <thead className="bg-charcoal text-left text-cream/60">
+            <tr>
+              <th className="px-4 py-2">Período</th>
+              <th className="px-4 py-2">{vocab.staffSingular}</th>
+              <th className="px-4 py-2">Ingreso</th>
+              <th className="px-4 py-2">% comisión</th>
+              <th className="px-4 py-2">Pagado</th>
+              <th className="px-4 py-2">Cerrado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {payoutHistory.map((p) => (
+              <tr key={p.id} className="border-t border-white/5">
+                <td className="px-4 py-2 text-cream/70">
+                  {p.periodStart.toLocaleDateString("es", { day: "2-digit", month: "2-digit" })} –{" "}
+                  {p.periodEnd.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                </td>
+                <td className="px-4 py-2 font-medium">{p.staff.name}</td>
+                <td className="px-4 py-2 text-cream/70">${p.revenue.toFixed(2)}</td>
+                <td className="px-4 py-2 text-cream/70">
+                  {p.commissionPercent === null ? "—" : `${p.commissionPercent}%`}
+                </td>
+                <td className="px-4 py-2 text-gold">${p.commissionAmount.toFixed(2)}</td>
+                <td className="px-4 py-2 text-cream/50">
+                  {p.createdAt.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                </td>
+              </tr>
+            ))}
+            {payoutHistory.length === 0 && (
+              <tr>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={6}>
+                  Todavía no has cerrado ningún período de pago.
+                </td>
+              </tr>
+            )}
+          </tbody>
         </table>
       </div>
     </div>
