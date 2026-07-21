@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { applyClientStrike } from "@/lib/clients";
+import { notifyWaitlistForFreedSlot } from "@/lib/waitlist";
 
 export async function getPublicAppointment(appointmentId: string) {
   const appt = await prisma.appointment.findUnique({
@@ -48,6 +49,13 @@ export async function cancelAppointmentByClient(appointmentId: string): Promise<
   if (wasLate) {
     await applyClientStrike(appt.clientId);
   }
+
+  await notifyWaitlistForFreedSlot({
+    businessId: appt.businessId,
+    serviceId: appt.serviceId,
+    staffId: appt.staffId,
+    day: appt.startTime.toISOString().slice(0, 10),
+  });
 
   revalidatePath("/dashboard/appointments");
   revalidatePath("/dashboard");

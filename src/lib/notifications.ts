@@ -20,28 +20,21 @@ function toE164(phone: string): string | null {
   return `+${digits}`;
 }
 
-async function sendWhatsAppReminder(payload: ReminderPayload): Promise<ReminderResult> {
+/** Envío genérico de WhatsApp vía Twilio, reutilizado por recordatorios, lista de espera y difusión masiva. */
+export async function sendWhatsAppMessage(phone: string, body: string): Promise<ReminderResult> {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_WHATSAPP_FROM;
 
-  const to = toE164(payload.clientPhone);
-  const dateLabel = payload.startTime.toLocaleString("es", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const body = `Hola ${payload.clientName}, te recordamos tu cita de ${payload.serviceName} en ${payload.businessName} el ${dateLabel}.`;
+  const to = toE164(phone);
 
   if (!sid || !token || !from) {
-    console.log(`[recordatorio:WHATSAPP] Twilio no configurado. Mensaje para ${payload.clientPhone}: ${body}`);
+    console.log(`[whatsapp] Twilio no configurado. Mensaje para ${phone}: ${body}`);
     return { sent: false, reason: "Twilio no configurado (faltan variables de entorno)." };
   }
 
   if (!to) {
-    return { sent: false, reason: "El teléfono del cliente no parece válido para WhatsApp." };
+    return { sent: false, reason: "El teléfono no parece válido para WhatsApp." };
   }
 
   try {
@@ -59,15 +52,26 @@ async function sendWhatsAppReminder(payload: ReminderPayload): Promise<ReminderR
     });
 
     if (!res.ok) {
-      console.error("[recordatorio:WHATSAPP] Error de Twilio:", await res.text());
+      console.error("[whatsapp] Error de Twilio:", await res.text());
       return { sent: false, reason: "Twilio rechazó el mensaje." };
     }
 
     return { sent: true };
   } catch (error) {
-    console.error("[recordatorio:WHATSAPP] Error de red:", error);
+    console.error("[whatsapp] Error de red:", error);
     return { sent: false, reason: "Error de red al contactar Twilio." };
   }
+}
+
+function buildReminderBody(payload: ReminderPayload): string {
+  const dateLabel = payload.startTime.toLocaleString("es", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `Hola ${payload.clientName}, te recordamos tu cita de ${payload.serviceName} en ${payload.businessName} el ${dateLabel}.`;
 }
 
 export async function sendAppointmentReminder(
@@ -79,7 +83,7 @@ export async function sendAppointmentReminder(
   }
 
   if (channel === "WHATSAPP") {
-    return sendWhatsAppReminder(payload);
+    return sendWhatsAppMessage(payload.clientPhone, buildReminderBody(payload));
   }
 
   // TODO: EMAIL (Resend) y SMS (Twilio) todavía no conectados.

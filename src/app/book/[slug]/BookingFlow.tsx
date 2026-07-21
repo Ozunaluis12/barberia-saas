@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { fetchSlots, createBooking } from "@/app/actions/booking";
+import { fetchSlots, createBooking, joinWaitlist } from "@/app/actions/booking";
 import Avatar from "@/components/Avatar";
 
 type Service = { id: string; name: string; durationMinutes: number; price: number };
@@ -49,6 +49,8 @@ export default function BookingFlow({
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [joiningWaitlist, setJoiningWaitlist] = useState(false);
+  const [waitlistJoined, setWaitlistJoined] = useState(false);
   const [result, setResult] = useState<
     | { ok: true; staffName: string; startTime: string; appointmentId: string }
     | { ok: false; error: string }
@@ -62,10 +64,19 @@ export default function BookingFlow({
     if (step !== 3 || !serviceId) return;
     setLoadingSlots(true);
     setTime(null);
+    setWaitlistJoined(false);
     fetchSlots({ businessSlug, serviceId, staffId, day })
       .then(setSlots)
       .finally(() => setLoadingSlots(false));
   }, [step, serviceId, staffId, day, businessSlug]);
+
+  async function handleJoinWaitlist() {
+    if (!serviceId || !clientName.trim() || !clientPhone.trim()) return;
+    setJoiningWaitlist(true);
+    const res = await joinWaitlist({ businessSlug, serviceId, staffId, day, clientName, clientPhone });
+    setJoiningWaitlist(false);
+    if (res.ok) setWaitlistJoined(true);
+  }
 
   async function handleConfirm() {
     if (!serviceId || !time) return;
@@ -207,7 +218,37 @@ export default function BookingFlow({
 
           {loadingSlots && <p className="text-sm text-cream/50">Buscando horarios...</p>}
           {!loadingSlots && slots.length === 0 && (
-            <p className="text-sm text-cream/50">No hay horarios disponibles ese día.</p>
+            <div className="space-y-3 rounded-md border border-white/10 bg-ink p-4">
+              <p className="text-sm text-cream/50">No hay horarios disponibles ese día.</p>
+              {waitlistJoined ? (
+                <p className="text-sm text-gold">
+                  Listo, te avisaremos por WhatsApp si se libera un horario ese día.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm text-cream/70">¿Quieres que te avisemos si se libera un horario?</p>
+                  <input
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    placeholder="Tu nombre"
+                    className="w-full rounded-md border border-white/20 bg-charcoal px-3 py-2 text-sm outline-none focus:border-gold"
+                  />
+                  <input
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.target.value)}
+                    placeholder="Tu teléfono"
+                    className="w-full rounded-md border border-white/20 bg-charcoal px-3 py-2 text-sm outline-none focus:border-gold"
+                  />
+                  <button
+                    disabled={!clientName.trim() || !clientPhone.trim() || joiningWaitlist}
+                    onClick={handleJoinWaitlist}
+                    className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink disabled:opacity-40"
+                  >
+                    {joiningWaitlist ? "Enviando..." : "Avisarme si se libera un horario"}
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           <div className="grid grid-cols-4 gap-2">
             {slots.map((s) => (

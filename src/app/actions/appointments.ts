@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/guard";
 import { getAvailableSlots, combineDayAndTime } from "@/lib/availability";
 import { findOrCreateClient, applyClientStrike } from "@/lib/clients";
+import { notifyWaitlistForFreedSlot } from "@/lib/waitlist";
 
 export type CreateWalkInResult = { ok: true } | { ok: false; error: string };
 
@@ -101,6 +102,15 @@ export async function updateAppointmentStatus(appointmentId: string, status: str
       });
       revalidatePath("/dashboard/clients");
     }
+  }
+
+  if (status === "CANCELLED") {
+    await notifyWaitlistForFreedSlot({
+      businessId: appt.businessId,
+      serviceId: appt.serviceId,
+      staffId: appt.staffId,
+      day: appt.startTime.toISOString().slice(0, 10),
+    });
   }
 
   revalidatePath("/dashboard/appointments");

@@ -98,3 +98,39 @@ export async function createBooking(params: {
     { timeout: 15000, maxWait: 15000 }
   );
 }
+
+export type JoinWaitlistResult = { ok: true } | { ok: false; error: string };
+
+export async function joinWaitlist(params: {
+  businessSlug: string;
+  serviceId: string;
+  staffId: string | null;
+  day: string;
+  clientName: string;
+  clientPhone: string;
+}): Promise<JoinWaitlistResult> {
+  const business = await prisma.business.findUnique({ where: { slug: params.businessSlug } });
+  if (!business) return { ok: false, error: "Negocio no encontrado." };
+
+  if (!params.clientName.trim() || !params.clientPhone.trim()) {
+    return { ok: false, error: "Nombre y teléfono son obligatorios." };
+  }
+
+  const service = await prisma.service.findFirst({
+    where: { id: params.serviceId, businessId: business.id, active: true },
+  });
+  if (!service) return { ok: false, error: "Servicio no válido." };
+
+  await prisma.waitlistEntry.create({
+    data: {
+      businessId: business.id,
+      serviceId: service.id,
+      staffId: params.staffId,
+      day: params.day,
+      clientName: params.clientName.trim(),
+      clientPhone: params.clientPhone.trim(),
+    },
+  });
+
+  return { ok: true };
+}
