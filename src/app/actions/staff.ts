@@ -80,3 +80,38 @@ export async function toggleStaffActive(staffId: string) {
   await prisma.staff.update({ where: { id: staffId }, data: { active: !staff.active } });
   revalidatePath("/dashboard/staff");
 }
+
+export async function addStaffTimeOff(staffId: string, formData: FormData) {
+  const session = await requirePermission("staff");
+  const staff = await prisma.staff.findFirst({ where: { id: staffId, businessId: session.businessId } });
+  if (!staff) redirect("/dashboard/staff?error=NO_ENCONTRADO");
+
+  const startDate = String(formData.get("startDate") ?? "");
+  const endDate = String(formData.get("endDate") ?? "");
+  const reason = String(formData.get("reason") ?? "").trim() || null;
+
+  if (!startDate || !endDate || startDate > endDate) {
+    redirect(`/dashboard/staff/${staffId}?error=RANGO_INVALIDO`);
+  }
+
+  await prisma.staffTimeOff.create({
+    data: {
+      staffId,
+      startDate: new Date(`${startDate}T00:00:00`),
+      endDate: new Date(`${endDate}T23:59:59`),
+      reason,
+    },
+  });
+  revalidatePath(`/dashboard/staff/${staffId}`);
+  redirect(`/dashboard/staff/${staffId}`);
+}
+
+export async function removeStaffTimeOff(timeOffId: string) {
+  const session = await requirePermission("staff");
+  const timeOff = await prisma.staffTimeOff.findFirst({
+    where: { id: timeOffId, staff: { businessId: session.businessId } },
+  });
+  if (!timeOff) return;
+  await prisma.staffTimeOff.delete({ where: { id: timeOffId } });
+  revalidatePath(`/dashboard/staff/${timeOff.staffId}`);
+}

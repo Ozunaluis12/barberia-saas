@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
-import { updateStaff } from "@/app/actions/staff";
+import { updateStaff, addStaffTimeOff, removeStaffTimeOff } from "@/app/actions/staff";
 import { getVocabulary } from "@/lib/vocabulary";
 import { DAY_LABELS } from "@/lib/days";
 import Avatar from "@/components/Avatar";
@@ -11,6 +11,7 @@ const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
   COMISION_INVALIDA: "La comisión debe ser un número entre 0 y 100.",
   HORARIO_INVALIDO: "Revisa el horario: la hora de inicio debe ser antes que la de fin.",
+  RANGO_INVALIDO: "Revisa las fechas: el inicio debe ser antes o igual al fin.",
 };
 
 export default async function EditStaffPage({
@@ -30,6 +31,11 @@ export default async function EditStaffPage({
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");
   const workDaysSet = new Set(staff.workDays.split(","));
+
+  const timeOffRanges = await prisma.staffTimeOff.findMany({
+    where: { staffId: staff.id },
+    orderBy: { startDate: "desc" },
+  });
 
   return (
     <div>
@@ -127,6 +133,74 @@ export default async function EditStaffPage({
           Guardar cambios
         </button>
       </form>
+
+      <div className="mt-8 max-w-lg rounded-lg border border-white/10 bg-charcoal p-6">
+        <h2 className="text-lg font-semibold">Días libres</h2>
+        <p className="mt-1 text-sm text-cream/60">
+          Vacaciones o incapacidades: mientras un rango esté activo, ese
+          {" "}{vocab.staffSingular.toLowerCase()} no aparece disponible para reservar esos días.
+        </p>
+
+        <div className="mt-4 space-y-2">
+          {timeOffRanges.map((t) => (
+            <div
+              key={t.id}
+              className="flex items-center justify-between rounded-md border border-white/10 bg-ink px-3 py-2 text-sm"
+            >
+              <span>
+                {t.startDate.toISOString().slice(0, 10)} → {t.endDate.toISOString().slice(0, 10)}
+                {t.reason && <span className="text-cream/50"> · {t.reason}</span>}
+              </span>
+              <form action={removeStaffTimeOff.bind(null, t.id)}>
+                <button className="text-xs text-red-400 hover:underline">Eliminar</button>
+              </form>
+            </div>
+          ))}
+          {timeOffRanges.length === 0 && (
+            <p className="text-sm text-cream/40">No hay días libres registrados.</p>
+          )}
+        </div>
+
+        <form
+          action={addStaffTimeOff.bind(null, staff.id)}
+          className="mt-4 space-y-3 border-t border-white/10 pt-4"
+        >
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm text-cream/70">Desde</label>
+              <input
+                type="date"
+                name="startDate"
+                required
+                className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-cream/70">Hasta</label>
+              <input
+                type="date"
+                name="endDate"
+                required
+                className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">Motivo (opcional)</label>
+            <input
+              name="reason"
+              placeholder="Vacaciones"
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
+          <button
+            type="submit"
+            className="rounded-md border border-white/20 px-4 py-2 text-sm hover:border-gold hover:text-gold"
+          >
+            Agregar rango
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

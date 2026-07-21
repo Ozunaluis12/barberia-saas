@@ -48,6 +48,15 @@ async function freeSlotsForStaff(
   const dayStart = dateAt(day, workStart);
   const dayEnd = dateAt(day, workEnd);
 
+  const timeOff = await db.staffTimeOff.findFirst({
+    where: {
+      staffId,
+      startDate: { lte: dayEnd },
+      endDate: { gte: dayStart },
+    },
+  });
+  if (timeOff) return [];
+
   const existing = await db.appointment.findMany({
     where: {
       staffId,

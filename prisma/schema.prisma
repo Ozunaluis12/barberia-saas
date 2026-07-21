@@ -112,6 +112,21 @@ model Staff {
   appointments Appointment[]
   reviews      Review[]
   cashSessions CashSession[]
+  timeOff      StaffTimeOff[]
+}
+
+// Rango de fechas en el que un miembro del personal no trabaja (vacaciones,
+// incapacidad) — excepción puntual al horario semanal fijo de Staff.workDays.
+model StaffTimeOff {
+  id        String   @id @default(cuid())
+  staffId   String
+  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([staffId, startDate, endDate])
 }
 
 model Service {
