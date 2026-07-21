@@ -171,7 +171,15 @@ export default async function RegisterPage({
         </form>
       </div>
 
-      <h2 className="mt-10 text-lg font-semibold">Historial de cierres</h2>
+      <div className="mt-10 flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Historial de cierres</h2>
+        <a
+          href="/api/export/cash-report"
+          className="rounded-md border border-white/20 px-3 py-1.5 text-sm hover:border-gold hover:text-gold"
+        >
+          Descargar PDF
+        </a>
+      </div>
       <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
         <table className="w-full text-sm">
           <thead className="bg-charcoal text-left text-cream/60">
