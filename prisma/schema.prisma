@@ -44,6 +44,7 @@ model Business {
   products     Product[]
   appointments Appointment[]
   reviews      Review[]
+  cashSessions CashSession[]
 }
 
 // Historial de un cliente a nivel de organización: si canceló tarde o no
@@ -75,7 +76,8 @@ model User {
   business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
 
-  resetTokens PasswordResetToken[]
+  resetTokens    PasswordResetToken[]
+  openedSessions CashSession[]
 }
 
 // Token de un solo uso para el flujo de "olvidé mi contraseña". Se guarda el hash,
@@ -108,6 +110,7 @@ model Staff {
 
   appointments Appointment[]
   reviews      Review[]
+  cashSessions CashSession[]
 }
 
 model Service {
@@ -161,6 +164,7 @@ model Appointment {
   priceCharged      Float? // snapshot del precio del servicio al momento de la reserva
   paymentMethod     String      @default("UNPAID") // UNPAID, CASH, CARD_IN_PERSON, ONLINE
   paymentStatus     String      @default("PENDING") // PENDING, PAID, REFUNDED
+  paidAt            DateTime? // cuándo se marcó como pagada (para acotar sesiones de caja)
   reminderSentAt    DateTime? // evita mandar el mismo recordatorio dos veces
   createdAt         DateTime    @default(now())
   review            Review?
@@ -183,4 +187,28 @@ model Review {
   rating        Int // 1 a 5
   comment       String?
   createdAt     DateTime    @default(now())
+}
+
+// Sesión de caja: apertura y cierre de un turno, por empleado o general
+// (staffId null). Se calcula lo esperado (efectivo cobrado en la ventana de
+// la sesión) contra lo contado físicamente, y la diferencia queda guardada
+// para siempre — no solo mientras la caja está abierta.
+model CashSession {
+  id             String    @id @default(cuid())
+  businessId     String
+  business       Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staffId        String?
+  staff          Staff?    @relation(fields: [staffId], references: [id])
+  openedByUserId String
+  openedBy       User      @relation(fields: [openedByUserId], references: [id])
+  openingAmount  Float     @default(0)
+  countedAmount  Float?
+  expectedAmount Float?
+  difference     Float?
+  notes          String?
+  status         String    @default("OPEN") // OPEN, CLOSED
+  openedAt       DateTime  @default(now())
+  closedAt       DateTime?
+
+  @@index([businessId, status])
 }

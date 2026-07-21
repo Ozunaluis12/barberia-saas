@@ -106,11 +106,12 @@ export async function markAppointmentPaid(appointmentId: string, paymentMethod: 
 
   await prisma.appointment.update({
     where: { id: appointmentId },
-    data: { paymentMethod, paymentStatus: "PAID" },
+    data: { paymentMethod, paymentStatus: "PAID", paidAt: new Date() },
   });
 
   revalidatePath("/dashboard/appointments");
   revalidatePath("/dashboard/reports");
+  revalidatePath("/dashboard/register");
 }
 
 export async function getWalkInSlots(params: {
