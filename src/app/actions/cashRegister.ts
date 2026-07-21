@@ -58,7 +58,23 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
     _sum: { priceCharged: true },
   });
 
-  const expectedAmount = cashSession!.openingAmount + (paidInWindow._sum.priceCharged ?? 0);
+  // Las ventas de producto no se pueden atribuir a un miembro puntual del
+  // roster (Staff), así que solo suman al esperado de la caja general.
+  const productSalesInWindow = cashSession!.staffId
+    ? { _sum: { total: null as number | null } }
+    : await prisma.productSale.aggregate({
+        where: {
+          businessId: session.businessId,
+          paymentMethod: "CASH",
+          createdAt: { gte: cashSession!.openedAt, lte: closedAt },
+        },
+        _sum: { total: true },
+      });
+
+  const expectedAmount =
+    cashSession!.openingAmount +
+    (paidInWindow._sum.priceCharged ?? 0) +
+    (productSalesInWindow._sum.total ?? 0);
   const difference = countedAmount - expectedAmount;
 
   await prisma.cashSession.update({

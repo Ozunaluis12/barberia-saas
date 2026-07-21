@@ -48,6 +48,7 @@ model Business {
   appointments Appointment[]
   reviews      Review[]
   cashSessions CashSession[]
+  productSales ProductSale[]
 }
 
 // Historial de un cliente a nivel de organización: si canceló tarde o no
@@ -82,6 +83,7 @@ model User {
 
   resetTokens    PasswordResetToken[]
   openedSessions CashSession[]
+  productSales   ProductSale[]
 }
 
 // Token de un solo uso para el flujo de "olvidé mi contraseña". Se guarda el hash,
@@ -159,8 +161,31 @@ model Product {
   description String?
   imageUrl    String?
   price       Float
+  stock       Int? // null = no se trackea inventario para este producto
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
+
+  sales ProductSale[]
+}
+
+// Venta puntual de un producto (no participa del flujo de citas). Descuenta
+// stock si el producto lo trackea, y alimenta el esperado de caja cuando el
+// pago fue en efectivo.
+model ProductSale {
+  id            String   @id @default(cuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  quantity      Int
+  unitPrice     Float
+  total         Float
+  paymentMethod String // CASH, CARD_IN_PERSON
+  soldByUserId  String
+  soldBy        User     @relation(fields: [soldByUserId], references: [id])
+  createdAt     DateTime @default(now())
+
+  @@index([businessId, createdAt])
 }
 
 model Appointment {

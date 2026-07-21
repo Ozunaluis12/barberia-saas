@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
-import { createProduct, toggleProductActive } from "@/app/actions/products";
+import { createProduct, toggleProductActive, sellProduct } from "@/app/actions/products";
 
 const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
   PRECIO_INVALIDO: "El precio no puede ser negativo.",
+  STOCK_INVALIDO: "El stock debe ser un número entero mayor o igual a 0.",
   NO_ENCONTRADO: "No se encontró ese producto.",
+  CANTIDAD_INVALIDA: "La cantidad a vender debe ser mayor a 0.",
+  STOCK_INSUFICIENTE: "No hay suficiente stock para vender esa cantidad.",
 };
 
 export default async function CatalogPage({
@@ -42,6 +45,7 @@ export default async function CatalogPage({
             <tr>
               <th className="px-4 py-2">Nombre</th>
               <th className="px-4 py-2">Precio</th>
+              <th className="px-4 py-2">Stock</th>
               <th className="px-4 py-2">Estado</th>
               <th className="px-4 py-2"></th>
             </tr>
@@ -62,6 +66,9 @@ export default async function CatalogPage({
                   </div>
                 </td>
                 <td className="px-4 py-2 text-cream/70">${p.price.toFixed(2)}</td>
+                <td className="px-4 py-2 text-cream/70">
+                  {p.stock === null ? "—" : p.stock}
+                </td>
                 <td className="px-4 py-2">
                   <span
                     className={`rounded-full px-2 py-1 text-xs ${
@@ -72,7 +79,27 @@ export default async function CatalogPage({
                   </span>
                 </td>
                 <td className="px-4 py-2 text-right">
-                  <div className="flex justify-end gap-3">
+                  <div className="flex items-center justify-end gap-3">
+                    <form
+                      action={sellProduct.bind(null, p.id)}
+                      className="flex items-center gap-1"
+                    >
+                      <input
+                        type="number"
+                        name="quantity"
+                        min={1}
+                        defaultValue={1}
+                        className="w-14 rounded-md border border-white/20 bg-ink px-1.5 py-1 text-xs outline-none focus:border-gold"
+                      />
+                      <select
+                        name="paymentMethod"
+                        className="rounded-md border border-white/20 bg-ink px-1 py-1 text-xs outline-none focus:border-gold"
+                      >
+                        <option value="CASH">Efectivo</option>
+                        <option value="CARD_IN_PERSON">Tarjeta</option>
+                      </select>
+                      <button className="text-xs text-gold hover:underline">Vender</button>
+                    </form>
                     <Link
                       href={`/dashboard/catalog/${p.id}`}
                       className="text-xs text-gold hover:underline"
@@ -90,7 +117,7 @@ export default async function CatalogPage({
             ))}
             {products.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-cream/40" colSpan={4}>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={5}>
                   Aún no has agregado productos.
                 </td>
               </tr>
@@ -135,6 +162,18 @@ export default async function CatalogPage({
               name="price"
               step="0.01"
               min={0}
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">
+              Stock inicial (déjalo vacío si no quieres trackear inventario)
+            </label>
+            <input
+              type="number"
+              name="stock"
+              min={0}
+              placeholder="Sin trackear"
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             />
           </div>

@@ -50,7 +50,22 @@ export default async function RegisterPage({
         },
         _sum: { priceCharged: true },
       });
-      return { ...s, liveExpected: s.openingAmount + (agg._sum.priceCharged ?? 0) };
+      // Las ventas de producto no se pueden atribuir a un miembro puntual del
+      // roster, así que solo suman al esperado de la caja general.
+      const productAgg = s.staffId
+        ? { _sum: { total: null as number | null } }
+        : await prisma.productSale.aggregate({
+            where: {
+              businessId: session.businessId,
+              paymentMethod: "CASH",
+              createdAt: { gte: s.openedAt, lte: now },
+            },
+            _sum: { total: true },
+          });
+      return {
+        ...s,
+        liveExpected: s.openingAmount + (agg._sum.priceCharged ?? 0) + (productAgg._sum.total ?? 0),
+      };
     })
   );
 

@@ -7,6 +7,7 @@ import { updateProduct } from "@/app/actions/products";
 const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
   PRECIO_INVALIDO: "El precio no puede ser negativo.",
+  STOCK_INVALIDO: "El stock debe ser un número entero mayor o igual a 0.",
 };
 
 export default async function EditProductPage({
@@ -86,6 +87,19 @@ export default async function EditProductPage({
             step="0.01"
             min={0}
             defaultValue={product.price}
+            className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+          />
+        </div>
+        <div>
+          <label className="text-sm text-cream/70">
+            Stock (déjalo vacío si no quieres trackear inventario)
+          </label>
+          <input
+            type="number"
+            name="stock"
+            min={0}
+            placeholder="Sin trackear"
+            defaultValue={product.stock ?? ""}
             className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
           />
         </div>
