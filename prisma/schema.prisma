@@ -218,11 +218,13 @@ model Appointment {
   paymentStatus     String      @default("PENDING") // PENDING, PAID, REFUNDED
   paidAt            DateTime? // cuándo se marcó como pagada (para acotar sesiones de caja)
   reminderSentAt    DateTime? // evita mandar el mismo recordatorio dos veces
+  recurrenceGroupId String? // comparte id entre todas las citas de una misma serie recurrente; null = cita suelta
   createdAt         DateTime    @default(now())
   review            Review?
 
   @@index([staffId, startTime])
   @@index([businessId, startTime])
+  @@index([businessId, recurrenceGroupId])
 }
 
 // Reseña que un cliente deja después de una cita completada.

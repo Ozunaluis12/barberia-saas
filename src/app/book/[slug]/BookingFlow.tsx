@@ -51,8 +51,16 @@ export default function BookingFlow({
   const [submitting, setSubmitting] = useState(false);
   const [joiningWaitlist, setJoiningWaitlist] = useState(false);
   const [waitlistJoined, setWaitlistJoined] = useState(false);
+  const [repeatEvery, setRepeatEvery] = useState<0 | 1 | 2 | 4>(0); // 0 = no repetir
+  const [repeatCount, setRepeatCount] = useState(4);
   const [result, setResult] = useState<
-    | { ok: true; staffName: string; startTime: string; appointmentId: string }
+    | {
+        ok: true;
+        staffName: string;
+        startTime: string;
+        appointmentId: string;
+        recurrence?: { created: number; requested: number; skippedDays: string[] };
+      }
     | { ok: false; error: string }
     | null
   >(null);
@@ -89,6 +97,10 @@ export default function BookingFlow({
       time,
       clientName,
       clientPhone,
+      recurrence:
+        repeatEvery > 0
+          ? { intervalWeeks: repeatEvery as 1 | 2 | 4, occurrences: repeatCount }
+          : undefined,
     });
     setSubmitting(false);
     setResult(res);
@@ -107,6 +119,17 @@ export default function BookingFlow({
           {date.toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" })} a las{" "}
           {date.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
         </p>
+        {result.recurrence && (
+          <p className="mt-3 text-sm text-cream/70">
+            Se agendaron {result.recurrence.created} de {result.recurrence.requested} citas de la serie.
+            {result.recurrence.skippedDays.length > 0 && (
+              <>
+                {" "}No había cupo el{result.recurrence.skippedDays.length > 1 ? "s" : ""}:{" "}
+                {result.recurrence.skippedDays.join(", ")}.
+              </>
+            )}
+          </p>
+        )}
         <div className="mx-auto mt-6 max-w-sm rounded-md border border-white/10 bg-ink p-4 text-sm">
           <p className="text-cream/70">
             ¿Necesitas cancelar? Guarda este enlace, se requieren al menos{" "}
@@ -303,6 +326,32 @@ export default function BookingFlow({
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             />
           </div>
+          <div>
+            <label className="text-sm text-cream/70">Repetir esta cita</label>
+            <select
+              value={repeatEvery}
+              onChange={(e) => setRepeatEvery(Number(e.target.value) as 0 | 1 | 2 | 4)}
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            >
+              <option value={0}>No repetir</option>
+              <option value={1}>Cada semana</option>
+              <option value={2}>Cada 2 semanas</option>
+              <option value={4}>Cada 4 semanas</option>
+            </select>
+          </div>
+          {repeatEvery > 0 && (
+            <div>
+              <label className="text-sm text-cream/70">¿Cuántas veces en total?</label>
+              <input
+                type="number"
+                min={2}
+                max={8}
+                value={repeatCount}
+                onChange={(e) => setRepeatCount(Number(e.target.value))}
+                className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+              />
+            </div>
+          )}
           {result && !result.ok && (
             <p className="rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">{result.error}</p>
           )}

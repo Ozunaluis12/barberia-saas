@@ -1,8 +1,15 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { getAvailableSlots, combineDayAndTime } from "@/lib/availability";
 import { findOrCreateClient } from "@/lib/clients";
+
+function addDaysToDay(day: string, days: number): string {
+  const d = new Date(`${day}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export async function fetchSlots(params: {
   businessSlug: string;
@@ -21,7 +28,13 @@ export async function fetchSlots(params: {
 }
 
 export type CreateBookingResult =
-  | { ok: true; staffName: string; startTime: string; appointmentId: string }
+  | {
+      ok: true;
+      staffName: string;
+      startTime: string;
+      appointmentId: string;
+      recurrence?: { created: number; requested: number; skippedDays: string[] };
+    }
   | { ok: false; error: string };
 
 export async function createBooking(params: {
@@ -32,6 +45,7 @@ export async function createBooking(params: {
   time: string;
   clientName: string;
   clientPhone: string;
+  recurrence?: { intervalWeeks: 1 | 2 | 4; occurrences: number }; // occurrences = total incluyendo la primera
 }): Promise<CreateBookingResult> {
   const business = await prisma.business.findUnique({ where: { slug: params.businessSlug } });
   if (!business) return { ok: false, error: "Negocio no encontrado." };
@@ -71,6 +85,9 @@ export async function createBooking(params: {
       const startTime = combineDayAndTime(params.day, params.time);
       const endTime = new Date(startTime.getTime() + service.durationMinutes * 60000);
 
+      const recurrenceGroupId =
+        params.recurrence && params.recurrence.occurrences > 1 ? randomUUID() : null;
+
       const appointment = await tx.appointment.create({
         data: {
           businessId: business.id,
@@ -85,14 +102,58 @@ export async function createBooking(params: {
           source: "ONLINE",
           anyStaffRequested: params.staffId === null,
           priceCharged: service.price,
+          recurrenceGroupId,
         },
       });
+
+      let recurrence: { created: number; requested: number; skippedDays: string[] } | undefined;
+      if (recurrenceGroupId && params.recurrence) {
+        let created = 1;
+        const skippedDays: string[] = [];
+        // Todas las repeticiones se agendan con el MISMO especialista que quedó
+        // asignado en la primera cita (aunque se haya pedido "cualquiera"), para
+        // que el cliente vea siempre a la misma persona en su serie recurrente.
+        for (let i = 1; i < params.recurrence.occurrences; i++) {
+          const nextDay = addDaysToDay(params.day, i * params.recurrence.intervalWeeks * 7);
+          const nextSlots = await getAvailableSlots(
+            { businessId: business.id, serviceId: params.serviceId, staffId: match.staffId, day: nextDay },
+            tx
+          );
+          const nextMatch = nextSlots.find((s) => s.time === params.time);
+          if (!nextMatch) {
+            skippedDays.push(nextDay);
+            continue;
+          }
+          const nextStartTime = combineDayAndTime(nextDay, params.time);
+          const nextEndTime = new Date(nextStartTime.getTime() + service.durationMinutes * 60000);
+          await tx.appointment.create({
+            data: {
+              businessId: business.id,
+              staffId: match.staffId,
+              serviceId: service.id,
+              clientId: client.id,
+              clientName: params.clientName.trim(),
+              clientPhone: params.clientPhone.trim(),
+              startTime: nextStartTime,
+              endTime: nextEndTime,
+              status: "CONFIRMED",
+              source: "ONLINE",
+              anyStaffRequested: params.staffId === null,
+              priceCharged: service.price,
+              recurrenceGroupId,
+            },
+          });
+          created += 1;
+        }
+        recurrence = { created, requested: params.recurrence.occurrences, skippedDays };
+      }
 
       return {
         ok: true,
         staffName: match.staffName,
         startTime: startTime.toISOString(),
         appointmentId: appointment.id,
+        ...(recurrenceGroupId ? { recurrence } : {}),
       };
     },
     { timeout: 15000, maxWait: 15000 }
