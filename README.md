@@ -26,6 +26,8 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **Catálogo de servicios y productos**, cada uno con descripción, precio y
   foto propios (subida a Cloudinary), sin que los productos participen del
   flujo de reserva.
+- **Catálogo público** (`/catalogo/[slug]`): los clientes pueden ver servicios,
+  productos y equipo con foto y precio sin necesidad de empezar una reserva.
 - **Fotos del equipo**: cada miembro del personal puede tener foto, visible en
   el panel y en el paso de elegir especialista de la reserva pública.
 - **Permisos granulares por cuenta de Personal**: el dueño elige, por persona,
@@ -100,6 +102,7 @@ src/
     manifest.ts, icon.tsx  PWA (manifest + ícono generado)
     signup/, login/        alta e inicio de sesión (con selector de rubro)
     book/[slug]/           flujo de reserva del cliente
+    catalogo/[slug]/        catálogo público (servicios, productos y equipo, sin reservar)
     cita/[id]/              confirmación, cancelación y reseña de una cita
     dashboard/
       page.tsx              resumen
@@ -201,6 +204,14 @@ anterior con los nombres `corteya-db`/`corteya-app`, Render no renombra esos
 recursos solo porque `render.yaml` cambió de nombre — hay que renombrarlos a
 mano en el dashboard (o aceptar que Render cree recursos nuevos `turnify-db`/
 `turnify-app` en el próximo sync del Blueprint).
+
+**Variables opcionales que hay que cargar a mano:** `render.yaml` declara
+`RESEND_API_KEY`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` y
+`CLOUDINARY_API_SECRET` como `sync: false` — Render crea el campo vacío en el
+dashboard del servicio `turnify-app` pero no adivina el valor. Sin esas tres
+de Cloudinary, el formulario de subir foto sigue funcionando pero la imagen no
+se guarda (falla en silencio). Hay que pegarlas a mano en **turnify-app →
+Environment** y volver a desplegar.
 
 ## Planes
 

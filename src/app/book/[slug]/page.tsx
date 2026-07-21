@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
@@ -42,6 +43,12 @@ export default async function BookPage({
           <p className="text-sm uppercase tracking-widest text-gold">Reservar cita</p>
           <h1 className="mt-1 text-3xl font-bold">{business.name}</h1>
           {business.address && <p className="mt-1 text-cream/60">{business.address}</p>}
+          <Link
+            href={`/catalogo/${business.slug}`}
+            className="mt-2 inline-block text-sm text-gold hover:underline"
+          >
+            Ver catálogo de servicios y productos →
+          </Link>
           {ratingSummary._count > 0 && ratingSummary._avg.rating !== null && (
             <p className="mt-2 text-sm text-cream/70">
               <span className="text-gold">★ {ratingSummary._avg.rating.toFixed(1)}</span> ·{" "}

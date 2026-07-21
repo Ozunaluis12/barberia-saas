@@ -60,6 +60,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
           >
             Ver página pública de reservas →
           </Link>
+          <Link
+            href={`/catalogo/${business?.slug}`}
+            target="_blank"
+            className="block text-xs text-gold hover:underline"
+          >
+            Ver catálogo público →
+          </Link>
           <form action={logoutAction}>
             <button className="text-xs text-cream/50 hover:text-cream">Cerrar sesión</button>
           </form>
