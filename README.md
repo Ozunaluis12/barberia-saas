@@ -38,9 +38,12 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   lo atendió, y el detalle de cada visita anterior.
 - **Calendario por sucursal**, con una vista que junta las citas de todas las
   sucursales del mismo dueño.
-- **Caja registradora**: apertura y cierre por empleado o general, con lo
-  esperado calculado automáticamente y el historial de cierres guardado para
-  siempre.
+- **Caja registradora**: apertura y cierre por empleado o general, con conteo
+  a ciegas (lo esperado nunca se muestra antes de cerrar) y el historial
+  guardado para siempre. Cada cuenta de Personal puede vincularse a un
+  miembro del roster para que solo pueda abrir/cerrar su propia caja — la
+  general queda exclusiva del dueño. Si la diferencia supera un umbral
+  configurable, se avisa por correo a los dueños.
 - **Política de cancelación con sanciones**: los clientes acumulan strikes por
   cancelaciones tardías o no-shows, visibles en su historial.
 - **Excepciones de horario por staff**: vacaciones o incapacidades puntuales
@@ -84,10 +87,12 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   compartirse entre todas las ubicaciones del mismo dueño.
 - **Business** — una sucursal/ubicación: tiene un `category` (rubro), plan
   (`GRATIS`/`PRO`), política de cancelación, canal de recordatorios, si tiene
-  pagos en línea habilitados y la configuración del programa de fidelidad.
+  pagos en línea habilitados, la configuración del programa de fidelidad y el
+  umbral de alerta por diferencia de caja.
 - **User** — cuenta con acceso al panel. `role` es `OWNER` o `STAFF`;
   `permissions` (CSV) define qué secciones adicionales puede ver una cuenta
-  `STAFF` (`staff`, `catalog`, `reports`, `settings`).
+  `STAFF` (`staff`, `catalog`, `reports`, `settings`); `staffId` opcional la
+  vincula a un miembro del roster para restringir qué caja puede operar.
 - **Staff** — miembro del equipo (el roster, no la cuenta de acceso), con % de
   comisión opcional, horario y días laborales, y rangos de `StaffTimeOff`
   (vacaciones/incapacidad) que bloquean la reserva esos días.
@@ -102,8 +107,8 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   `recurrenceGroupId` opcional si pertenece a una serie recurrente.
 - **Review** — reseña (1 a 5) que un cliente deja tras una cita completada.
 - **CashSession** — apertura/cierre de caja por empleado o general, con monto
-  esperado (calculado, incluye ventas de producto en efectivo), contado y la
-  diferencia.
+  esperado (calculado, incluye ventas de producto en efectivo), contado, la
+  diferencia y quién la abrió/cerró (`openedByUserId`/`closedByUserId`).
 - **PayrollPayout** — cierre congelado de comisión de un staff para un rango
   de fechas, para no recalcular el mismo período dos veces.
 - **WaitlistEntry** — cliente esperando que se libere un horario en un día
