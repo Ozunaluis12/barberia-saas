@@ -8,8 +8,98 @@ function waLink(message: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
+type IconName =
+  | "scissors"
+  | "comb"
+  | "droplet"
+  | "pulse"
+  | "paw"
+  | "wrench"
+  | "dumbbell"
+  | "calendar";
+
+function CategoryIcon({ name, className }: { name: IconName; className?: string }) {
+  const common = {
+    className,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
+  switch (name) {
+    case "scissors":
+      return (
+        <svg {...common}>
+          <circle cx="6" cy="6" r="3" />
+          <circle cx="6" cy="18" r="3" />
+          <line x1="20" y1="4" x2="8.12" y2="15.88" />
+          <line x1="14.47" y1="14.48" x2="20" y2="20" />
+          <line x1="8.12" y1="8.12" x2="12" y2="12" />
+        </svg>
+      );
+    case "comb":
+      return (
+        <svg {...common}>
+          <path d="M4 4h16v4H4z" />
+          <line x1="6" y1="8" x2="6" y2="20" />
+          <line x1="10" y1="8" x2="10" y2="20" />
+          <line x1="14" y1="8" x2="14" y2="20" />
+          <line x1="18" y1="8" x2="18" y2="20" />
+        </svg>
+      );
+    case "droplet":
+      return (
+        <svg {...common}>
+          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+        </svg>
+      );
+    case "pulse":
+      return (
+        <svg {...common}>
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+      );
+    case "paw":
+      return (
+        <svg {...common}>
+          <ellipse cx="12" cy="16.5" rx="5" ry="4" />
+          <circle cx="5.5" cy="9" r="2" />
+          <circle cx="10.5" cy="5.5" r="2" />
+          <circle cx="15.5" cy="5.5" r="2" />
+          <circle cx="20" cy="9" r="2" />
+        </svg>
+      );
+    case "wrench":
+      return (
+        <svg {...common}>
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+        </svg>
+      );
+    case "dumbbell":
+      return (
+        <svg {...common}>
+          <line x1="6.5" y1="12" x2="17.5" y2="12" />
+          <rect x="2" y="8" width="3.5" height="8" rx="1" />
+          <rect x="18.5" y="8" width="3.5" height="8" rx="1" />
+        </svg>
+      );
+    case "calendar":
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="17" rx="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+          <path d="M9 15.5l2 2 4-4.5" />
+        </svg>
+      );
+  }
+}
+
 export type CategoryInfo = {
-  icon: string;
+  icon: IconName;
   title: string;
   summary: string;
   details: string;
@@ -18,7 +108,7 @@ export type CategoryInfo = {
 
 export const CATEGORIAS: CategoryInfo[] = [
   {
-    icon: "✂",
+    icon: "scissors",
     title: "Barbería",
     summary:
       "Tus clientes reservan su corte online y eligen a su barbero de confianza. Controla comisiones y walk-ins desde el mismo panel.",
@@ -32,7 +122,7 @@ export const CATEGORIAS: CategoryInfo[] = [
     ],
   },
   {
-    icon: "✦",
+    icon: "comb",
     title: "Salón de belleza",
     summary:
       "Agenda cortes, color y tratamientos con cada estilista. Tus clientas ven horarios reales y reservan en segundos.",
@@ -46,7 +136,7 @@ export const CATEGORIAS: CategoryInfo[] = [
     ],
   },
   {
-    icon: "❀",
+    icon: "droplet",
     title: "Spa",
     summary:
       "Organiza masajes, faciales y tratamientos por especialista, sin choques de horario ni llamadas de ida y vuelta.",
@@ -60,7 +150,7 @@ export const CATEGORIAS: CategoryInfo[] = [
     ],
   },
   {
-    icon: "✚",
+    icon: "pulse",
     title: "Consultorio médico",
     summary:
       "Tus pacientes agendan consulta con el doctor que prefieren. Recordatorios automáticos para bajar las inasistencias.",
@@ -74,7 +164,7 @@ export const CATEGORIAS: CategoryInfo[] = [
     ],
   },
   {
-    icon: "♥",
+    icon: "paw",
     title: "Veterinaria",
     summary:
       "Agenda consultas y vacunas por veterinario. Historial de cada mascota y su dueño, siempre a la mano.",
@@ -88,7 +178,7 @@ export const CATEGORIAS: CategoryInfo[] = [
     ],
   },
   {
-    icon: "⚒",
+    icon: "wrench",
     title: "Taller",
     summary:
       "Recibe citas para mantenimiento y reparaciones por técnico. Controla tiempos de servicio y evita la fila en el mostrador.",
@@ -102,7 +192,7 @@ export const CATEGORIAS: CategoryInfo[] = [
     ],
   },
   {
-    icon: "⚡",
+    icon: "dumbbell",
     title: "Gimnasio",
     summary:
       "Agenda clases y sesiones personalizadas por entrenador. Tus clientes reservan su cupo desde el celular.",
@@ -116,7 +206,7 @@ export const CATEGORIAS: CategoryInfo[] = [
     ],
   },
   {
-    icon: "◆",
+    icon: "calendar",
     title: "Y cualquier negocio con citas",
     summary:
       "¿Tu negocio no está en la lista? Si trabajas con citas y un equipo, Turnify se adapta a tu operación.",
@@ -152,8 +242,8 @@ export default function CategoryShowcase() {
             onClick={() => setSelected(c)}
             className="rounded-lg border border-white/10 bg-ink p-6 text-left transition hover:border-gold"
           >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold/15 text-xl font-bold text-gold">
-              {c.icon}
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold/15 text-gold">
+              <CategoryIcon name={c.icon} className="h-6 w-6" />
             </span>
             <h3 className="mt-4 font-semibold">{c.title}</h3>
             <p className="mt-2 text-sm text-cream/70">{c.summary}</p>
@@ -177,8 +267,8 @@ export default function CategoryShowcase() {
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gold/15 text-xl font-bold text-gold">
-                  {selected.icon}
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold">
+                  <CategoryIcon name={selected.icon} className="h-6 w-6" />
                 </span>
                 <h3 className="text-lg font-bold text-cream">{selected.title}</h3>
               </div>
