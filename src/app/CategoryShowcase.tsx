@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+const WHATSAPP_NUMBER = "573004177979";
+function waLink(message: string) {
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
 export type CategoryInfo = {
   icon: string;
   title: string;
   summary: string;
   details: string;
   features: string[];
-  demoSlug: string;
 };
 
 export const CATEGORIAS: CategoryInfo[] = [
@@ -26,7 +30,6 @@ export const CATEGORIAS: CategoryInfo[] = [
       "Historial de clientes con cancelaciones tardías",
       "Reseñas después de cada corte",
     ],
-    demoSlug: "demo-barberia",
   },
   {
     icon: "✦",
@@ -41,7 +44,6 @@ export const CATEGORIAS: CategoryInfo[] = [
       "Reportes de desempeño por persona",
       "Reseñas visibles para nuevas clientas",
     ],
-    demoSlug: "demo-spa",
   },
   {
     icon: "❀",
@@ -56,7 +58,6 @@ export const CATEGORIAS: CategoryInfo[] = [
       "Pagos en efectivo o tarjeta registrados por cita",
       "Recordatorios configurables antes de la sesión",
     ],
-    demoSlug: "demo-spa",
   },
   {
     icon: "✚",
@@ -71,7 +72,6 @@ export const CATEGORIAS: CategoryInfo[] = [
       "Historial de inasistencias por paciente",
       "Recordatorios antes de cada cita",
     ],
-    demoSlug: "demo-spa",
   },
   {
     icon: "♥",
@@ -86,7 +86,6 @@ export const CATEGORIAS: CategoryInfo[] = [
       "Servicios con precio y duración propios",
       "Reseñas de dueños de mascotas",
     ],
-    demoSlug: "demo-spa",
   },
   {
     icon: "⚒",
@@ -101,7 +100,6 @@ export const CATEGORIAS: CategoryInfo[] = [
       "Registro de pagos en efectivo o tarjeta",
       "Historial de clientes recurrentes",
     ],
-    demoSlug: "demo-barberia",
   },
   {
     icon: "⚡",
@@ -116,7 +114,6 @@ export const CATEGORIAS: CategoryInfo[] = [
       "Reseñas después de cada sesión",
       "Reportes de asistencia y desempeño",
     ],
-    demoSlug: "demo-barberia",
   },
   {
     icon: "◆",
@@ -131,7 +128,6 @@ export const CATEGORIAS: CategoryInfo[] = [
       "Mismo panel para cualquier tipo de cita",
       "Listo para crecer a varias sucursales",
     ],
-    demoSlug: "demo-barberia",
   },
 ];
 
@@ -207,12 +203,16 @@ export default function CategoryShowcase() {
             </ul>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href={`/book/${selected.demoSlug}`}
+              <a
+                href={waLink(
+                  `Hola, quiero programar una demostración de Turnify para mi negocio de ${selected.title.toLowerCase()}.`
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-gold/90"
               >
-                Ver demo en vivo
-              </Link>
+                Programar demostración por WhatsApp
+              </a>
               <Link
                 href="/signup"
                 className="rounded-md border border-white/20 px-4 py-2 text-sm font-semibold hover:border-gold hover:text-gold"
