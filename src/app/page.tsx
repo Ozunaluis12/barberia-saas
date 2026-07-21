@@ -1,14 +1,59 @@
 import Link from "next/link";
 
-const NEGOCIOS = [
-  "Barberías",
-  "Salones de belleza",
-  "Spas",
-  "Consultorios médicos",
-  "Veterinarias",
-  "Talleres",
-  "Gimnasios",
-  "Y cualquier negocio con citas",
+const WHATSAPP_NUMBER = "573004177979";
+function waLink(message: string) {
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+}
+
+const CATEGORIAS = [
+  {
+    icon: "✂",
+    title: "Barbería",
+    detail:
+      "Tus clientes reservan su corte online y eligen a su barbero de confianza. Controla comisiones y walk-ins desde el mismo panel.",
+  },
+  {
+    icon: "✦",
+    title: "Salón de belleza",
+    detail:
+      "Agenda cortes, color y tratamientos con cada estilista. Tus clientas ven horarios reales y reservan en segundos.",
+  },
+  {
+    icon: "❀",
+    title: "Spa",
+    detail:
+      "Organiza masajes, faciales y tratamientos por especialista, sin choques de horario ni llamadas de ida y vuelta.",
+  },
+  {
+    icon: "✚",
+    title: "Consultorio médico",
+    detail:
+      "Tus pacientes agendan consulta con el doctor que prefieren. Recordatorios automáticos para bajar las inasistencias.",
+  },
+  {
+    icon: "♥",
+    title: "Veterinaria",
+    detail:
+      "Agenda consultas y vacunas por veterinario. Historial de cada mascota y su dueño, siempre a la mano.",
+  },
+  {
+    icon: "⚒",
+    title: "Taller",
+    detail:
+      "Recibe citas para mantenimiento y reparaciones por técnico. Controla tiempos de servicio y evita la fila en el mostrador.",
+  },
+  {
+    icon: "⚡",
+    title: "Gimnasio",
+    detail:
+      "Agenda clases y sesiones personalizadas por entrenador. Tus clientes reservan su cupo desde el celular.",
+  },
+  {
+    icon: "◆",
+    title: "Y cualquier negocio con citas",
+    detail:
+      "¿Tu negocio no está en la lista? Si trabajas con citas y un equipo, Turnify se adapta a tu operación.",
+  },
 ];
 
 const BENEFICIOS = [
@@ -98,6 +143,14 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
           <span className="text-xl font-bold tracking-tight text-gold">Turnify</span>
           <nav className="flex items-center gap-4 text-sm">
+            <a
+              href={waLink("Hola, necesito ayuda con Turnify.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-gold"
+            >
+              Soporte
+            </a>
             <Link href="/book/demo-barberia" className="hover:text-gold">
               Ver demo
             </Link>
@@ -336,18 +389,23 @@ export default function HomePage() {
 
       <section className="border-t border-white/10 bg-charcoal/60">
         <div className="mx-auto max-w-6xl px-6 py-16">
-          <h2 className="text-center text-3xl font-bold">Para qué tipo de negocios sirve</h2>
+          <h2 className="text-center text-3xl font-bold">
+            Un software para diferentes tipos de negocio
+          </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-cream/70">
-            El mismo panel, el mismo flujo de reserva — sin desarrollar una versión distinta
-            para cada rubro.
+            El mismo panel, el mismo flujo de reserva — adaptado a cómo trabaja cada rubro.
           </p>
-          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {NEGOCIOS.map((n) => (
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {CATEGORIAS.map((c) => (
               <div
-                key={n}
-                className="rounded-lg border border-white/10 bg-ink px-4 py-5 text-center text-sm font-medium text-cream/80"
+                key={c.title}
+                className="rounded-lg border border-white/10 bg-ink p-6"
               >
-                {n}
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold/15 text-xl font-bold text-gold">
+                  {c.icon}
+                </span>
+                <h3 className="mt-4 font-semibold">{c.title}</h3>
+                <p className="mt-2 text-sm text-cream/70">{c.detail}</p>
               </div>
             ))}
           </div>
@@ -391,6 +449,12 @@ export default function HomePage() {
               <li>Reseñas, reportes de desempeño y comisiones</li>
               <li>Historial de clientes con sanciones por cancelación tardía</li>
             </ul>
+            <Link
+              href="/signup"
+              className="mt-6 block rounded-md bg-gold px-4 py-2 text-center font-semibold text-ink hover:bg-gold/90"
+            >
+              Crear mi negocio gratis
+            </Link>
           </div>
           <div className="rounded-lg border border-white/10 p-8">
             <h3 className="text-xl font-bold">Pro</h3>
@@ -403,12 +467,49 @@ export default function HomePage() {
               <li>Recordatorios automáticos por WhatsApp/SMS (próximamente)</li>
               <li>Cobro con tarjeta en línea (próximamente)</li>
             </ul>
+            <a
+              href={waLink("Hola, quiero más información sobre el plan Pro de Turnify.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 block rounded-md border border-gold px-4 py-2 text-center font-semibold text-gold hover:bg-gold/10"
+            >
+              Consultar por WhatsApp
+            </a>
           </div>
         </div>
         <p className="mt-6 text-center text-sm text-cream/50">
           Sin comisión por cliente nuevo. Sin cargos ocultos. Nunca. Mientras el plan Pro está en
           desarrollo, todo el producto es gratis para cualquier tamaño de equipo.
         </p>
+      </section>
+
+      <section className="border-t border-white/10 bg-charcoal/60">
+        <div className="mx-auto max-w-4xl px-6 py-16 text-center">
+          <h2 className="text-3xl font-bold">¿Quieres verlo funcionar en tu negocio?</h2>
+          <p className="mx-auto mt-3 max-w-xl text-cream/70">
+            Agenda una demostración guiada con nuestro equipo o escríbenos directo si tienes
+            dudas sobre Turnify o sobre qué plan te conviene.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <a
+              href={waLink("Hola, quiero agendar una demostración de Turnify.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md bg-gold px-6 py-3 font-semibold text-ink hover:bg-gold/90"
+            >
+              Agendar una demostración
+            </a>
+            <a
+              href={waLink("Hola, necesito ayuda con Turnify.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-md border border-white/20 px-6 py-3 font-semibold hover:border-gold hover:text-gold"
+            >
+              Soporte por WhatsApp
+            </a>
+          </div>
+          <p className="mt-4 text-sm text-cream/50">WhatsApp: +57 300 417 7979</p>
+        </div>
       </section>
 
       <footer className="border-t border-white/10 py-8 text-center text-sm text-cream/50">
