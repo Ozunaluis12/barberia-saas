@@ -22,6 +22,7 @@ function riskBadge(strikes: number) {
 
 export default async function ClientsPage() {
   const session = await requireSession();
+  const business = await prisma.business.findUnique({ where: { id: session.businessId } });
 
   const clients = await prisma.client.findMany({
     where: { organizationId: session.organizationId },
@@ -67,6 +68,7 @@ export default async function ClientsPage() {
               <th className="px-4 py-2">Última cita</th>
               <th className="px-4 py-2">Última atención por</th>
               <th className="px-4 py-2">Última sucursal</th>
+              {business?.loyaltyEnabled && <th className="px-4 py-2">Puntos</th>}
               <th className="px-4 py-2">Estado</th>
             </tr>
           </thead>
@@ -95,12 +97,15 @@ export default async function ClientsPage() {
                 <td className="px-4 py-2 text-cream/70">
                   {c.appointments[0]?.business.name ?? "—"}
                 </td>
+                {business?.loyaltyEnabled && (
+                  <td className="px-4 py-2 text-gold">{c.loyaltyPoints}</td>
+                )}
                 <td className="px-4 py-2">{riskBadge(c.strikes)}</td>
               </tr>
             ))}
             {clients.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-cream/40" colSpan={7}>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={business?.loyaltyEnabled ? 8 : 7}>
                   Aún no tienes clientes registrados.
                 </td>
               </tr>

@@ -36,6 +36,9 @@ model Business {
   reminderChannel         String   @default("NONE") // NONE, EMAIL, SMS, WHATSAPP
   reminderHoursBefore     Int      @default(24)
   onlinePaymentsEnabled   Boolean  @default(false) // reservado para cuando se conecte un proveedor de pagos real
+  loyaltyEnabled          Boolean  @default(false)
+  loyaltyPointsPerVisit   Int      @default(1)
+  loyaltyRewardThreshold  Int      @default(10)
   createdAt               DateTime @default(now())
 
   users        User[]
@@ -56,6 +59,7 @@ model Client {
   name           String
   phone          String
   strikes        Int      @default(0) // cancelaciones tardías + no-shows
+  loyaltyPoints  Int      @default(0)
   createdAt      DateTime @default(now())
 
   appointments Appointment[]

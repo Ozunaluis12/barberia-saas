@@ -19,6 +19,9 @@ export async function updateBusinessSettings(formData: FormData) {
     ? reminderChannelInput
     : "NONE";
   const reminderHoursBefore = Math.max(1, Number(formData.get("reminderHoursBefore") ?? 24));
+  const loyaltyEnabled = formData.get("loyaltyEnabled") === "on";
+  const loyaltyPointsPerVisit = Math.max(1, Number(formData.get("loyaltyPointsPerVisit") ?? 1));
+  const loyaltyRewardThreshold = Math.max(1, Number(formData.get("loyaltyRewardThreshold") ?? 10));
 
   await prisma.business.update({
     where: { id: session.businessId },
@@ -29,6 +32,9 @@ export async function updateBusinessSettings(formData: FormData) {
       category,
       reminderChannel,
       reminderHoursBefore,
+      loyaltyEnabled,
+      loyaltyPointsPerVisit,
+      loyaltyRewardThreshold,
     },
   });
 

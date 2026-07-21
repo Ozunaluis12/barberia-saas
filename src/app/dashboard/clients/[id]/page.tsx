@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
+import { redeemLoyaltyReward } from "@/app/actions/loyalty";
 
 const STATUS_LABEL: Record<string, string> = {
   CONFIRMED: "Confirmada",
@@ -10,18 +11,28 @@ const STATUS_LABEL: Record<string, string> = {
   NO_SHOW: "No asistió",
 };
 
+const ERRORS: Record<string, string> = {
+  FIDELIZACION_DESACTIVADA: "El programa de puntos no está activado para este negocio.",
+  PUNTOS_INSUFICIENTES: "El cliente todavía no alcanza los puntos necesarios.",
+};
+
 export default async function ClientDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string; redeemed?: string }>;
 }) {
   const session = await requireSession();
   const { id } = await params;
+  const { error, redeemed } = await searchParams;
 
   const client = await prisma.client.findFirst({
     where: { id, organizationId: session.organizationId },
   });
   if (!client) notFound();
+
+  const business = await prisma.business.findUnique({ where: { id: session.businessId } });
 
   const appointments = await prisma.appointment.findMany({
     where: { clientId: client.id },
@@ -40,6 +51,33 @@ export default async function ClientDetailPage({
         Cliente desde{" "}
         {client.createdAt.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })}
       </p>
+
+      {business?.loyaltyEnabled && (
+        <div className="mt-4 flex items-center gap-4 rounded-md border border-white/10 bg-charcoal px-4 py-3">
+          <p className="text-sm text-cream/70">
+            <span className="font-semibold text-gold">{client.loyaltyPoints} puntos</span>
+            {" "}· recompensa disponible a partir de {business.loyaltyRewardThreshold} puntos
+          </p>
+          {client.loyaltyPoints >= business.loyaltyRewardThreshold && (
+            <form action={redeemLoyaltyReward.bind(null, client.id)}>
+              <button className="rounded-md bg-gold px-3 py-1.5 text-sm font-semibold text-ink hover:bg-gold/90">
+                Canjear recompensa
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+
+      {redeemed && (
+        <p className="mt-3 rounded-md bg-green-500/10 px-3 py-2 text-sm text-green-400">
+          Recompensa canjeada correctamente.
+        </p>
+      )}
+      {error && (
+        <p className="mt-3 rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          {ERRORS[error] ?? "Ocurrió un error, intenta de nuevo."}
+        </p>
+      )}
 
       <h2 className="mt-8 text-lg font-semibold">Historial de procedimientos</h2>
       <div className="mt-3 overflow-hidden rounded-lg border border-white/10">

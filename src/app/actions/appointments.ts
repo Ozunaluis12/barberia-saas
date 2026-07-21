@@ -92,6 +92,17 @@ export async function updateAppointmentStatus(appointmentId: string, status: str
     revalidatePath("/dashboard/clients");
   }
 
+  if (status === "COMPLETED") {
+    const business = await prisma.business.findUnique({ where: { id: session.businessId } });
+    if (business?.loyaltyEnabled) {
+      await prisma.client.update({
+        where: { id: appt.clientId },
+        data: { loyaltyPoints: { increment: business.loyaltyPointsPerVisit } },
+      });
+      revalidatePath("/dashboard/clients");
+    }
+  }
+
   revalidatePath("/dashboard/appointments");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/reports");
