@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { fetchSlots, createBooking } from "@/app/actions/booking";
+import Avatar from "@/components/Avatar";
 
 type Service = { id: string; name: string; durationMinutes: number; price: number };
-type StaffMember = { id: string; name: string };
+type StaffMember = { id: string; name: string; photoUrl?: string | null };
 type Slot = { time: string; staffId: string; staffName: string };
 type Vocab = {
   staffSingular: string;
@@ -173,8 +174,9 @@ export default function BookingFlow({
                 setStaffId(s.id);
                 setStep(3);
               }}
-              className="w-full rounded-md border border-white/10 bg-ink px-4 py-3 text-left hover:border-gold"
+              className="flex w-full items-center gap-3 rounded-md border border-white/10 bg-ink px-4 py-3 text-left hover:border-gold"
             >
+              <Avatar src={s.photoUrl} name={s.name} size={36} />
               {s.name}
             </button>
           ))}

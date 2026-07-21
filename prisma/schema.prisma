@@ -101,6 +101,7 @@ model Staff {
   businessId        String
   business          Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name              String
+  photoUrl          String?
   active            Boolean  @default(true)
   commissionPercent Int? // null = este negocio no maneja comisión por empleado
   workStart         String   @default("09:00") // HH:mm

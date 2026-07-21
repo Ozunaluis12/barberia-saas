@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/guard";
+import { uploadImage } from "@/lib/images";
 
 type ParsedProduct =
   | { error: "NOMBRE_REQUERIDO" | "PRECIO_INVALIDO" }
@@ -25,7 +26,10 @@ export async function createProduct(formData: FormData) {
   const parsed = parseProductInput(formData);
   if ("error" in parsed) redirect(`/dashboard/catalog?error=${parsed.error}`);
 
-  await prisma.product.create({ data: { businessId: session.businessId, ...parsed.data } });
+  const photo = formData.get("photo");
+  const imageUrl = photo instanceof File ? await uploadImage(photo, "products") : null;
+
+  await prisma.product.create({ data: { businessId: session.businessId, imageUrl, ...parsed.data } });
   revalidatePath("/dashboard/catalog");
   redirect("/dashboard/catalog");
 }
@@ -38,7 +42,11 @@ export async function updateProduct(productId: string, formData: FormData) {
   const parsed = parseProductInput(formData);
   if ("error" in parsed) redirect(`/dashboard/catalog/${productId}?error=${parsed.error}`);
 
-  await prisma.product.update({ where: { id: productId }, data: parsed.data });
+  const photo = formData.get("photo");
+  const uploadedUrl = photo instanceof File ? await uploadImage(photo, "products") : null;
+  const imageUrl = uploadedUrl ?? product!.imageUrl;
+
+  await prisma.product.update({ where: { id: productId }, data: { imageUrl, ...parsed.data } });
   revalidatePath("/dashboard/catalog");
   redirect("/dashboard/catalog");
 }

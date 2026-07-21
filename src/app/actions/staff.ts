@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/guard";
+import { uploadImage } from "@/lib/images";
 
 type ParsedStaff =
   | { error: "NOMBRE_REQUERIDO" | "COMISION_INVALIDA" | "HORARIO_INVALIDO" }
@@ -47,7 +48,10 @@ export async function createStaff(formData: FormData) {
   const parsed = parseStaffInput(formData);
   if ("error" in parsed) redirect(`/dashboard/staff?error=${parsed.error}`);
 
-  await prisma.staff.create({ data: { businessId: session.businessId, ...parsed.data } });
+  const photo = formData.get("photo");
+  const photoUrl = photo instanceof File ? await uploadImage(photo, "staff") : null;
+
+  await prisma.staff.create({ data: { businessId: session.businessId, photoUrl, ...parsed.data } });
   revalidatePath("/dashboard/staff");
   redirect("/dashboard/staff");
 }
@@ -60,7 +64,11 @@ export async function updateStaff(staffId: string, formData: FormData) {
   const parsed = parseStaffInput(formData);
   if ("error" in parsed) redirect(`/dashboard/staff/${staffId}?error=${parsed.error}`);
 
-  await prisma.staff.update({ where: { id: staffId }, data: parsed.data });
+  const photo = formData.get("photo");
+  const uploadedUrl = photo instanceof File ? await uploadImage(photo, "staff") : null;
+  const photoUrl = uploadedUrl ?? staff!.photoUrl;
+
+  await prisma.staff.update({ where: { id: staffId }, data: { photoUrl, ...parsed.data } });
   revalidatePath("/dashboard/staff");
   redirect("/dashboard/staff");
 }

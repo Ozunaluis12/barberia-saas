@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/guard";
+import { uploadImage } from "@/lib/images";
 
 type ParsedService =
   | { error: "NOMBRE_REQUERIDO" | "DURACION_INVALIDA" | "PRECIO_INVALIDO" }
@@ -29,7 +30,10 @@ export async function createService(formData: FormData) {
   const parsed = parseServiceInput(formData);
   if ("error" in parsed) redirect(`/dashboard/services?error=${parsed.error}`);
 
-  await prisma.service.create({ data: { businessId: session.businessId, ...parsed.data } });
+  const photo = formData.get("photo");
+  const imageUrl = photo instanceof File ? await uploadImage(photo, "services") : null;
+
+  await prisma.service.create({ data: { businessId: session.businessId, imageUrl, ...parsed.data } });
   revalidatePath("/dashboard/services");
   redirect("/dashboard/services");
 }
@@ -42,7 +46,11 @@ export async function updateService(serviceId: string, formData: FormData) {
   const parsed = parseServiceInput(formData);
   if ("error" in parsed) redirect(`/dashboard/services/${serviceId}?error=${parsed.error}`);
 
-  await prisma.service.update({ where: { id: serviceId }, data: parsed.data });
+  const photo = formData.get("photo");
+  const uploadedUrl = photo instanceof File ? await uploadImage(photo, "services") : null;
+  const imageUrl = uploadedUrl ?? service!.imageUrl;
+
+  await prisma.service.update({ where: { id: serviceId }, data: { imageUrl, ...parsed.data } });
   revalidatePath("/dashboard/services");
   redirect("/dashboard/services");
 }

@@ -50,8 +50,16 @@ export default async function CatalogPage({
             {products.map((p) => (
               <tr key={p.id} className="border-t border-white/5">
                 <td className="px-4 py-2 font-medium">
-                  {p.name}
-                  {p.description && <p className="text-xs font-normal text-cream/50">{p.description}</p>}
+                  <div className="flex items-center gap-3">
+                    {p.imageUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.imageUrl} alt={p.name} className="h-8 w-8 rounded-md object-cover" />
+                    )}
+                    <div>
+                      {p.name}
+                      {p.description && <p className="text-xs font-normal text-cream/50">{p.description}</p>}
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-2 text-cream/70">${p.price.toFixed(2)}</td>
                 <td className="px-4 py-2">
@@ -93,7 +101,7 @@ export default async function CatalogPage({
 
       <div className="mt-8 max-w-lg rounded-lg border border-white/10 bg-charcoal p-6">
         <h2 className="text-lg font-semibold">Agregar producto</h2>
-        <form action={createProduct} className="mt-4 space-y-4">
+        <form action={createProduct} encType="multipart/form-data" className="mt-4 space-y-4">
           <div>
             <label className="text-sm text-cream/70">Nombre</label>
             <input
@@ -101,6 +109,15 @@ export default async function CatalogPage({
               required
               placeholder="Shampoo profesional"
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">Imagen (opcional)</label>
+            <input
+              type="file"
+              name="photo"
+              accept="image/*"
+              className="mt-1 w-full text-sm text-cream/70 file:mr-3 file:rounded-md file:border-0 file:bg-gold file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ink"
             />
           </div>
           <div>

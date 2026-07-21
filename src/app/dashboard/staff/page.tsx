@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { createStaff, toggleStaffActive } from "@/app/actions/staff";
 import { getVocabulary } from "@/lib/vocabulary";
 import { DAY_LABELS } from "@/lib/days";
+import Avatar from "@/components/Avatar";
 
 const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
@@ -51,7 +52,12 @@ export default async function StaffPage({
           <tbody>
             {staffMembers.map((s) => (
               <tr key={s.id} className="border-t border-white/5">
-                <td className="px-4 py-2 font-medium">{s.name}</td>
+                <td className="px-4 py-2 font-medium">
+                  <div className="flex items-center gap-3">
+                    <Avatar src={s.photoUrl} name={s.name} size={32} />
+                    {s.name}
+                  </div>
+                </td>
                 <td className="px-4 py-2 text-cream/70">
                   {s.workStart} - {s.workEnd}
                 </td>
@@ -94,13 +100,22 @@ export default async function StaffPage({
 
       <div className="mt-8 max-w-lg rounded-lg border border-white/10 bg-charcoal p-6">
         <h2 className="text-lg font-semibold">Agregar {vocab.staffSingular.toLowerCase()}</h2>
-        <form action={createStaff} className="mt-4 space-y-4">
+        <form action={createStaff} encType="multipart/form-data" className="mt-4 space-y-4">
           <div>
             <label className="text-sm text-cream/70">Nombre</label>
             <input
               name="name"
               required
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">Foto (opcional)</label>
+            <input
+              type="file"
+              name="photo"
+              accept="image/*"
+              className="mt-1 w-full text-sm text-cream/70 file:mr-3 file:rounded-md file:border-0 file:bg-gold file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ink"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

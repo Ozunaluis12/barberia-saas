@@ -38,8 +38,28 @@ export default async function EditProductPage({
 
       <form
         action={updateProduct.bind(null, product.id)}
+        encType="multipart/form-data"
         className="mt-6 max-w-lg space-y-4 rounded-lg border border-white/10 bg-charcoal p-6"
       >
+        <div className="flex items-center gap-4">
+          {product.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={product.imageUrl} alt={product.name} className="h-14 w-14 rounded-md object-cover" />
+          ) : (
+            <div className="flex h-14 w-14 items-center justify-center rounded-md bg-white/5 text-xs text-cream/40">
+              Sin foto
+            </div>
+          )}
+          <div className="flex-1">
+            <label className="text-sm text-cream/70">Imagen (opcional)</label>
+            <input
+              type="file"
+              name="photo"
+              accept="image/*"
+              className="mt-1 w-full text-sm text-cream/70 file:mr-3 file:rounded-md file:border-0 file:bg-gold file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ink"
+            />
+          </div>
+        </div>
         <div>
           <label className="text-sm text-cream/70">Nombre</label>
           <input

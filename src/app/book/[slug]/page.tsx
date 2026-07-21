@@ -70,7 +70,7 @@ export default async function BookPage({
             durationMinutes: s.durationMinutes,
             price: s.price,
           }))}
-          staff={business.staff.map((s) => ({ id: s.id, name: s.name }))}
+          staff={business.staff.map((s) => ({ id: s.id, name: s.name, photoUrl: s.photoUrl }))}
           cancellationNoticeHours={business.cancellationNoticeHours}
           vocab={{
             staffSingular: vocab.staffSingular,

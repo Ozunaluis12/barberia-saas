@@ -23,8 +23,11 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   belleza o spa.
 - **Comisión de cada miembro del equipo configurable** (u opcional, si el
   negocio no paga por comisión) y calculada automáticamente.
-- **Catálogo de servicios y productos**, cada uno con descripción y precio
-  propios, sin que los productos participen del flujo de reserva.
+- **Catálogo de servicios y productos**, cada uno con descripción, precio y
+  foto propios (subida a Cloudinary), sin que los productos participen del
+  flujo de reserva.
+- **Fotos del equipo**: cada miembro del personal puede tener foto, visible en
+  el panel y en el paso de elegir especialista de la reserva pública.
 - **Permisos granulares por cuenta de Personal**: el dueño elige, por persona,
   si puede ver Personal, Catálogo, Reportes y/o Configuración — Equipo y
   Sucursales son siempre exclusivas del dueño.
@@ -46,6 +49,8 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - [Prisma](https://www.prisma.io/) con PostgreSQL
 - TailwindCSS
 - Autenticación propia con `bcryptjs` (hash de contraseñas) y `jose` (sesión JWT)
+- [Cloudinary](https://cloudinary.com/) para fotos de personal, servicios y productos
+- [Resend](https://resend.com/) para correo transaccional (recuperación de contraseña)
 
 ## Modelo de datos
 
@@ -85,11 +90,6 @@ pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive e
   canal y horas de anticipación en Configuración, y `src/lib/notifications.ts`
   tiene el punto de extensión listo, pero todavía no envía nada de verdad hasta
   que se conecte un proveedor (Twilio, WhatsApp Business API, Resend, etc.).
-- **Fotos de personal/servicios/productos** — `Service.imageUrl` y
-  `Product.imageUrl` ya existen en el esquema (listos, sin usar todavía);
-  `Staff` aún no tiene su campo de foto. Falta conectar Cloudinary (cuenta +
-  `CLOUDINARY_CLOUD_NAME`/`CLOUDINARY_API_KEY`/`CLOUDINARY_API_SECRET`) antes
-  de construir la subida de imágenes.
 
 ## Estructura del proyecto
 
@@ -103,8 +103,9 @@ src/
     cita/[id]/              confirmación, cancelación y reseña de una cita
     dashboard/
       page.tsx              resumen
-      staff/                 gestión del roster (con [id] para editar)
-      catalog/                servicios y productos ([service]/[product] para editar)
+      staff/                 gestión del roster, con foto (con [id] para editar)
+      services/               catálogo de servicios, con foto ([id] para editar)
+      catalog/                catálogo de productos, con foto ([id] para editar)
       appointments/          agenda + registro de citas sin cita previa
       calendar/               agenda por sucursal o todas juntas
       register/               caja: abrir/cerrar turnos, historial de cierres
@@ -122,6 +123,7 @@ src/
     availability.ts         cálculo de huecos libres y balanceo del equipo
     guard.ts                protección de rutas del dashboard
     vocabulary.ts           vocabulario dinámico según el rubro del negocio
+    images.ts               subida de fotos a Cloudinary
     notifications.ts        punto de extensión para recordatorios (sin proveedor aún)
 prisma/
   schema.prisma             modelo de datos
