@@ -77,13 +77,8 @@ const PASOS = [
 
 function BrowserFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-white/10 bg-charcoal shadow-2xl shadow-black/40">
-      <div className="flex items-center gap-1.5 border-b border-white/10 bg-ink/60 px-3 py-2">
-        <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
-        <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
-        <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
-      </div>
-      <div className="p-4">{children}</div>
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-charcoal p-4 shadow-2xl shadow-black/40">
+      {children}
     </div>
   );
 }
