@@ -8,15 +8,7 @@ function waLink(message: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
 
-type IconName =
-  | "barberpole"
-  | "mirror"
-  | "leaf"
-  | "pulse"
-  | "paw"
-  | "wrench"
-  | "dumbbell"
-  | "calendar";
+type IconName = "barberpole" | "mirror" | "leaf";
 
 function CategoryIcon({ name, className }: { name: IconName; className?: string }) {
   const common = {
@@ -50,46 +42,6 @@ function CategoryIcon({ name, className }: { name: IconName; className?: string 
         <svg {...common}>
           <path d="M12 20c-4.4-1-8-5-8-10a8 8 0 0 1 8-8c4.4 0 8 3.6 8 8 0 5-3.6 9-8 10z" />
           <path d="M12 20V4" />
-        </svg>
-      );
-    case "pulse":
-      return (
-        <svg {...common}>
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-        </svg>
-      );
-    case "paw":
-      return (
-        <svg {...common}>
-          <ellipse cx="12" cy="16.5" rx="5" ry="4" />
-          <circle cx="5.5" cy="9" r="2" />
-          <circle cx="10.5" cy="5.5" r="2" />
-          <circle cx="15.5" cy="5.5" r="2" />
-          <circle cx="20" cy="9" r="2" />
-        </svg>
-      );
-    case "wrench":
-      return (
-        <svg {...common}>
-          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-        </svg>
-      );
-    case "dumbbell":
-      return (
-        <svg {...common}>
-          <line x1="6.5" y1="12" x2="17.5" y2="12" />
-          <rect x="2" y="8" width="3.5" height="8" rx="1" />
-          <rect x="18.5" y="8" width="3.5" height="8" rx="1" />
-        </svg>
-      );
-    case "calendar":
-      return (
-        <svg {...common}>
-          <rect x="3" y="4" width="18" height="17" rx="2" />
-          <line x1="16" y1="2" x2="16" y2="6" />
-          <line x1="8" y1="2" x2="8" y2="6" />
-          <line x1="3" y1="10" x2="21" y2="10" />
-          <path d="M9 15.5l2 2 4-4.5" />
         </svg>
       );
   }
@@ -146,76 +98,6 @@ export const CATEGORIAS: CategoryInfo[] = [
       "Recordatorios configurables antes de la sesión",
     ],
   },
-  {
-    icon: "pulse",
-    title: "Consultorio médico",
-    summary:
-      "Tus pacientes agendan consulta con el doctor que prefieren. Recordatorios automáticos para bajar las inasistencias.",
-    details:
-      "Tus pacientes agendan consulta con el doctor o la doctora que prefieren, o el sistema asigna a quien esté disponible más pronto. Los recordatorios automáticos ayudan a reducir las inasistencias, y cada consulta sin cita previa queda registrada igual que una reserva en línea.",
-    features: [
-      "Vocabulario médico: doctor/a, paciente, consulta",
-      "Consultas sin cita para casos urgentes",
-      "Historial de inasistencias por paciente",
-      "Recordatorios antes de cada cita",
-    ],
-  },
-  {
-    icon: "paw",
-    title: "Veterinaria",
-    summary:
-      "Agenda consultas y vacunas por veterinario. Historial de cada mascota y su dueño, siempre a la mano.",
-    details:
-      "Agenda consultas, vacunas y controles por veterinario. El historial de cada cliente queda registrado y visible para cualquier veterinario del equipo antes de confirmar otra cita, sin importar quién atendió la vez anterior.",
-    features: [
-      "Historial compartido entre todo el equipo",
-      "Consultas sin cita para urgencias",
-      "Servicios con precio y duración propios",
-      "Reseñas de dueños de mascotas",
-    ],
-  },
-  {
-    icon: "wrench",
-    title: "Taller",
-    summary:
-      "Recibe citas para mantenimiento y reparaciones por técnico. Controla tiempos de servicio y evita la fila en el mostrador.",
-    details:
-      "Recibe vehículos para mantenimiento o reparación con cita previa o por orden de llegada, asignando al técnico disponible. Controla cuánto dura cada servicio y lleva el registro de qué se cobró y cómo.",
-    features: [
-      "Duración configurable por tipo de trabajo",
-      "Asignación automática al técnico más disponible",
-      "Registro de pagos en efectivo o tarjeta",
-      "Historial de clientes recurrentes",
-    ],
-  },
-  {
-    icon: "dumbbell",
-    title: "Gimnasio",
-    summary:
-      "Agenda clases y sesiones personalizadas por entrenador. Tus clientes reservan su cupo desde el celular.",
-    details:
-      "Agenda clases grupales o sesiones personalizadas con cada entrenador. Tus clientes reservan su cupo desde el celular, sin llamadas ni mensajes manuales, y tú ves el desempeño de cada entrenador en un solo reporte.",
-    features: [
-      "Reserva de cupo por entrenador o clase",
-      "Balanceo de carga entre entrenadores",
-      "Reseñas después de cada sesión",
-      "Reportes de asistencia y desempeño",
-    ],
-  },
-  {
-    icon: "calendar",
-    title: "Y cualquier negocio con citas",
-    summary:
-      "¿Tu negocio no está en la lista? Si trabajas con citas y un equipo, Turnify se adapta a tu operación.",
-    details:
-      "Turnify no está atado a un solo rubro: si tu negocio agenda citas con un equipo de personas, la plataforma se adapta a tu operación sin necesitar una versión especial ni desarrollo a la medida.",
-    features: [
-      "Vocabulario configurable para tu tipo de negocio",
-      "Servicios y horarios totalmente personalizables",
-      "Mismo panel para cualquier tipo de cita",
-      "Listo para crecer a varias sucursales",
-    ],
-  },
 ];
 
 export default function CategoryShowcase() {
@@ -232,7 +114,7 @@ export default function CategoryShowcase() {
 
   return (
     <>
-      <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-10 grid gap-6 sm:grid-cols-3">
         {CATEGORIAS.map((c) => (
           <button
             key={c.title}

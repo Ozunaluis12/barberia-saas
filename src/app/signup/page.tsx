@@ -45,7 +45,7 @@ export default async function SignupPage({
             <label className="text-sm text-cream/70">Tipo de negocio</label>
             <select
               name="category"
-              defaultValue="OTHER"
+              defaultValue="BARBERSHOP"
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             >
               {CATEGORY_OPTIONS.map((c) => (

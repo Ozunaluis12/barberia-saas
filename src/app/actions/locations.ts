@@ -23,10 +23,10 @@ export async function createLocation(formData: FormData) {
   const session = await requireOwner();
   const name = String(formData.get("name") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
-  const categoryInput = String(formData.get("category") ?? "OTHER");
+  const categoryInput = String(formData.get("category") ?? "BARBERSHOP");
   const category = (BUSINESS_CATEGORIES as readonly string[]).includes(categoryInput)
     ? categoryInput
-    : "OTHER";
+    : "BARBERSHOP";
 
   if (!name) redirect("/dashboard/locations?error=NOMBRE_REQUERIDO");
 

@@ -28,7 +28,7 @@ model Business {
   organization            Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name                    String
   slug                    String   @unique
-  category                String   @default("OTHER") // BARBERSHOP, HAIR_SALON, SPA, MEDICAL_CLINIC, VETERINARY, WORKSHOP, GYM, OTHER
+  category                String   @default("BARBERSHOP") // BARBERSHOP, HAIR_SALON, SPA
   phone                   String?
   address                 String?
   plan                    String   @default("GRATIS") // GRATIS, PRO

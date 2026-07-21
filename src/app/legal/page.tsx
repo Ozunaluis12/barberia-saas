@@ -25,8 +25,8 @@ export default function LegalPage() {
         <section className="mt-8 space-y-3 text-sm leading-relaxed text-cream/80">
           <h2 className="text-xl font-semibold text-cream">1. Qué es Turnify</h2>
           <p>
-            Turnify es una plataforma para que negocios de servicios (barberías, salones, spas,
-            consultorios y similares) administren su agenda: reservas en línea, personal,
+            Turnify es una plataforma para que negocios de servicios (barberías, salones de
+            belleza y spas) administren su agenda: reservas en línea, personal,
             servicios, clientes y reportes. Quien crea una cuenta ("el negocio") es responsable de
             la información que carga y de cómo la usa frente a sus propios clientes.
           </p>

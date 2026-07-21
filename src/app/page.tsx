@@ -35,7 +35,7 @@ const BENEFICIOS = [
     icon: "⚙",
     title: "Se adapta al vocabulario de tu rubro",
     detail:
-      "Barbero, estilista, doctor/a, veterinario/a, entrenador/a, técnico... el panel y la reserva usan el término correcto para tu tipo de negocio.",
+      "Barbero, estilista o especialista... el panel y la reserva usan el término correcto según seas barbería, salón de belleza o spa.",
   },
   {
     icon: "⚑",
@@ -48,7 +48,7 @@ const BENEFICIOS = [
 const STATS = [
   { value: "0%", label: "de comisión por venta" },
   { value: "24/7", label: "reservas en línea" },
-  { value: "8+", label: "tipos de negocio" },
+  { value: "3", label: "rubros especializados" },
   { value: "1", label: "panel para todo tu equipo" },
 ];
 
@@ -120,10 +120,10 @@ export default function HomePage() {
       <section className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-2">
         <div>
           <p className="inline-block rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-gold">
-            Agenda de citas para negocios de servicios
+            Agenda de citas para barberías, salones y spas
           </p>
           <h1 className="mt-5 text-4xl font-bold leading-tight sm:text-5xl">
-            El software de citas para tu negocio,{" "}
+            El software de citas para tu barbería, salón o spa,{" "}
             <span className="text-gold">sin comisiones que te roben tus ganancias</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-cream/80">
@@ -250,7 +250,7 @@ export default function HomePage() {
                   </div>
                   <div className="flex justify-between rounded bg-ink px-2 py-1.5">
                     <span>11:00 · Rafael G.</span>
-                    <span className="text-cream/50">Consulta general</span>
+                    <span className="text-cream/50">Corte y peinado</span>
                   </div>
                 </div>
               </BrowserFrame>
@@ -282,7 +282,7 @@ export default function HomePage() {
                   </div>
                   <div className="rounded-md border border-white/10 bg-ink p-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-medium">Rafael G. · Consulta general</span>
+                      <span className="font-medium">Rafael G. · Corte y peinado</span>
                       <StatusPill tone="green">Pagado</StatusPill>
                     </div>
                     <p className="mt-1 text-cream/50">Hoy 11:00 · Confirmada</p>
@@ -317,7 +317,7 @@ export default function HomePage() {
                     <p className="mt-1 text-cream/70">
                       &ldquo;Muy claro el recordatorio, no se me olvidó la cita.&rdquo;
                     </p>
-                    <p className="mt-1 text-cream/40">Ana L. · Consulta general</p>
+                    <p className="mt-1 text-cream/40">Ana L. · Corte y peinado</p>
                   </div>
                 </div>
               </BrowserFrame>
@@ -340,7 +340,7 @@ export default function HomePage() {
       <section className="border-t border-white/10 bg-charcoal/60">
         <div className="mx-auto max-w-6xl px-6 py-16">
           <h2 className="text-center text-3xl font-bold">
-            Un software para diferentes tipos de negocio
+            Hecho para barberías, salones de belleza y spas
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-cream/70">
             El mismo panel, el mismo flujo de reserva — adaptado a cómo trabaja cada rubro. Haz
@@ -451,8 +451,8 @@ export default function HomePage() {
 
       <footer className="border-t border-white/10 py-8 text-center text-sm text-cream/50">
         <p>
-          Turnify — hecho para negocios de servicios que quieren crecer sin que la plataforma se
-          quede con sus ganancias.
+          Turnify — hecho para barberías, salones de belleza y spas que quieren crecer sin que la
+          plataforma se quede con sus ganancias.
         </p>
         <Link href="/legal" className="mt-2 inline-block text-gold hover:underline">
           Términos y privacidad

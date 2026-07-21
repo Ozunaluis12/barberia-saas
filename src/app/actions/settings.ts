@@ -10,10 +10,10 @@ export async function updateBusinessSettings(formData: FormData) {
   const phone = String(formData.get("phone") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
   const cancellationNoticeHours = Math.max(0, Number(formData.get("cancellationNoticeHours") ?? 3));
-  const categoryInput = String(formData.get("category") ?? "OTHER");
+  const categoryInput = String(formData.get("category") ?? "BARBERSHOP");
   const category = (BUSINESS_CATEGORIES as readonly string[]).includes(categoryInput)
     ? categoryInput
-    : "OTHER";
+    : "BARBERSHOP";
   const reminderChannelInput = String(formData.get("reminderChannel") ?? "NONE");
   const reminderChannel = ["NONE", "EMAIL", "SMS", "WHATSAPP"].includes(reminderChannelInput)
     ? reminderChannelInput

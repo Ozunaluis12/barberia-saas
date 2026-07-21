@@ -25,10 +25,10 @@ export async function signupAction(formData: FormData) {
   const ownerName = String(formData.get("ownerName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const categoryInput = String(formData.get("category") ?? "OTHER");
+  const categoryInput = String(formData.get("category") ?? "BARBERSHOP");
   const category = (BUSINESS_CATEGORIES as readonly string[]).includes(categoryInput)
     ? categoryInput
-    : "OTHER";
+    : "BARBERSHOP";
 
   if (!businessName || !ownerName || !email || password.length < 6) {
     redirect("/signup?error=DATOS_INVALIDOS");

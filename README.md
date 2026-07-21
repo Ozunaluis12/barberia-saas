@@ -1,10 +1,13 @@
 # Turnify
 
-SaaS de agenda de citas para cualquier negocio con equipo: barberías, salones de
-belleza, spas, consultorios médicos, veterinarias, talleres, gimnasios y más. Los
-clientes reservan online eligiendo especialista (o dejando que el sistema asigne
-al más disponible) y el dueño administra personal, servicios, citas sin cita
-previa, pagos, reseñas y reportes desde un solo panel.
+SaaS de agenda de citas para barberías, salones de belleza y spas. Los clientes
+reservan online eligiendo especialista (o dejando que el sistema asigne al más
+disponible) y el dueño administra personal, servicios, citas sin cita previa,
+pagos, reseñas y reportes desde un solo panel.
+
+El modelo de datos es genérico (soporta cualquier rubro con equipo y citas),
+pero por ahora el producto solo se ofrece y se prueba para estas tres
+categorías — el resto se dejó fuera hasta que estén completas de verdad.
 
 ## Por qué existe
 
@@ -15,9 +18,9 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **El cliente elige a su especialista**, o el sistema asigna automáticamente al
   disponible con menos carga ese día (balanceo de citas entre el equipo).
 - **Citas sin cita previa y online en el mismo calendario**, sin choques de horario.
-- **Vocabulario adaptado al rubro** — barbero, estilista, doctor/a, veterinario/a,
-  entrenador/a, técnico... el panel y la reserva usan el término correcto según
-  el tipo de negocio.
+- **Vocabulario adaptado al rubro** — barbero, estilista o especialista: el
+  panel y la reserva usan el término correcto según seas barbería, salón de
+  belleza o spa.
 - **Comisión de cada miembro del equipo configurable** (u opcional, si el
   negocio no paga por comisión) y calculada automáticamente.
 - **Reseñas de clientes** después de cada cita completada.
@@ -90,7 +93,7 @@ src/
     notifications.ts        punto de extensión para recordatorios (sin proveedor aún)
 prisma/
   schema.prisma             modelo de datos
-  seed.ts                   datos de ejemplo (un negocio por cada categoría)
+  seed.ts                   datos de ejemplo (barbería, salón y spa)
 ```
 
 ## Cómo correrlo en local
@@ -123,19 +126,14 @@ prisma/
    ```
 
    La app queda disponible en `http://localhost:3000`. El seed crea un
-   negocio de ejemplo por cada categoría, con su propia reserva pública y su
-   propio login al panel:
+   negocio de ejemplo por cada categoría soportada, con su propia reserva
+   pública y su propio login al panel:
 
    | Categoría          | Reserva pública           | Login del panel        | Contraseña       |
    | ------------------ | -------------------------- | ----------------------- | ---------------- |
    | Barbería            | `/book/demo-barberia`      | `barberia@demo.com`     | `Barberia123`     |
    | Salón de belleza    | `/book/demo-salon`         | `salon@demo.com`        | `Salon123`        |
    | Spa                 | `/book/demo-spa`           | `spa@demo.com`          | `Spa123`          |
-   | Consultorio médico  | `/book/demo-clinica`       | `clinica@demo.com`      | `Clinica123`      |
-   | Veterinaria         | `/book/demo-veterinaria`   | `veterinaria@demo.com`  | `Veterinaria123`  |
-   | Taller              | `/book/demo-taller`        | `taller@demo.com`       | `Taller123`       |
-   | Gimnasio            | `/book/demo-gimnasio`      | `gimnasio@demo.com`     | `Gimnasio123`     |
-   | Otro / genérico     | `/book/demo-otro`          | `otro@demo.com`         | `Otro123`         |
 
 ## Scripts disponibles
 
