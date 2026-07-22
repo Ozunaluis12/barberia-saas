@@ -67,6 +67,8 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **Panel de analítica**: horas pico, servicios/productos más vendidos y tasa
   de clientes recurrentes.
 - **Reporte de caja en PDF** descargable, además del CSV existente.
+- **Recibo en PDF** por cita pagada o venta de producto, descargable desde
+  Citas y Catálogo — es un comprobante interno, no una factura electrónica.
 - **Instalable como app** (PWA) desde el navegador del celular.
 
 ## Stack
@@ -129,6 +131,18 @@ pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive e
   configuradas; `src/lib/notifications.ts` tiene el punto de extensión listo
   para SMS y correo, pero esos dos canales todavía solo registran el mensaje
   en el log.
+- **Factura electrónica legal** — el recibo en PDF (por cita o venta de
+  producto) es solo un comprobante interno. Facturación electrónica de
+  verdad (DIAN en Colombia, CFDI/SAT en México, etc.) requiere elegir un
+  proveedor autorizado por país y no está conectada todavía.
+- **Cobro de la suscripción a los dueños de negocio** — `Business.plan`
+  (`GRATIS`/`PRO`) existe pero no está conectado a ninguna pasarela de pago;
+  hoy no hay forma de cobrarle a un negocio por usar Turnify ni de que el
+  plan bloquee o desbloquee funciones.
+- **Descuentos/cupones**, **reembolsos** (el valor `REFUNDED` existe en
+  `Appointment.paymentStatus` pero ninguna acción lo usa todavía), **captcha o
+  rate limiting** en el registro y la reserva pública, y **tiempo de colchón**
+  entre citas consecutivas del mismo especialista tampoco están construidos.
 
 ## Estructura del proyecto
 

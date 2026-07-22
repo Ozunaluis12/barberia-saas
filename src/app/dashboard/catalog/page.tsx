@@ -20,10 +20,18 @@ export default async function CatalogPage({
   const session = await requirePermission("catalog");
   const { error } = await searchParams;
 
-  const products = await prisma.product.findMany({
-    where: { businessId: session.businessId },
-    orderBy: { createdAt: "asc" },
-  });
+  const [products, recentSales] = await Promise.all([
+    prisma.product.findMany({
+      where: { businessId: session.businessId },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.productSale.findMany({
+      where: { businessId: session.businessId },
+      include: { product: true },
+      orderBy: { createdAt: "desc" },
+      take: 15,
+    }),
+  ]);
 
   return (
     <div>
@@ -119,6 +127,48 @@ export default async function CatalogPage({
               <tr>
                 <td className="px-4 py-6 text-center text-cream/40" colSpan={5}>
                   Aún no has agregado productos.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <h2 className="mt-10 text-lg font-semibold">Ventas recientes</h2>
+      <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
+        <table className="w-full text-sm">
+          <thead className="bg-charcoal text-left text-cream/60">
+            <tr>
+              <th className="px-4 py-2">Fecha</th>
+              <th className="px-4 py-2">Producto</th>
+              <th className="px-4 py-2">Cantidad</th>
+              <th className="px-4 py-2">Total</th>
+              <th className="px-4 py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {recentSales.map((s) => (
+              <tr key={s.id} className="border-t border-white/5">
+                <td className="px-4 py-2 text-cream/70">
+                  {s.createdAt.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                </td>
+                <td className="px-4 py-2">{s.product.name}</td>
+                <td className="px-4 py-2 text-cream/70">{s.quantity}</td>
+                <td className="px-4 py-2 text-cream/70">${s.total.toFixed(2)}</td>
+                <td className="px-4 py-2 text-right">
+                  <a
+                    href={`/api/receipt/product-sale/${s.id}`}
+                    className="text-xs text-gold hover:underline"
+                  >
+                    Recibo
+                  </a>
+                </td>
+              </tr>
+            ))}
+            {recentSales.length === 0 && (
+              <tr>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={5}>
+                  Aún no hay ventas registradas.
                 </td>
               </tr>
             )}
