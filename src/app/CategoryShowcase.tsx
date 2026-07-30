@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Reveal from "./Reveal";
 
 const WHATSAPP_NUMBER = "573004177979";
 function waLink(message: string) {
@@ -47,12 +47,17 @@ function CategoryIcon({ name, className }: { name: IconName; className?: string 
   }
 }
 
+export type CategoryFeature = {
+  title: string;
+  detail: string;
+};
+
 export type CategoryInfo = {
   icon: IconName;
   title: string;
   summary: string;
   details: string;
-  features: string[];
+  features: CategoryFeature[];
 };
 
 export const CATEGORIAS: CategoryInfo[] = [
@@ -62,12 +67,28 @@ export const CATEGORIAS: CategoryInfo[] = [
     summary:
       "Tus clientes reservan su corte online y eligen a su barbero de confianza. Controla comisiones y walk-ins desde el mismo panel.",
     details:
-      "Cada barbero tiene su propio horario y comisión configurada. Tus clientes reservan online eligiendo con quién cortarse — o dejan que el sistema asigne al barbero disponible más pronto, repartiendo la carga de forma justa. Los walk-ins y las reservas online conviven en la misma agenda, sin choques de horario.",
+      "Los walk-ins y las reservas online conviven en la misma agenda, sin choques de horario. El cliente elige a su barbero de confianza o deja que el sistema asigne automáticamente a quien tenga menos carga ese día, distribuyendo el trabajo de forma equitativa entre todo el equipo.",
     features: [
-      "Comisión por barbero, calculada automáticamente",
-      "Walk-ins y citas online en el mismo calendario",
-      "Historial de clientes con cancelaciones tardías",
-      "Reseñas después de cada corte",
+      {
+        title: "Comisión calculada por barbero",
+        detail:
+          "El sistema calcula automáticamente lo que corresponde a cada barbero según sus cortes realizados, sin planillas manuales.",
+      },
+      {
+        title: "Control de cancelaciones y ausencias",
+        detail:
+          "Registra automáticamente al cliente que cancela tarde o no se presenta, visible para todo el equipo antes de confirmarle otra cita.",
+      },
+      {
+        title: "Reseña después de cada corte",
+        detail:
+          "El cliente califica su experiencia al finalizar, construyendo la reputación de cada barbero dentro de la plataforma.",
+      },
+      {
+        title: "Un panel para todo el equipo",
+        detail:
+          "Cada barbero ve su agenda del día al ingresar; tú ves el negocio completo desde el mismo lugar.",
+      },
     ],
   },
   {
@@ -76,12 +97,28 @@ export const CATEGORIAS: CategoryInfo[] = [
     summary:
       "Agenda cortes, color y tratamientos con cada estilista. Tus clientas ven horarios reales y reservan en segundos.",
     details:
-      "Organiza a tu equipo de estilistas por servicio y disponibilidad. Cada clienta ve en tiempo real quién está libre y a qué hora, y puede elegir su estilista de confianza para color, corte o tratamientos, o dejar que el sistema le asigne a la persona disponible más pronto.",
+      "Cada clienta ve en tiempo real qué estilista está disponible y a qué hora, y puede elegir a su especialista de confianza para color, corte o tratamientos — o dejar que el sistema le asigne a la persona disponible más pronto.",
     features: [
-      "Servicios con duración y precio configurables",
-      "Cada estilista con su propio horario",
-      "Reportes de desempeño por persona",
-      "Reseñas visibles para nuevas clientas",
+      {
+        title: "Servicios con duración y precio propios",
+        detail:
+          "Cada tratamiento define su tiempo y tarifa, para que el calendario nunca subestime cuánto ocupa una cita.",
+      },
+      {
+        title: "Horario independiente por estilista",
+        detail:
+          "Cada estilista administra su propia disponibilidad sin afectar la agenda del resto del equipo.",
+      },
+      {
+        title: "Reporte de desempeño por estilista",
+        detail:
+          "Ingresos, citas atendidas y reseñas de cada persona, visibles para ti en tiempo real.",
+      },
+      {
+        title: "Reseñas visibles antes de reservar",
+        detail:
+          "Nuevas clientas ven la calificación de cada estilista antes de elegir con quién agendar.",
+      },
     ],
   },
   {
@@ -90,12 +127,28 @@ export const CATEGORIAS: CategoryInfo[] = [
     summary:
       "Organiza masajes, faciales y tratamientos por especialista, sin choques de horario ni llamadas de ida y vuelta.",
     details:
-      "Coordina masajes, faciales y tratamientos por especialista sin que se crucen los horarios. Ideal para spas con varios terapeutas atendiendo en paralelo, con duraciones distintas para cada tipo de sesión.",
+      "Coordina masajes, faciales y tratamientos por especialista sin que se cruce ningún horario, incluso con varios terapeutas atendiendo sesiones de distinta duración en paralelo.",
     features: [
-      "Duración distinta por tipo de tratamiento",
-      "Balanceo automático de carga entre especialistas",
-      "Pagos en efectivo o tarjeta registrados por cita",
-      "Recordatorios configurables antes de la sesión",
+      {
+        title: "Duración configurable por tratamiento",
+        detail:
+          "Cada tipo de sesión define su propio tiempo, evitando que una cita larga choque con la siguiente.",
+      },
+      {
+        title: "Distribución equilibrada de la carga",
+        detail:
+          "El sistema asigna nuevas reservas al terapeuta disponible con menos carga, repartiendo el trabajo de forma justa.",
+      },
+      {
+        title: "Registro de pagos por cita",
+        detail:
+          "Cada sesión queda marcada como pagada en efectivo o tarjeta, sin control aparte.",
+      },
+      {
+        title: "Recordatorios antes de la sesión",
+        detail:
+          "Reduce ausencias avisando al cliente con anticipación configurable.",
+      },
     ],
   },
 ];
@@ -115,33 +168,34 @@ export default function CategoryShowcase() {
   return (
     <>
       <div className="mt-10 grid gap-6 sm:grid-cols-3">
-        {CATEGORIAS.map((c) => (
-          <button
-            key={c.title}
-            onClick={() => setSelected(c)}
-            className="rounded-lg border border-white/10 bg-ink p-6 text-left transition hover:border-gold"
-          >
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold/15 text-gold">
-              <CategoryIcon name={c.icon} className="h-6 w-6" />
-            </span>
-            <h3 className="mt-4 font-semibold">{c.title}</h3>
-            <p className="mt-2 text-sm text-cream/70">{c.summary}</p>
-            <span className="mt-3 inline-block text-xs font-semibold text-gold">
-              Ver más →
-            </span>
-          </button>
+        {CATEGORIAS.map((c, i) => (
+          <Reveal key={c.title} delay={i * 120}>
+            <button
+              onClick={() => setSelected(c)}
+              className="group h-full w-full rounded-lg border border-white/10 bg-ink p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:border-gold hover:shadow-xl hover:shadow-gold/10"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gold/15 text-gold transition-all duration-300 group-hover:scale-110 group-hover:bg-gold/25">
+                <CategoryIcon name={c.icon} className="h-6 w-6" />
+              </span>
+              <h3 className="mt-4 font-semibold">{c.title}</h3>
+              <p className="mt-2 text-sm text-cream/70">{c.summary}</p>
+              <span className="mt-3 inline-block text-xs font-semibold text-gold transition-transform duration-300 group-hover:translate-x-1">
+                Ver más →
+              </span>
+            </button>
+          </Reveal>
         ))}
       </div>
 
       {selected && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 animate-fadeIn"
           onClick={() => setSelected(null)}
         >
           <div
             role="dialog"
             aria-modal="true"
-            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border border-white/10 bg-charcoal p-6 shadow-2xl"
+            className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border border-white/10 bg-charcoal p-6 shadow-2xl animate-modalIn"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
@@ -162,11 +216,14 @@ export default function CategoryShowcase() {
 
             <p className="mt-4 text-sm text-cream/80">{selected.details}</p>
 
-            <ul className="mt-4 space-y-2 text-sm text-cream/80">
+            <ul className="mt-4 space-y-3 text-sm">
               {selected.features.map((f) => (
-                <li key={f} className="flex gap-2">
-                  <span className="text-gold">✓</span>
-                  {f}
+                <li key={f.title} className="flex gap-2">
+                  <span className="mt-0.5 text-gold">✓</span>
+                  <span>
+                    <span className="font-medium text-cream">{f.title}</span>
+                    <span className="block text-cream/60">{f.detail}</span>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -178,16 +235,10 @@ export default function CategoryShowcase() {
                 )}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-gold/90"
+                className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink transition-all duration-300 hover:scale-105 hover:bg-gold/90"
               >
                 Programar demostración por WhatsApp
               </a>
-              <Link
-                href="/signup"
-                className="rounded-md border border-white/20 px-4 py-2 text-sm font-semibold hover:border-gold hover:text-gold"
-              >
-                Crear mi negocio gratis
-              </Link>
             </div>
           </div>
         </div>
