@@ -14,7 +14,7 @@ export type ReminderPayload = {
 export type ReminderResult = { sent: boolean; reason?: string };
 
 /** Deja solo dígitos con un "+" adelante; devuelve null si no parece un teléfono real. */
-function toE164(phone: string): string | null {
+export function toE164(phone: string): string | null {
   const digits = phone.replace(/[^\d]/g, "");
   if (digits.length < 8) return null;
   return `+${digits}`;

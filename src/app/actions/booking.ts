@@ -34,6 +34,7 @@ export type CreateBookingResult =
       startTime: string;
       appointmentId: string;
       recurrence?: { created: number; requested: number; skippedDays: string[] };
+      pendingPayment?: boolean;
     }
   | { ok: false; error: string };
 
@@ -88,6 +89,10 @@ export async function createBooking(params: {
       const recurrenceGroupId =
         params.recurrence && params.recurrence.occurrences > 1 ? randomUUID() : null;
 
+      // Solo la primera cita de una serie exige pago anticipado — cobrar cada
+      // repetición por adelantado es un problema de cobro recurrente aparte.
+      const requiresAdvancePayment = business.advancePaymentEnabled;
+
       const appointment = await tx.appointment.create({
         data: {
           businessId: business.id,
@@ -98,11 +103,14 @@ export async function createBooking(params: {
           clientPhone: params.clientPhone.trim(),
           startTime,
           endTime,
-          status: "CONFIRMED",
+          status: requiresAdvancePayment ? "PENDING_PAYMENT" : "CONFIRMED",
           source: "ONLINE",
           anyStaffRequested: params.staffId === null,
           priceCharged: service.price,
           recurrenceGroupId,
+          ...(requiresAdvancePayment
+            ? { paymentMethod: "TRANSFER", paymentStatus: "AWAITING_VERIFICATION" }
+            : {}),
         },
       });
 
@@ -154,6 +162,7 @@ export async function createBooking(params: {
         startTime: startTime.toISOString(),
         appointmentId: appointment.id,
         ...(recurrenceGroupId ? { recurrence } : {}),
+        ...(requiresAdvancePayment ? { pendingPayment: true } : {}),
       };
     },
     { timeout: 15000, maxWait: 15000 }

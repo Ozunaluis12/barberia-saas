@@ -35,7 +35,12 @@ model Business {
   cancellationNoticeHours Int      @default(3)
   reminderChannel         String   @default("NONE") // NONE, EMAIL, SMS, WHATSAPP
   reminderHoursBefore     Int      @default(24)
-  onlinePaymentsEnabled   Boolean  @default(false) // reservado para cuando se conecte un proveedor de pagos real
+  advancePaymentEnabled          Boolean  @default(false) // exige pago anticipado (transferencia/QR/Bre-B) para reservar en línea
+  advancePaymentAmount           Float?   // null = cobra el precio completo del servicio; número = seña fija
+  advancePaymentExpirationHours  Int      @default(2) // horas para confirmar el pago antes de liberar el horario
+  paymentQrUrl                   String?
+  paymentBrebKey                 String?
+  paymentAccountInfo             String?  // texto libre: banco, tipo de cuenta, número, titular
   loyaltyEnabled          Boolean  @default(false)
   loyaltyPointsPerVisit   Int      @default(1)
   loyaltyRewardThreshold  Int      @default(10)
@@ -217,13 +222,13 @@ model Appointment {
   clientPhone       String
   startTime         DateTime
   endTime           DateTime
-  status            String      @default("CONFIRMED") // CONFIRMED, CANCELLED, COMPLETED, NO_SHOW
+  status            String      @default("CONFIRMED") // CONFIRMED, CANCELLED, COMPLETED, NO_SHOW, PENDING_PAYMENT
   source            String      @default("ONLINE") // ONLINE, WALK_IN
   anyStaffRequested Boolean     @default(false)
   lateCancellation  Boolean     @default(false)
   priceCharged      Float? // snapshot del precio del servicio al momento de la reserva
-  paymentMethod     String      @default("UNPAID") // UNPAID, CASH, CARD_IN_PERSON, ONLINE
-  paymentStatus     String      @default("PENDING") // PENDING, PAID, REFUNDED
+  paymentMethod     String      @default("UNPAID") // UNPAID, CASH, CARD_IN_PERSON, ONLINE, TRANSFER
+  paymentStatus     String      @default("PENDING") // PENDING, PAID, REFUNDED, AWAITING_VERIFICATION
   paidAt            DateTime? // cuándo se marcó como pagada (para acotar sesiones de caja)
   reminderSentAt    DateTime? // evita mandar el mismo recordatorio dos veces
   recurrenceGroupId String? // comparte id entre todas las citas de una misma serie recurrente; null = cita suelta

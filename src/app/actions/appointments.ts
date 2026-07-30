@@ -119,6 +119,24 @@ export async function updateAppointmentStatus(appointmentId: string, status: str
   revalidatePath("/dashboard/reports");
 }
 
+/** El negocio confirma que recibió el comprobante de un pago anticipado (transferencia/QR/Bre-B). */
+export async function confirmAdvancePayment(appointmentId: string) {
+  const session = await requireSession();
+  const appt = await prisma.appointment.findFirst({
+    where: { id: appointmentId, businessId: session.businessId, status: "PENDING_PAYMENT" },
+  });
+  if (!appt) return;
+
+  await prisma.appointment.update({
+    where: { id: appointmentId },
+    data: { status: "CONFIRMED", paymentStatus: "PAID", paidAt: new Date() },
+  });
+
+  revalidatePath("/dashboard/appointments");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/reports");
+}
+
 export async function markAppointmentPaid(appointmentId: string, paymentMethod: "CASH" | "CARD_IN_PERSON") {
   const session = await requireSession();
   const appt = await prisma.appointment.findFirst({

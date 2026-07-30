@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { fetchSlots, createBooking, joinWaitlist } from "@/app/actions/booking";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import Avatar from "@/components/Avatar";
 
 type Service = { id: string; name: string; durationMinutes: number; price: number };
@@ -13,6 +14,42 @@ type Vocab = {
   anyStaffLabel: string;
   anyStaffDescription: string;
 };
+type AdvancePayment = {
+  enabled: boolean;
+  amount: number | null; // null = cobra el precio completo del servicio
+  qrUrl: string | null;
+  brebKey: string | null;
+  accountInfo: string | null;
+  expirationHours: number;
+  businessPhone: string | null;
+  businessName: string;
+};
+
+function PaymentInstructions({ advancePayment, amount }: { advancePayment: AdvancePayment; amount: number }) {
+  return (
+    <div className="space-y-3 rounded-md border border-gold/40 bg-ink p-4">
+      <p className="text-sm font-semibold text-gold">
+        Paga ${amount.toFixed(2)} por adelantado para reservar
+      </p>
+      {advancePayment.qrUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={advancePayment.qrUrl} alt="QR de pago" className="mx-auto h-40 w-40 object-contain" />
+      )}
+      {advancePayment.brebKey && (
+        <p className="text-sm text-cream/80">
+          Llave Bre-B: <span className="font-semibold text-cream">{advancePayment.brebKey}</span>
+        </p>
+      )}
+      {advancePayment.accountInfo && (
+        <p className="whitespace-pre-line text-sm text-cream/80">{advancePayment.accountInfo}</p>
+      )}
+      <p className="text-xs text-cream/50">
+        Si no confirmamos tu pago dentro de {advancePayment.expirationHours}{" "}
+        {advancePayment.expirationHours === 1 ? "hora" : "horas"}, el horario podría liberarse.
+      </p>
+    </div>
+  );
+}
 
 function nextDays(count: number): { value: string; label: string }[] {
   const days = [];
@@ -32,12 +69,14 @@ export default function BookingFlow({
   staff,
   cancellationNoticeHours,
   vocab,
+  advancePayment,
 }: {
   businessSlug: string;
   services: Service[];
   staff: StaffMember[];
   cancellationNoticeHours: number;
   vocab: Vocab;
+  advancePayment: AdvancePayment;
 }) {
   const [step, setStep] = useState(1);
   const [serviceId, setServiceId] = useState<string | null>(null);
@@ -60,6 +99,7 @@ export default function BookingFlow({
         startTime: string;
         appointmentId: string;
         recurrence?: { created: number; requested: number; skippedDays: string[] };
+        pendingPayment?: boolean;
       }
     | { ok: false; error: string }
     | null
@@ -67,6 +107,7 @@ export default function BookingFlow({
 
   const days = useMemo(() => nextDays(14), []);
   const selectedService = services.find((s) => s.id === serviceId) ?? null;
+  const paymentAmount = advancePayment.amount ?? selectedService?.price ?? 0;
 
   useEffect(() => {
     if (step !== 3 || !serviceId) return;
@@ -109,9 +150,23 @@ export default function BookingFlow({
 
   if (step === 5 && result?.ok) {
     const date = new Date(result.startTime);
+    const whatsappMessage = `Hola, soy ${clientName}. Reservé ${selectedService?.name ?? "una cita"} en ${advancePayment.businessName} el ${date.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })} a las ${date.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}. Aquí está mi comprobante de pago.`;
+    const whatsappLink = advancePayment.businessPhone
+      ? buildWhatsAppLink(advancePayment.businessPhone, whatsappMessage)
+      : null;
+
     return (
       <div className="rounded-lg border border-gold/40 bg-charcoal p-8 text-center">
-        <h2 className="text-2xl font-bold text-gold">¡Cita confirmada!</h2>
+        {result.pendingPayment ? (
+          <>
+            <h2 className="text-2xl font-bold text-gold">Reserva registrada</h2>
+            <p className="mt-2 text-sm text-cream/70">
+              Falta confirmar tu pago para que tu cita quede agendada del todo.
+            </p>
+          </>
+        ) : (
+          <h2 className="text-2xl font-bold text-gold">¡Cita confirmada!</h2>
+        )}
         <p className="mt-4 text-cream/80">
           Te atenderá <span className="font-semibold text-cream">{result.staffName}</span>
         </p>
@@ -129,6 +184,25 @@ export default function BookingFlow({
               </>
             )}
           </p>
+        )}
+        {result.pendingPayment && (
+          <div className="mx-auto mt-6 max-w-sm text-left">
+            <PaymentInstructions advancePayment={advancePayment} amount={paymentAmount} />
+            {whatsappLink ? (
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 block rounded-md bg-gold px-4 py-2 text-center font-semibold text-ink hover:bg-gold/90"
+              >
+                Ya pagué, enviar comprobante
+              </a>
+            ) : (
+              <p className="mt-3 text-sm text-cream/50">
+                Envía tu comprobante de pago al negocio para que confirme tu cita.
+              </p>
+            )}
+          </div>
         )}
         <div className="mx-auto mt-6 max-w-sm rounded-md border border-white/10 bg-ink p-4 text-sm">
           <p className="text-cream/70">
@@ -351,6 +425,9 @@ export default function BookingFlow({
                 className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
               />
             </div>
+          )}
+          {advancePayment.enabled && (
+            <PaymentInstructions advancePayment={advancePayment} amount={paymentAmount} />
           )}
           {result && !result.ok && (
             <p className="rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">{result.error}</p>

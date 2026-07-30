@@ -85,6 +85,16 @@ export default async function BookPage({
             anyStaffLabel: vocab.anyStaffLabel,
             anyStaffDescription: vocab.anyStaffDescription,
           }}
+          advancePayment={{
+            enabled: business.advancePaymentEnabled,
+            amount: business.advancePaymentAmount,
+            qrUrl: business.paymentQrUrl,
+            brebKey: business.paymentBrebKey,
+            accountInfo: business.paymentAccountInfo,
+            expirationHours: business.advancePaymentExpirationHours,
+            businessPhone: business.phone,
+            businessName: business.name,
+          }}
         />
       </div>
     </main>

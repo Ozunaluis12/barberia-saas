@@ -69,6 +69,11 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **Reporte de caja en PDF** descargable, además del CSV existente.
 - **Recibo en PDF** por cita pagada o venta de producto, descargable desde
   Citas y Catálogo — es un comprobante interno, no una factura electrónica.
+- **Pago anticipado manual sin pasarela**: cada negocio decide si exige pago
+  para reservar en línea (precio completo o una seña fija), muestra su QR,
+  llave Bre-B y cuenta(s), y el cliente envía el comprobante por WhatsApp. El
+  horario se reserva de inmediato como "pago pendiente" y el negocio lo
+  confirma o rechaza desde Citas — si no se confirma a tiempo, se libera solo.
 - **Instalable como app** (PWA) desde el navegador del celular.
 
 ## Stack
@@ -88,9 +93,10 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   sucursales (`Business`). `Client` vive aquí, no en la sucursal, para
   compartirse entre todas las ubicaciones del mismo dueño.
 - **Business** — una sucursal/ubicación: tiene un `category` (rubro), plan
-  (`GRATIS`/`PRO`), política de cancelación, canal de recordatorios, si tiene
-  pagos en línea habilitados, la configuración del programa de fidelidad y el
-  umbral de alerta por diferencia de caja.
+  (`GRATIS`/`PRO`), política de cancelación, canal de recordatorios, la
+  configuración del programa de fidelidad, el umbral de alerta por diferencia
+  de caja y la configuración de pago anticipado (QR, llave Bre-B, cuenta,
+  monto de la seña y horas para expirar).
 - **User** — cuenta con acceso al panel. `role` es `OWNER` o `STAFF`;
   `permissions` (CSV) define qué secciones adicionales puede ver una cuenta
   `STAFF` (`staff`, `catalog`, `reports`, `settings`); `staffId` opcional la
@@ -105,8 +111,10 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **Client** — historial de un cliente dentro de una organización, con
   contador de `strikes`, puntos de fidelidad y si acepta difusión por WhatsApp.
 - **Appointment** — cita, con estado (`CONFIRMED`, `CANCELLED`, `COMPLETED`,
-  `NO_SHOW`), origen (`ONLINE`/`WALK_IN`), método/estado de pago, `paidAt` y
-  `recurrenceGroupId` opcional si pertenece a una serie recurrente.
+  `NO_SHOW`, `PENDING_PAYMENT`), origen (`ONLINE`/`WALK_IN`), método/estado de
+  pago (incluye `TRANSFER`/`AWAITING_VERIFICATION` para el pago anticipado
+  manual), `paidAt` y `recurrenceGroupId` opcional si pertenece a una serie
+  recurrente.
 - **Review** — reseña (1 a 5) que un cliente deja tras una cita completada.
 - **CashSession** — apertura/cierre de caja por empleado o general, con monto
   esperado (calculado, incluye ventas de producto en efectivo), contado, la
@@ -122,9 +130,10 @@ pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive e
 
 ## Funciones que todavía son solo el esqueleto (sin proveedor conectado)
 
-- **Pagos en línea** — el modelo ya tiene `paymentMethod`/`paymentStatus` y hoy
-  se puede marcar una cita como pagada en efectivo o tarjeta desde el panel.
-  Falta conectar un proveedor real (ej. Stripe) para cobrar en línea.
+- **Pagos en línea con pasarela** — no hay ninguna conectada (Stripe, Wompi,
+  MercadoPago, etc.). Lo que sí existe es un pago anticipado **manual**: el
+  negocio muestra su QR/Bre-B/cuenta, el cliente transfiere y manda el
+  comprobante por WhatsApp, y el negocio confirma a mano desde Citas.
 - **Recordatorios y difusión por SMS/correo** — el canal WhatsApp ya envía de
   verdad vía Twilio (recordatorios, lista de espera y difusión masiva) cuando
   `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_FROM` están
@@ -184,6 +193,7 @@ src/
     images.ts               subida de fotos a Cloudinary
     notifications.ts        envío de WhatsApp (Twilio) + punto de extensión para SMS/correo
     waitlist.ts             aviso automático a la lista de espera al liberarse un horario
+    whatsapp.ts             arma enlaces wa.me (comprobante de pago anticipado)
 prisma/
   schema.prisma             modelo de datos
   seed.ts                   datos de ejemplo (barbería, salón y spa)

@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
-import { updateAppointmentStatus, markAppointmentPaid } from "@/app/actions/appointments";
+import { updateAppointmentStatus, markAppointmentPaid, confirmAdvancePayment } from "@/app/actions/appointments";
 import { getVocabulary } from "@/lib/vocabulary";
 import WalkInForm from "./WalkInForm";
 import CopyReviewLinkButton from "./CopyReviewLinkButton";
@@ -10,6 +10,7 @@ const STATUS_LABEL: Record<string, string> = {
   COMPLETED: "Completada",
   CANCELLED: "Cancelada",
   NO_SHOW: "No asistió",
+  PENDING_PAYMENT: "Pago pendiente",
 };
 
 const ERRORS: Record<string, string> = {
@@ -111,6 +112,10 @@ export default async function AppointmentsPage({
                         Recibo
                       </a>
                     </div>
+                  ) : a.status === "PENDING_PAYMENT" ? (
+                    <span className="rounded-full bg-yellow-500/20 px-2 py-1 text-xs text-yellow-400">
+                      Por verificar
+                    </span>
                   ) : (a.status === "CONFIRMED" || a.status === "COMPLETED") ? (
                     <div className="flex gap-2 text-xs">
                       <form action={markAppointmentPaid.bind(null, a.id, "CASH")}>
@@ -125,6 +130,16 @@ export default async function AppointmentsPage({
                   )}
                 </td>
                 <td className="px-4 py-2 text-right">
+                  {a.status === "PENDING_PAYMENT" && (
+                    <div className="flex justify-end gap-2 text-xs">
+                      <form action={confirmAdvancePayment.bind(null, a.id)}>
+                        <button className="text-green-400 hover:underline">Confirmar pago</button>
+                      </form>
+                      <form action={updateAppointmentStatus.bind(null, a.id, "CANCELLED")}>
+                        <button className="text-red-400 hover:underline">Rechazar</button>
+                      </form>
+                    </div>
+                  )}
                   {a.status === "CONFIRMED" && (
                     <div className="flex justify-end gap-2 text-xs">
                       <form action={updateAppointmentStatus.bind(null, a.id, "COMPLETED")}>
