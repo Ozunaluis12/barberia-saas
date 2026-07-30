@@ -8,6 +8,7 @@ import { getAvailableSlots, combineDayAndTime } from "@/lib/availability";
 import { findOrCreateClient, applyClientStrike } from "@/lib/clients";
 import { notifyWaitlistForFreedSlot } from "@/lib/waitlist";
 import { sendWhatsAppMessage } from "@/lib/notifications";
+import { logAudit } from "@/lib/audit";
 
 export type CreateWalkInResult = { ok: true } | { ok: false; error: string };
 
@@ -139,6 +140,8 @@ export async function confirmAdvancePayment(appointmentId: string) {
     `Hola ${appt.clientName}, confirmamos tu pago: tu cita de ${appt.service.name} en ${appt.business.name} el ${appt.startTime.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })} a las ${appt.startTime.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })} quedó agendada. ¡Te esperamos!`
   );
 
+  await logAudit(session, "payment.confirmed", `${appt.clientName} — ${appt.service.name}`);
+
   revalidatePath("/dashboard/appointments");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/reports");
@@ -166,6 +169,8 @@ export async function rejectAdvancePayment(appointmentId: string) {
     staffId: appt.staffId,
     day: appt.startTime.toISOString().slice(0, 10),
   });
+
+  await logAudit(session, "payment.rejected", `${appt.clientName} — ${appt.service.name}`);
 
   revalidatePath("/dashboard/appointments");
   revalidatePath("/dashboard");
@@ -223,6 +228,8 @@ export async function refundAppointmentPayment(appointmentId: string, formData: 
     where: { id: appointmentId },
     data: { paymentStatus: "REFUNDED", refundedAt: new Date(), refundReason: reason },
   });
+
+  await logAudit(session, "payment.refunded", `${appt.clientName}: ${reason}`);
 
   revalidatePath("/dashboard/appointments");
   revalidatePath("/dashboard/reports");

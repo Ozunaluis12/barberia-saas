@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/guard";
 import { sendCashDiscrepancyAlert } from "@/lib/email";
+import { logAudit } from "@/lib/audit";
 
 /**
  * Solo el dueño, o el miembro del roster vinculado a esa caja personal, puede
@@ -41,6 +42,8 @@ export async function openCashSession(formData: FormData) {
       openingAmount,
     },
   });
+
+  await logAudit(session, "cash.opened", `Monto inicial: $${openingAmount.toFixed(2)}`);
 
   revalidatePath("/dashboard/register");
   redirect("/dashboard/register");
@@ -143,6 +146,12 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
       )
     );
   }
+
+  await logAudit(
+    session,
+    "cash.closed",
+    `${staff?.name ?? "Caja general"}: esperado $${expectedAmount.toFixed(2)}, contado $${countedAmount.toFixed(2)}, diferencia $${difference.toFixed(2)}`
+  );
 
   revalidatePath("/dashboard/register");
   redirect("/dashboard/register");

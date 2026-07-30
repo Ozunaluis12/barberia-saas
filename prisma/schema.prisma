@@ -350,3 +350,18 @@ model WaitlistEntry {
 
   @@index([businessId, day])
 }
+
+// Bitácora de acciones sensibles (dinero y accesos) — no instrumenta todo el
+// sistema a propósito, solo lo que de verdad importa auditar.
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  businessId     String?
+  userId         String?
+  userName       String // snapshot: sigue siendo legible si el usuario se borra/desactiva
+  action         String
+  details        String?
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+}

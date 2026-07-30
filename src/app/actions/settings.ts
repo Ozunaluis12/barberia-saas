@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/guard";
 import { BUSINESS_CATEGORIES } from "@/lib/vocabulary";
 import { uploadImage } from "@/lib/images";
+import { logAudit } from "@/lib/audit";
 
 export async function updateBusinessSettings(formData: FormData) {
   const session = await requirePermission("settings");
@@ -68,6 +69,8 @@ export async function updateBusinessSettings(formData: FormData) {
       paymentAccountInfo: paymentAccountInfo || null,
     },
   });
+
+  await logAudit(session, "settings.update");
 
   revalidatePath("/dashboard/settings");
 }

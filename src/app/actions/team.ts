@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireOwner } from "@/lib/guard";
 import { hashPassword } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 
 const GRANTABLE = ["staff", "catalog", "reports", "settings"];
 
@@ -61,6 +62,8 @@ export async function createTeamMember(formData: FormData) {
     },
   });
 
+  await logAudit(session, "team.created", `Cuenta creada: ${name} (${email}), permisos: ${permissions || "ninguno"}`);
+
   revalidatePath("/dashboard/team");
   redirect("/dashboard/team");
 }
@@ -81,6 +84,9 @@ export async function updateTeamMemberPermissions(userId: string, formData: Form
   const permissions = parsePermissions(formData);
   const staffId = await resolveStaffLink(formData, session.businessId, userId);
   await prisma.user.update({ where: { id: userId }, data: { permissions, staffId } });
+
+  await logAudit(session, "team.permissions_changed", `${user!.name}: permisos ahora "${permissions || "ninguno"}"`);
+
   revalidatePath("/dashboard/team");
   redirect("/dashboard/team");
 }
