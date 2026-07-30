@@ -80,6 +80,25 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   camino que falta su comprobante; el dueño también recibe un aviso por
   WhatsApp apenas entra una reserva pendiente, y el resumen del panel muestra
   cuántas hay por verificar.
+- **Reembolsos reales**: marcar una cita pagada como reembolsada (con motivo
+  obligatorio) la excluye automáticamente de reportes, nómina y analítica.
+- **Protección anti-spam sin dependencias externas**: rate-limit por teléfono
+  e IP en reservas/lista de espera/login/signup/recuperación de contraseña, y
+  campo honeypot en los formularios públicos.
+- **Tiempo de colchón entre citas**: cada miembro del personal puede tener
+  minutos de limpieza/descanso obligatorios después de cada cita, para que no
+  se agenden pegadas sin ningún margen.
+- **Cupones de descuento** (porcentaje o monto fijo, con límite de usos y
+  vencimiento opcionales) aplicables al reservar en línea — no a venta de
+  producto ni a citas sin cita previa.
+- **Programa de referidos**: cada cliente tiene un código propio para
+  compartir; cuando alguien nuevo reserva por primera vez con su enlace, el
+  referidor suma los puntos configurados (reutiliza el sistema de fidelidad).
+- **Bitácora de auditoría**: registro de acciones sensibles (cambios de
+  Configuración, permisos de Equipo, apertura/cierre de caja, confirmar/
+  rechazar/reembolsar un pago) visible solo para el dueño.
+- **Checklist de onboarding**: guía los primeros pasos (agregar personal,
+  servicio, teléfono) en el resumen del panel hasta completarlos u ocultarla.
 - **Instalable como app** (PWA) desde el navegador del celular.
 
 ## Stack
@@ -100,28 +119,31 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   compartirse entre todas las ubicaciones del mismo dueño.
 - **Business** — una sucursal/ubicación: tiene un `category` (rubro), plan
   (`GRATIS`/`PRO`), política de cancelación, canal de recordatorios, la
-  configuración del programa de fidelidad, el umbral de alerta por diferencia
-  de caja y la configuración de pago anticipado (QR, llave Bre-B, cuenta,
-  monto de la seña y horas para expirar).
+  configuración del programa de fidelidad y de referidos, el umbral de alerta
+  por diferencia de caja, la configuración de pago anticipado (QR, llave
+  Bre-B, cuenta, monto de la seña y horas para expirar) y si ya se ocultó el
+  checklist de onboarding.
 - **User** — cuenta con acceso al panel. `role` es `OWNER` o `STAFF`;
   `permissions` (CSV) define qué secciones adicionales puede ver una cuenta
   `STAFF` (`staff`, `catalog`, `reports`, `settings`); `staffId` opcional la
   vincula a un miembro del roster para restringir qué caja puede operar.
 - **Staff** — miembro del equipo (el roster, no la cuenta de acceso), con % de
-  comisión opcional, horario y días laborales, y rangos de `StaffTimeOff`
-  (vacaciones/incapacidad) que bloquean la reserva esos días.
+  comisión opcional, horario y días laborales, minutos de colchón después de
+  cada cita, y rangos de `StaffTimeOff` (vacaciones/incapacidad) que bloquean
+  la reserva esos días.
 - **Service** — servicio agendable, con duración, precio, descripción y seña
   de pago anticipado opcionales (si no se define, usa la seña general del
   negocio o el precio completo).
 - **Product** — producto físico en venta (sin relación con las citas), con
   descripción, precio y stock opcional propios; cada venta queda en `ProductSale`.
 - **Client** — historial de un cliente dentro de una organización, con
-  contador de `strikes`, puntos de fidelidad y si acepta difusión por WhatsApp.
+  contador de `strikes`, puntos de fidelidad, si acepta difusión por WhatsApp,
+  su `referralCode` propio y quién lo refirió (`referredById`), si aplica.
 - **Appointment** — cita, con estado (`CONFIRMED`, `CANCELLED`, `COMPLETED`,
   `NO_SHOW`, `PENDING_PAYMENT`), origen (`ONLINE`/`WALK_IN`), método/estado de
-  pago (incluye `TRANSFER`/`AWAITING_VERIFICATION` para el pago anticipado
-  manual), `paidAt` y `recurrenceGroupId` opcional si pertenece a una serie
-  recurrente.
+  pago (incluye `TRANSFER`/`AWAITING_VERIFICATION`/`REFUNDED` con motivo y
+  fecha), `paidAt`, `couponCode` si se usó uno, y `recurrenceGroupId` opcional
+  si pertenece a una serie recurrente.
 - **Review** — reseña (1 a 5) que un cliente deja tras una cita completada.
 - **CashSession** — apertura/cierre de caja por empleado o general, con monto
   esperado (calculado, incluye ventas de producto en efectivo), contado, la
@@ -130,6 +152,11 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   de fechas, para no recalcular el mismo período dos veces.
 - **WaitlistEntry** — cliente esperando que se libere un horario en un día
   sin cupo; se le avisa por WhatsApp al cancelarse una cita que calce.
+- **Coupon** — código de descuento (porcentaje o monto fijo) por negocio, con
+  límite de usos y vencimiento opcionales; solo aplica a la reserva pública.
+- **AuditLog** — bitácora de acciones sensibles (dinero y accesos), con el
+  nombre del usuario guardado como snapshot para seguir siendo legible aunque
+  la cuenta se borre o desactive.
 
 El vocabulario que se muestra en pantalla (cómo se llama al personal, la
 pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive en
@@ -155,10 +182,10 @@ pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive e
   (`GRATIS`/`PRO`) existe pero no está conectado a ninguna pasarela de pago;
   hoy no hay forma de cobrarle a un negocio por usar Turnify ni de que el
   plan bloquee o desbloquee funciones.
-- **Descuentos/cupones**, **reembolsos** (el valor `REFUNDED` existe en
-  `Appointment.paymentStatus` pero ninguna acción lo usa todavía), **captcha o
-  rate limiting** en el registro y la reserva pública, y **tiempo de colchón**
-  entre citas consecutivas del mismo especialista tampoco están construidos.
+- **Captcha real** — la protección contra spam (`src/lib/rateLimit.ts` +
+  honeypot) es deliberadamente ligera y sin dependencias externas; un
+  hCaptcha/reCAPTCHA real requeriría crear una cuenta en ese servicio y
+  pasar una site key, igual que Cloudinary o Stripe.
 
 ## Estructura del proyecto
 
@@ -185,22 +212,26 @@ src/
       analytics/              horas pico, más vendidos, clientes recurrentes
       waitlist/                lista de espera por día/servicio
       broadcast/               difusión masiva por WhatsApp (solo dueño)
+      coupons/                 cupones de descuento para la reserva pública
+      audit/                   bitácora de acciones sensibles (solo dueño)
       team/                   cuentas de Personal y sus permisos ([id] = editar)
       locations/              sucursales de la organización
       settings/               configuración del negocio (rubro, recordatorios, fidelidad, pagos)
     actions/                server actions (auth, booking, appointments, reviews,
                             products, team, cashRegister, payroll, loyalty,
-                            broadcast, clients, etc.)
+                            broadcast, clients, coupons, etc.)
   lib/
     db.ts                   cliente de Prisma
     auth.ts / session.ts    hash de contraseñas y sesión JWT
-    availability.ts         cálculo de huecos libres, balanceo del equipo y excepciones de horario
+    availability.ts         cálculo de huecos libres, balanceo del equipo, excepciones de horario y colchón
     guard.ts                protección de rutas del dashboard
     vocabulary.ts           vocabulario dinámico según el rubro del negocio
     images.ts               subida de fotos a Cloudinary
     notifications.ts        envío de WhatsApp (Twilio) + punto de extensión para SMS/correo
     waitlist.ts             aviso automático a la lista de espera al liberarse un horario
     whatsapp.ts             arma enlaces wa.me (comprobante de pago anticipado)
+    rateLimit.ts            rate-limit en memoria + IP del cliente (anti-spam sin dependencias)
+    audit.ts                registra entradas en la bitácora de auditoría
 prisma/
   schema.prisma             modelo de datos
   seed.ts                   datos de ejemplo (barbería, salón y spa)
