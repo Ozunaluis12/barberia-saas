@@ -1,11 +1,14 @@
-// Recordatorios de citas. WhatsApp está conectado con Twilio; EMAIL y SMS
-// todavía no (imprimen el mensaje en los logs en vez de enviarlo).
+// Recordatorios de citas. WhatsApp está conectado con Twilio, EMAIL con
+// Resend; SMS todavía no (imprime el mensaje en los logs en vez de enviarlo).
+
+import { sendAppointmentReminderEmail } from "@/lib/email";
 
 export type ReminderChannel = "NONE" | "EMAIL" | "SMS" | "WHATSAPP";
 
 export type ReminderPayload = {
   clientName: string;
   clientPhone: string;
+  clientEmail?: string | null;
   businessName: string;
   serviceName: string;
   startTime: Date;
@@ -86,7 +89,19 @@ export async function sendAppointmentReminder(
     return sendWhatsAppMessage(payload.clientPhone, buildReminderBody(payload));
   }
 
-  // TODO: EMAIL (Resend) y SMS (Twilio) todavía no conectados.
+  if (channel === "EMAIL") {
+    if (!payload.clientEmail) {
+      return { sent: false, reason: "El cliente no dejó correo." };
+    }
+    return sendAppointmentReminderEmail(payload.clientEmail, {
+      clientName: payload.clientName,
+      businessName: payload.businessName,
+      serviceName: payload.serviceName,
+      startTime: payload.startTime,
+    });
+  }
+
+  // TODO: SMS (Twilio) todavía no conectado.
   console.log(
     `[recordatorio:${channel}] ${payload.clientName} (${payload.clientPhone}) — ` +
       `${payload.serviceName} en ${payload.businessName} el ${payload.startTime.toISOString()}`

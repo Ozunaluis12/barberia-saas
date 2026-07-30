@@ -108,7 +108,7 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - TailwindCSS
 - Autenticación propia con `bcryptjs` (hash de contraseñas) y `jose` (sesión JWT)
 - [Cloudinary](https://cloudinary.com/) para fotos de personal, servicios y productos
-- [Resend](https://resend.com/) para correo transaccional (recuperación de contraseña)
+- [Resend](https://resend.com/) para correo transaccional (recuperación de contraseña, recordatorios de cita)
 - [Twilio](https://www.twilio.com/) para WhatsApp (recordatorios, lista de espera, difusión)
 - [pdfkit](https://pdfkit.org/) para el reporte de caja en PDF
 
@@ -138,12 +138,14 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   descripción, precio y stock opcional propios; cada venta queda en `ProductSale`.
 - **Client** — historial de un cliente dentro de una organización, con
   contador de `strikes`, puntos de fidelidad, si acepta difusión por WhatsApp,
-  su `referralCode` propio y quién lo refirió (`referredById`), si aplica.
+  correo opcional (para recordatorios), su `referralCode` propio y quién lo
+  refirió (`referredById`), si aplica.
 - **Appointment** — cita, con estado (`CONFIRMED`, `CANCELLED`, `COMPLETED`,
   `NO_SHOW`, `PENDING_PAYMENT`), origen (`ONLINE`/`WALK_IN`), método/estado de
   pago (incluye `TRANSFER`/`AWAITING_VERIFICATION`/`REFUNDED` con motivo y
-  fecha), `paidAt`, `couponCode` si se usó uno, y `recurrenceGroupId` opcional
-  si pertenece a una serie recurrente.
+  fecha), `paidAt`, `couponCode` si se usó uno, `clientEmail` (snapshot
+  opcional, igual que `clientName`/`clientPhone`) y `recurrenceGroupId`
+  opcional si pertenece a una serie recurrente.
 - **Review** — reseña (1 a 5) que un cliente deja tras una cita completada.
 - **CashSession** — apertura/cierre de caja por empleado o general, con monto
   esperado (calculado, incluye ventas de producto en efectivo), contado, la
@@ -168,12 +170,13 @@ pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive e
   MercadoPago, etc.). Lo que sí existe es un pago anticipado **manual**: el
   negocio muestra su QR/Bre-B/cuenta, el cliente transfiere y manda el
   comprobante por WhatsApp, y el negocio confirma a mano desde Citas.
-- **Recordatorios y difusión por SMS/correo** — el canal WhatsApp ya envía de
-  verdad vía Twilio (recordatorios, lista de espera y difusión masiva) cuando
-  `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_FROM` están
-  configuradas; `src/lib/notifications.ts` tiene el punto de extensión listo
-  para SMS y correo, pero esos dos canales todavía solo registran el mensaje
-  en el log.
+- **Recordatorios por SMS** — WhatsApp (Twilio) y correo (Resend) ya envían de
+  verdad. WhatsApp necesita `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/
+  `TWILIO_WHATSAPP_FROM`; correo necesita `RESEND_API_KEY` y que el cliente
+  haya dejado su email al reservar (si no lo dejó, simplemente no se le
+  manda). El canal SMS todavía solo registra el mensaje en el log —
+  `src/lib/notifications.ts` tiene el punto de extensión listo para
+  conectarlo cuando se decida el proveedor.
 - **Factura electrónica legal** — el recibo en PDF (por cita o venta de
   producto) es solo un comprobante interno. Facturación electrónica de
   verdad (DIAN en Colombia, CFDI/SAT en México, etc.) requiere elegir un
@@ -227,7 +230,7 @@ src/
     guard.ts                protección de rutas del dashboard
     vocabulary.ts           vocabulario dinámico según el rubro del negocio
     images.ts               subida de fotos a Cloudinary
-    notifications.ts        envío de WhatsApp (Twilio) + punto de extensión para SMS/correo
+    notifications.ts        envío de recordatorios: WhatsApp (Twilio) y correo (Resend); punto de extensión para SMS
     waitlist.ts             aviso automático a la lista de espera al liberarse un horario
     whatsapp.ts             arma enlaces wa.me (comprobante de pago anticipado)
     rateLimit.ts            rate-limit en memoria + IP del cliente (anti-spam sin dependencias)
@@ -315,7 +318,11 @@ mano en el dashboard (o aceptar que Render cree recursos nuevos `turnify-db`/
 dashboard del servicio `turnify-app` pero no adivina el valor. Sin esas tres
 de Cloudinary, el formulario de subir foto sigue funcionando pero la imagen no
 se guarda (falla en silencio). Hay que pegarlas a mano en **turnify-app →
-Environment** y volver a desplegar.
+Environment** y volver a desplegar. El cron `turnify-reminders` es un
+servicio aparte con sus propias variables: también necesita `RESEND_API_KEY`
+(para los recordatorios por correo) y `TWILIO_ACCOUNT_SID`/
+`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_FROM` (para WhatsApp) cargadas a mano en
+**turnify-reminders → Environment** — no las hereda de `turnify-app`.
 
 ## Planes
 

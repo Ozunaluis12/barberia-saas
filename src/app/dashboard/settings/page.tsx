@@ -88,8 +88,8 @@ export default async function SettingsPage({
         <div className="max-w-lg rounded-lg border border-white/10 bg-charcoal p-6">
           <h2 className="text-lg font-semibold">Recordatorios de citas</h2>
           <p className="mt-1 text-sm text-cream/60">
-            Todavía no está conectado un proveedor real de envío (próximamente WhatsApp, SMS y
-            correo). Puedes dejar configurado el canal y la anticipación desde ahora.
+            WhatsApp y correo ya envían el recordatorio de verdad. El correo solo le llega al
+            cliente si dejó su email al reservar. SMS todavía no está conectado.
           </p>
           <div className="mt-4 space-y-4">
             <div>

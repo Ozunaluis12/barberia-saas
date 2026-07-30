@@ -47,3 +47,5 @@ services:
         sync: false
       - key: TWILIO_WHATSAPP_FROM
         sync: false
+      - key: RESEND_API_KEY
+        sync: false

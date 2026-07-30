@@ -109,6 +109,7 @@ async function main() {
       const result = await sendAppointmentReminder(business.reminderChannel as ReminderChannel, {
         clientName: appt.clientName,
         clientPhone: appt.clientPhone,
+        clientEmail: appt.clientEmail,
         businessName: business.name,
         serviceName: appt.service.name,
         startTime: appt.startTime,

@@ -70,6 +70,7 @@ model Client {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
   phone          String
+  email          String? // opcional, para recordatorios por correo
   strikes        Int      @default(0) // cancelaciones tardías + no-shows
   loyaltyPoints  Int      @default(0)
   marketingOptIn Boolean  @default(true) // recibe difusión masiva de WhatsApp; ya recibe recordatorios igual
@@ -247,6 +248,7 @@ model Appointment {
   client            Client      @relation(fields: [clientId], references: [id])
   clientName        String
   clientPhone       String
+  clientEmail       String?
   startTime         DateTime
   endTime           DateTime
   status            String      @default("CONFIRMED") // CONFIRMED, CANCELLED, COMPLETED, NO_SHOW, PENDING_PAYMENT

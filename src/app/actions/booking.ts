@@ -49,6 +49,7 @@ export async function createBooking(params: {
   time: string;
   clientName: string;
   clientPhone: string;
+  clientEmail?: string;
   website?: string; // honeypot: si llega lleno, es un bot
   couponCode?: string;
   referralCode?: string;
@@ -78,7 +79,7 @@ export async function createBooking(params: {
   });
   if (!service) return { ok: false, error: "Servicio no válido." };
 
-  const client = await findOrCreateClient(business.organizationId, params.clientName, params.clientPhone, {
+  const client = await findOrCreateClient(business.organizationId, params.clientName, params.clientPhone, params.clientEmail, {
     code: params.referralCode,
     business: { loyaltyEnabled: business.loyaltyEnabled, referralBonusPoints: business.referralBonusPoints },
   });
@@ -144,6 +145,7 @@ export async function createBooking(params: {
           clientId: client.id,
           clientName: params.clientName.trim(),
           clientPhone: params.clientPhone.trim(),
+          clientEmail: params.clientEmail?.trim() || null,
           startTime,
           endTime,
           status: requiresAdvancePayment ? "PENDING_PAYMENT" : "CONFIRMED",
@@ -186,6 +188,7 @@ export async function createBooking(params: {
               clientId: client.id,
               clientName: params.clientName.trim(),
               clientPhone: params.clientPhone.trim(),
+              clientEmail: params.clientEmail?.trim() || null,
               startTime: nextStartTime,
               endTime: nextEndTime,
               status: "CONFIRMED",

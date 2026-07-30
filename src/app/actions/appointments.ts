@@ -19,6 +19,7 @@ export async function createWalkIn(formData: FormData): Promise<CreateWalkInResu
   const serviceId = String(formData.get("serviceId") ?? "");
   const clientName = String(formData.get("clientName") ?? "").trim();
   const clientPhone = String(formData.get("clientPhone") ?? "").trim();
+  const clientEmail = String(formData.get("clientEmail") ?? "").trim();
   const day = String(formData.get("day") ?? "");
   const time = String(formData.get("time") ?? "");
 
@@ -30,7 +31,7 @@ export async function createWalkIn(formData: FormData): Promise<CreateWalkInResu
   const staff = await prisma.staff.findFirst({ where: { id: staffId, businessId: session.businessId } });
   if (!service || !staff) return { ok: false, error: "Servicio o persona no válidos." };
 
-  const client = await findOrCreateClient(session.organizationId, clientName, clientPhone || "N/A");
+  const client = await findOrCreateClient(session.organizationId, clientName, clientPhone || "N/A", clientEmail);
 
   // Mismo lock que en la reserva pública: revalida que el hueco siga libre antes de
   // insertar, por si dos personas del equipo registran una cita al mismo tiempo.
@@ -57,6 +58,7 @@ export async function createWalkIn(formData: FormData): Promise<CreateWalkInResu
           clientId: client.id,
           clientName,
           clientPhone: clientPhone || "N/A",
+          clientEmail: clientEmail || null,
           startTime,
           endTime,
           status: "CONFIRMED",

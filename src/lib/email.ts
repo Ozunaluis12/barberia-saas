@@ -29,6 +29,49 @@ export async function sendPasswordResetPin(to: string, pin: string): Promise<Sen
   }
 }
 
+export type AppointmentReminderDetails = {
+  clientName: string;
+  businessName: string;
+  serviceName: string;
+  startTime: Date;
+};
+
+export async function sendAppointmentReminderEmail(
+  to: string,
+  details: AppointmentReminderDetails
+): Promise<SendResult> {
+  const dateLabel = details.startTime.toLocaleString("es", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  if (!resend) {
+    console.log(`[email:recordatorio] Resend no configurado. Recordatorio para ${to}: ${details.serviceName} el ${dateLabel}`);
+    return { sent: false, reason: "RESEND_API_KEY no configurado" };
+  }
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: `Recordatorio: tu cita en ${details.businessName}`,
+      html: `
+        <p>Hola ${details.clientName},</p>
+        <p>Te recordamos tu cita de <strong>${details.serviceName}</strong> en
+        <strong>${details.businessName}</strong> el ${dateLabel}.</p>
+        <p>¡Te esperamos!</p>
+      `,
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error("[email:recordatorio] Error enviando correo:", error);
+    return { sent: false, reason: "Error al enviar el correo" };
+  }
+}
+
 export type CashDiscrepancyDetails = {
   businessName: string;
   drawerLabel: string; // nombre del staff o "Caja general"

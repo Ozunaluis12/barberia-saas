@@ -26,6 +26,7 @@ export async function findOrCreateClient(
   organizationId: string,
   name: string,
   phone: string,
+  email?: string,
   referral?: {
     code?: string;
     business?: { loyaltyEnabled: boolean; referralBonusPoints: number };
@@ -36,7 +37,10 @@ export async function findOrCreateClient(
     where: { organizationId_phone: { organizationId, phone: cleanPhone } },
   });
   if (existing) {
-    return prisma.client.update({ where: { id: existing.id }, data: { name: name.trim() } });
+    return prisma.client.update({
+      where: { id: existing.id },
+      data: { name: name.trim(), ...(email?.trim() ? { email: email.trim() } : {}) },
+    });
   }
 
   // El crédito de referido solo aplica en la PRIMERA reserva de un cliente nuevo.
@@ -61,6 +65,7 @@ export async function findOrCreateClient(
       organizationId,
       name: name.trim(),
       phone: cleanPhone,
+      email: email?.trim() || null,
       referralCode: await generateUniqueReferralCode(),
       referredById,
     },

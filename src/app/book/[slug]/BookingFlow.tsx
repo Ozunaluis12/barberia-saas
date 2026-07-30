@@ -90,6 +90,7 @@ export default function BookingFlow({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
   const [referralCode, setReferralCode] = useState(initialReferralCode ?? "");
   const [website, setWebsite] = useState(""); // honeypot: invisible para personas, los bots lo suelen llenar
   const [submitting, setSubmitting] = useState(false);
@@ -166,6 +167,7 @@ export default function BookingFlow({
       time,
       clientName,
       clientPhone,
+      clientEmail: clientEmail.trim() || undefined,
       website,
       couponCode: appliedCoupon?.code,
       referralCode: referralCode.trim() || undefined,
@@ -437,6 +439,15 @@ export default function BookingFlow({
             <input
               value={clientPhone}
               onChange={(e) => setClientPhone(e.target.value)}
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">Correo (opcional, para recordatorios)</label>
+            <input
+              type="email"
+              value={clientEmail}
+              onChange={(e) => setClientEmail(e.target.value)}
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             />
           </div>

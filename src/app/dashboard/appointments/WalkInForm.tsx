@@ -26,6 +26,7 @@ export default function WalkInForm({
   const [chosenSlot, setChosenSlot] = useState<Slot | null>(null);
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +50,7 @@ export default function WalkInForm({
     fd.set("serviceId", serviceId);
     fd.set("clientName", clientName);
     fd.set("clientPhone", clientPhone);
+    fd.set("clientEmail", clientEmail);
     fd.set("day", day);
     fd.set("time", chosenSlot.time);
     const result = await createWalkIn(fd);
@@ -68,6 +70,7 @@ export default function WalkInForm({
     setOpen(false);
     setClientName("");
     setClientPhone("");
+    setClientEmail("");
     setChosenSlot(null);
   }
 
@@ -176,6 +179,15 @@ export default function WalkInForm({
         <input
           value={clientPhone}
           onChange={(e) => setClientPhone(e.target.value)}
+          className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2"
+        />
+      </div>
+      <div>
+        <label className="text-sm text-cream/70">Correo (opcional, para recordatorios)</label>
+        <input
+          type="email"
+          value={clientEmail}
+          onChange={(e) => setClientEmail(e.target.value)}
           className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2"
         />
       </div>
