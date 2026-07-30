@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { getAvailableSlots, combineDayAndTime } from "@/lib/availability";
 import { findOrCreateClient } from "@/lib/clients";
 import { sendWhatsAppMessage } from "@/lib/notifications";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 function addDaysToDay(day: string, days: number): string {
   const d = new Date(`${day}T00:00:00`);
@@ -47,13 +48,26 @@ export async function createBooking(params: {
   time: string;
   clientName: string;
   clientPhone: string;
+  website?: string; // honeypot: si llega lleno, es un bot
   recurrence?: { intervalWeeks: 1 | 2 | 4; occurrences: number }; // occurrences = total incluyendo la primera
 }): Promise<CreateBookingResult> {
+  if (params.website && params.website.trim() !== "") {
+    return { ok: false, error: "No se pudo procesar la reserva." };
+  }
+
   const business = await prisma.business.findUnique({ where: { slug: params.businessSlug } });
   if (!business) return { ok: false, error: "Negocio no encontrado." };
 
   if (!params.clientName.trim() || !params.clientPhone.trim()) {
     return { ok: false, error: "Nombre y teléfono son obligatorios." };
+  }
+
+  const ip = await getClientIp();
+  if (
+    !checkRateLimit(`booking:phone:${params.clientPhone.trim()}`, 5, 10 * 60 * 1000) ||
+    !checkRateLimit(`booking:ip:${ip}`, 20, 10 * 60 * 1000)
+  ) {
+    return { ok: false, error: "Demasiados intentos de reserva, espera unos minutos e inténtalo de nuevo." };
   }
 
   const service = await prisma.service.findFirst({
@@ -197,6 +211,14 @@ export async function joinWaitlist(params: {
 
   if (!params.clientName.trim() || !params.clientPhone.trim()) {
     return { ok: false, error: "Nombre y teléfono son obligatorios." };
+  }
+
+  const ip = await getClientIp();
+  if (
+    !checkRateLimit(`waitlist:phone:${params.clientPhone.trim()}`, 5, 10 * 60 * 1000) ||
+    !checkRateLimit(`waitlist:ip:${ip}`, 20, 10 * 60 * 1000)
+  ) {
+    return { ok: false, error: "Demasiados intentos, espera unos minutos e inténtalo de nuevo." };
   }
 
   const service = await prisma.service.findFirst({

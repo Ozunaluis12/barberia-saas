@@ -21,7 +21,9 @@ export default async function LoginPage({
           <p className="mt-4 rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
             {error === "CUENTA_DESACTIVADA"
               ? "Esta cuenta fue desactivada. Contacta al dueño del negocio."
-              : "Correo o contraseña incorrectos."}
+              : error === "DEMASIADOS_INTENTOS"
+                ? "Demasiados intentos, espera unos minutos e inténtalo de nuevo."
+                : "Correo o contraseña incorrectos."}
           </p>
         )}
 

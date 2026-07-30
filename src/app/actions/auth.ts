@@ -7,6 +7,7 @@ import { hashPassword, verifyPassword } from "@/lib/auth";
 import { createSession, clearSession } from "@/lib/session";
 import { sendPasswordResetPin } from "@/lib/email";
 import { BUSINESS_CATEGORIES } from "@/lib/vocabulary";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 const DIACRITICS_REGEX = new RegExp("[\\u0300-\\u036f]", "g");
 
@@ -31,6 +32,16 @@ export async function signupAction(formData: FormData) {
 
   if (!businessName || !ownerName || !email || password.length < 6) {
     redirect("/signup?error=DATOS_INVALIDOS");
+  }
+
+  // Campo honeypot: invisible para una persona, los bots de formularios lo suelen llenar.
+  if (String(formData.get("website") ?? "").trim() !== "") {
+    redirect("/signup?error=DATOS_INVALIDOS");
+  }
+
+  const ip = await getClientIp();
+  if (!checkRateLimit(`signup:ip:${ip}`, 10, 15 * 60 * 1000)) {
+    redirect("/signup?error=DEMASIADOS_INTENTOS");
   }
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -87,6 +98,11 @@ export async function loginAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
+  const ip = await getClientIp();
+  if (!checkRateLimit(`login:ip:${ip}`, 15, 15 * 60 * 1000)) {
+    redirect("/login?error=DEMASIADOS_INTENTOS");
+  }
+
   const user = await prisma.user.findUnique({ where: { email }, include: { business: true } });
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     redirect("/login?error=CREDENCIALES_INVALIDAS");
@@ -128,6 +144,11 @@ function generatePin(): string {
 export async function requestPasswordReset(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
 
+  const ip = await getClientIp();
+  if (!checkRateLimit(`reset-request:ip:${ip}`, 5, 15 * 60 * 1000)) {
+    redirect(`/reset-password?email=${encodeURIComponent(email)}&sent=1`);
+  }
+
   const user = await prisma.user.findUnique({ where: { email } });
   if (user) {
     // Invalidamos códigos anteriores sin usar para que no queden varios activos.
@@ -159,6 +180,13 @@ export async function verifyResetPin(formData: FormData): Promise<ResetPasswordR
 
   if (password.length < 6) {
     return { ok: false, error: "La contraseña debe tener al menos 6 caracteres." };
+  }
+
+  // El PIN es de solo 6 dígitos (1 millón de combinaciones): sin límite de intentos,
+  // se podría adivinar por fuerza bruta en poco tiempo.
+  const ip = await getClientIp();
+  if (!checkRateLimit(`reset-verify:${ip}:${email}`, 10, 15 * 60 * 1000)) {
+    return { ok: false, error: GENERIC_PIN_ERROR };
   }
 
   const user = await prisma.user.findUnique({ where: { email } });

@@ -87,6 +87,7 @@ export default function BookingFlow({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [website, setWebsite] = useState(""); // honeypot: invisible para personas, los bots lo suelen llenar
   const [submitting, setSubmitting] = useState(false);
   const [joiningWaitlist, setJoiningWaitlist] = useState(false);
   const [waitlistJoined, setWaitlistJoined] = useState(false);
@@ -138,6 +139,7 @@ export default function BookingFlow({
       time,
       clientName,
       clientPhone,
+      website,
       recurrence:
         repeatEvery > 0
           ? { intervalWeeks: repeatEvery as 1 | 2 | 4, occurrences: repeatCount }
@@ -381,6 +383,15 @@ export default function BookingFlow({
       {step === 4 && (
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">Tus datos</h2>
+          <input
+            type="text"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            className="absolute h-0 w-0 opacity-0"
+            aria-hidden="true"
+          />
           <div className="rounded-md bg-ink px-4 py-3 text-sm text-cream/70">
             {selectedService?.name} · {day} · {time}
           </div>

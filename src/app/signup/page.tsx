@@ -5,6 +5,7 @@ import { CATEGORY_OPTIONS } from "@/lib/vocabulary";
 const ERRORS: Record<string, string> = {
   DATOS_INVALIDOS: "Revisa los datos: la contraseña debe tener al menos 6 caracteres.",
   EMAIL_EN_USO: "Ese correo ya está registrado. Intenta iniciar sesión.",
+  DEMASIADOS_INTENTOS: "Demasiados intentos, espera unos minutos e inténtalo de nuevo.",
 };
 
 export default async function SignupPage({
@@ -32,6 +33,14 @@ export default async function SignupPage({
         )}
 
         <form action={signupAction} className="mt-6 space-y-4">
+          <input
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            className="absolute h-0 w-0 opacity-0"
+            aria-hidden="true"
+          />
           <div>
             <label className="text-sm text-cream/70">Nombre del negocio</label>
             <input
