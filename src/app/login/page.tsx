@@ -54,13 +54,6 @@ export default async function LoginPage({
             ¿Olvidaste tu contraseña?
           </Link>
         </p>
-
-        <p className="mt-4 text-center text-sm text-cream/60">
-          ¿No tienes cuenta?{" "}
-          <Link href="/signup" className="text-gold hover:underline">
-            Crea tu negocio
-          </Link>
-        </p>
       </div>
     </main>
   );
