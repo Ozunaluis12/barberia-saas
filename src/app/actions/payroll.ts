@@ -22,6 +22,7 @@ export async function closePayrollPeriod(formData: FormData) {
     where: {
       businessId: session.businessId,
       status: "COMPLETED",
+      paymentStatus: { not: "REFUNDED" },
       startTime: { gte: periodStart, lte: periodEnd },
     },
     include: { staff: true, service: true },

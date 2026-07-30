@@ -206,6 +206,29 @@ export async function markAppointmentPaid(appointmentId: string, paymentMethod: 
   revalidatePath("/dashboard/register");
 }
 
+/** Reembolsa una cita ya pagada — exige un motivo, no se puede cerrar en silencio. */
+export async function refundAppointmentPayment(appointmentId: string, formData: FormData) {
+  const session = await requireSession();
+  const appt = await prisma.appointment.findFirst({
+    where: { id: appointmentId, businessId: session.businessId, paymentStatus: "PAID" },
+  });
+  if (!appt) return;
+
+  const reason = String(formData.get("refundReason") ?? "").trim();
+  if (!reason) {
+    redirect("/dashboard/appointments?error=MOTIVO_REQUERIDO");
+  }
+
+  await prisma.appointment.update({
+    where: { id: appointmentId },
+    data: { paymentStatus: "REFUNDED", refundedAt: new Date(), refundReason: reason },
+  });
+
+  revalidatePath("/dashboard/appointments");
+  revalidatePath("/dashboard/reports");
+  revalidatePath("/dashboard/analytics");
+}
+
 export async function getWalkInSlots(params: {
   serviceId: string;
   staffId: string;

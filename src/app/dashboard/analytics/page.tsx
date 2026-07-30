@@ -14,7 +14,12 @@ export default async function AnalyticsPage({
 
   const [appointments, productSales] = await Promise.all([
     prisma.appointment.findMany({
-      where: { businessId: session.businessId, status: "COMPLETED", startTime: { gte: rangeStart, lte: rangeEnd } },
+      where: {
+        businessId: session.businessId,
+        status: "COMPLETED",
+        paymentStatus: { not: "REFUNDED" },
+        startTime: { gte: rangeStart, lte: rangeEnd },
+      },
       include: { service: true },
     }),
     prisma.productSale.findMany({

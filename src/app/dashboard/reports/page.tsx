@@ -25,6 +25,7 @@ export default async function ReportsPage({
     where: {
       businessId: session.businessId,
       status: "COMPLETED",
+      paymentStatus: { not: "REFUNDED" },
       startTime: { gte: rangeStart, lte: rangeEnd },
     },
     include: { staff: true, service: true },

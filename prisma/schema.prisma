@@ -231,6 +231,8 @@ model Appointment {
   paymentMethod     String      @default("UNPAID") // UNPAID, CASH, CARD_IN_PERSON, ONLINE, TRANSFER
   paymentStatus     String      @default("PENDING") // PENDING, PAID, REFUNDED, AWAITING_VERIFICATION
   paidAt            DateTime? // cuándo se marcó como pagada (para acotar sesiones de caja)
+  refundedAt        DateTime?
+  refundReason      String?
   reminderSentAt    DateTime? // evita mandar el mismo recordatorio dos veces
   paymentReminderSentAt DateTime? // evita repetir el aviso de "confirma tu pago pronto" antes de expirar
   recurrenceGroupId String? // comparte id entre todas las citas de una misma serie recurrente; null = cita suelta

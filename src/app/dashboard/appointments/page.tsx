@@ -1,6 +1,12 @@
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
-import { updateAppointmentStatus, markAppointmentPaid, confirmAdvancePayment, rejectAdvancePayment } from "@/app/actions/appointments";
+import {
+  updateAppointmentStatus,
+  markAppointmentPaid,
+  confirmAdvancePayment,
+  rejectAdvancePayment,
+  refundAppointmentPayment,
+} from "@/app/actions/appointments";
 import { getVocabulary } from "@/lib/vocabulary";
 import WalkInForm from "./WalkInForm";
 import CopyReviewLinkButton from "./CopyReviewLinkButton";
@@ -16,6 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
 const ERRORS: Record<string, string> = {
   CAJA_CERRADA:
     "No hay una caja abierta para registrar ese pago en efectivo. Abre una caja en la sección Caja primero.",
+  MOTIVO_REQUERIDO: "Escribe el motivo del reembolso antes de confirmarlo.",
 };
 
 export default async function AppointmentsPage({
@@ -101,7 +108,7 @@ export default async function AppointmentsPage({
                 <td className="px-4 py-2 text-cream/70">{STATUS_LABEL[a.status] ?? a.status}</td>
                 <td className="px-4 py-2">
                   {a.paymentStatus === "PAID" ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-green-500/20 px-2 py-1 text-xs text-green-400">
                         Pagado
                       </span>
@@ -111,7 +118,25 @@ export default async function AppointmentsPage({
                       >
                         Recibo
                       </a>
+                      <form
+                        action={refundAppointmentPayment.bind(null, a.id)}
+                        className="flex items-center gap-1"
+                      >
+                        <input
+                          name="refundReason"
+                          placeholder="Motivo del reembolso"
+                          className="w-32 rounded-md border border-white/20 bg-ink px-1.5 py-1 text-xs outline-none focus:border-gold"
+                        />
+                        <button className="text-xs text-red-400 hover:underline">Reembolsar</button>
+                      </form>
                     </div>
+                  ) : a.paymentStatus === "REFUNDED" ? (
+                    <span
+                      className="rounded-full bg-red-500/20 px-2 py-1 text-xs text-red-400"
+                      title={a.refundReason ?? undefined}
+                    >
+                      Reembolsado
+                    </span>
                   ) : a.status === "PENDING_PAYMENT" ? (
                     <span className="rounded-full bg-yellow-500/20 px-2 py-1 text-xs text-yellow-400">
                       Por verificar
