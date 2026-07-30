@@ -3,6 +3,10 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+function randomReferralCode(): string {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
 type SeedStaff = { name: string; commissionPercent: number | null; workStart: string; workEnd: string };
 type SeedService = { name: string; durationMinutes: number; price: number };
 
@@ -134,10 +138,10 @@ async function seedBusiness(config: SeedBusinessConfig) {
   const yesterday = new Date(today.getTime() - 24 * 60 * 60000);
 
   const clientA = await prisma.client.create({
-    data: { organizationId: organization.id, name: "Miguel Ángel", phone: `${config.slug}-555-0101` },
+    data: { organizationId: organization.id, name: "Miguel Ángel", phone: `${config.slug}-555-0101`, referralCode: randomReferralCode() },
   });
   const clientB = await prisma.client.create({
-    data: { organizationId: organization.id, name: "Pedro Salinas", phone: `${config.slug}-555-0102` },
+    data: { organizationId: organization.id, name: "Pedro Salinas", phone: `${config.slug}-555-0102`, referralCode: randomReferralCode() },
   });
   const clientRisky = await prisma.client.create({
     data: {
@@ -145,10 +149,11 @@ async function seedBusiness(config: SeedBusinessConfig) {
       name: "Roberto Núñez",
       phone: `${config.slug}-555-0103`,
       strikes: 2,
+      referralCode: randomReferralCode(),
     },
   });
   const clientHappy = await prisma.client.create({
-    data: { organizationId: organization.id, name: "Sofía Ramírez", phone: `${config.slug}-555-0104` },
+    data: { organizationId: organization.id, name: "Sofía Ramírez", phone: `${config.slug}-555-0104`, referralCode: randomReferralCode() },
   });
 
   await prisma.appointment.create({

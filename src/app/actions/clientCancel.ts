@@ -8,7 +8,7 @@ import { notifyWaitlistForFreedSlot } from "@/lib/waitlist";
 export async function getPublicAppointment(appointmentId: string) {
   const appt = await prisma.appointment.findUnique({
     where: { id: appointmentId },
-    include: { business: true, staff: true, service: true, review: true },
+    include: { business: true, staff: true, service: true, review: true, client: true },
   });
   return appt;
 }

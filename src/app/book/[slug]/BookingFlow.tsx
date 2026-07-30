@@ -71,6 +71,7 @@ export default function BookingFlow({
   cancellationNoticeHours,
   vocab,
   advancePayment,
+  initialReferralCode,
 }: {
   businessSlug: string;
   services: Service[];
@@ -78,6 +79,7 @@ export default function BookingFlow({
   cancellationNoticeHours: number;
   vocab: Vocab;
   advancePayment: AdvancePayment;
+  initialReferralCode?: string;
 }) {
   const [step, setStep] = useState(1);
   const [serviceId, setServiceId] = useState<string | null>(null);
@@ -88,6 +90,7 @@ export default function BookingFlow({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
+  const [referralCode, setReferralCode] = useState(initialReferralCode ?? "");
   const [website, setWebsite] = useState(""); // honeypot: invisible para personas, los bots lo suelen llenar
   const [submitting, setSubmitting] = useState(false);
   const [joiningWaitlist, setJoiningWaitlist] = useState(false);
@@ -165,6 +168,7 @@ export default function BookingFlow({
       clientPhone,
       website,
       couponCode: appliedCoupon?.code,
+      referralCode: referralCode.trim() || undefined,
       recurrence:
         repeatEvery > 0
           ? { intervalWeeks: repeatEvery as 1 | 2 | 4, occurrences: repeatCount }
@@ -462,6 +466,15 @@ export default function BookingFlow({
               />
             </div>
           )}
+          <div>
+            <label className="text-sm text-cream/70">¿Alguien te invitó? Código de referido (opcional)</label>
+            <input
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value)}
+              placeholder="CODIGO"
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
           <div>
             <label className="text-sm text-cream/70">Código de descuento (opcional)</label>
             <div className="mt-1 flex gap-2">

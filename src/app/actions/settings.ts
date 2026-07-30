@@ -24,6 +24,7 @@ export async function updateBusinessSettings(formData: FormData) {
   const loyaltyEnabled = formData.get("loyaltyEnabled") === "on";
   const loyaltyPointsPerVisit = Math.max(1, Number(formData.get("loyaltyPointsPerVisit") ?? 1));
   const loyaltyRewardThreshold = Math.max(1, Number(formData.get("loyaltyRewardThreshold") ?? 10));
+  const referralBonusPoints = Math.max(0, Number(formData.get("referralBonusPoints") ?? 0));
   const cashDiscrepancyAlertThreshold = Math.max(
     0,
     Number(formData.get("cashDiscrepancyAlertThreshold") ?? 5)
@@ -57,6 +58,7 @@ export async function updateBusinessSettings(formData: FormData) {
       loyaltyEnabled,
       loyaltyPointsPerVisit,
       loyaltyRewardThreshold,
+      referralBonusPoints,
       cashDiscrepancyAlertThreshold,
       advancePaymentEnabled,
       advancePaymentAmount,

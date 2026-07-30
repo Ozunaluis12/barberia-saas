@@ -51,6 +51,7 @@ export async function createBooking(params: {
   clientPhone: string;
   website?: string; // honeypot: si llega lleno, es un bot
   couponCode?: string;
+  referralCode?: string;
   recurrence?: { intervalWeeks: 1 | 2 | 4; occurrences: number }; // occurrences = total incluyendo la primera
 }): Promise<CreateBookingResult> {
   if (params.website && params.website.trim() !== "") {
@@ -77,7 +78,10 @@ export async function createBooking(params: {
   });
   if (!service) return { ok: false, error: "Servicio no válido." };
 
-  const client = await findOrCreateClient(business.organizationId, params.clientName, params.clientPhone);
+  const client = await findOrCreateClient(business.organizationId, params.clientName, params.clientPhone, {
+    code: params.referralCode,
+    business: { loyaltyEnabled: business.loyaltyEnabled, referralBonusPoints: business.referralBonusPoints },
+  });
 
   // Todo lo demás corre dentro de una transacción con un lock exclusivo por negocio,
   // para que dos reservas simultáneas no puedan leer el mismo hueco como libre y

@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPublicAppointment } from "@/app/actions/clientCancel";
 import { getVocabulary } from "@/lib/vocabulary";
@@ -21,6 +22,11 @@ export default async function ClientAppointmentPage({
   const { id } = await params;
   const appt = await getPublicAppointment(id);
   if (!appt) notFound();
+
+  const h = await headers();
+  const host = h.get("host");
+  const protocol = host?.includes("localhost") ? "http" : "https";
+  const referralLink = host ? `${protocol}://${host}/book/${appt.business.slug}?ref=${appt.client.referralCode}` : null;
 
   const vocab = getVocabulary(appt.business.category);
   const isUpcoming = appt.startTime.getTime() > Date.now();
@@ -127,6 +133,18 @@ export default async function ClientAppointmentPage({
             ) : (
               <ReviewForm appointmentId={appt.id} />
             )}
+          </div>
+        )}
+
+        {appt.business.referralBonusPoints > 0 && referralLink && (
+          <div className="mt-8 rounded-md border border-white/10 bg-ink p-4 text-sm">
+            <p className="font-semibold text-gold">Invita a un amigo y gana puntos</p>
+            <p className="mt-1 text-cream/70">
+              Comparte tu enlace: cuando alguien reserve por primera vez con él, tú sumas puntos.
+            </p>
+            <a href={referralLink} className="mt-2 block break-all text-gold hover:underline">
+              {referralLink}
+            </a>
           </div>
         )}
       </div>

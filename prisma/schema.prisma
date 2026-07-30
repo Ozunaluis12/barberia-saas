@@ -44,6 +44,7 @@ model Business {
   loyaltyEnabled          Boolean  @default(false)
   loyaltyPointsPerVisit   Int      @default(1)
   loyaltyRewardThreshold  Int      @default(10)
+  referralBonusPoints    Int      @default(0) // 0 = programa de referidos desactivado
   cashDiscrepancyAlertThreshold Float @default(5) // avisa por correo al dueño si el faltante/sobrante de una caja supera este monto
   createdAt               DateTime @default(now())
 
@@ -71,6 +72,10 @@ model Client {
   strikes        Int      @default(0) // cancelaciones tardías + no-shows
   loyaltyPoints  Int      @default(0)
   marketingOptIn Boolean  @default(true) // recibe difusión masiva de WhatsApp; ya recibe recordatorios igual
+  referralCode   String   @unique // código propio para compartir; se genera al crear el cliente
+  referredById   String?
+  referredBy     Client?  @relation("ClientReferrals", fields: [referredById], references: [id])
+  referrals      Client[] @relation("ClientReferrals")
   createdAt      DateTime @default(now())
 
   appointments Appointment[]

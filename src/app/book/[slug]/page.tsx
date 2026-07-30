@@ -6,10 +6,13 @@ import BookingFlow from "./BookingFlow";
 
 export default async function BookPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ ref?: string }>;
 }) {
   const { slug } = await params;
+  const { ref } = await searchParams;
   const business = await prisma.business.findUnique({
     where: { slug },
     include: {
@@ -71,6 +74,7 @@ export default async function BookPage({
 
         <BookingFlow
           businessSlug={business.slug}
+          initialReferralCode={ref}
           services={business.services.map((s) => ({
             id: s.id,
             name: s.name,

@@ -156,6 +156,22 @@ export default async function SettingsPage({
                 />
               </div>
             </div>
+            <div>
+              <label className="text-sm text-cream/70">
+                Puntos por referido (0 = programa de referidos desactivado)
+              </label>
+              <input
+                type="number"
+                name="referralBonusPoints"
+                min={0}
+                defaultValue={business.referralBonusPoints}
+                className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+              />
+              <p className="mt-1 text-xs text-cream/50">
+                Requiere el programa de puntos activado — el cliente que refiere suma estos
+                puntos cuando alguien reserva por primera vez con su enlace.
+              </p>
+            </div>
           </div>
         </div>
 

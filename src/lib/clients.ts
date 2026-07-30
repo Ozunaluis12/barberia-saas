@@ -10,12 +10,60 @@ function normalizePhone(phone: string): string {
   return digits.length >= 7 ? digits : phone.trim();
 }
 
-export async function findOrCreateClient(organizationId: string, name: string, phone: string) {
+function randomReferralCode(): string {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+async function generateUniqueReferralCode(): Promise<string> {
+  let code = randomReferralCode();
+  while (await prisma.client.findUnique({ where: { referralCode: code } })) {
+    code = randomReferralCode();
+  }
+  return code;
+}
+
+export async function findOrCreateClient(
+  organizationId: string,
+  name: string,
+  phone: string,
+  referral?: {
+    code?: string;
+    business?: { loyaltyEnabled: boolean; referralBonusPoints: number };
+  }
+) {
   const cleanPhone = normalizePhone(phone);
-  return prisma.client.upsert({
+  const existing = await prisma.client.findUnique({
     where: { organizationId_phone: { organizationId, phone: cleanPhone } },
-    update: { name: name.trim() },
-    create: { organizationId, name: name.trim(), phone: cleanPhone },
+  });
+  if (existing) {
+    return prisma.client.update({ where: { id: existing.id }, data: { name: name.trim() } });
+  }
+
+  // El crédito de referido solo aplica en la PRIMERA reserva de un cliente nuevo.
+  let referredById: string | null = null;
+  if (referral?.code) {
+    const referrer = await prisma.client.findFirst({
+      where: { organizationId, referralCode: referral.code.trim().toUpperCase() },
+    });
+    if (referrer) {
+      referredById = referrer.id;
+      if (referral.business?.loyaltyEnabled && referral.business.referralBonusPoints > 0) {
+        await prisma.client.update({
+          where: { id: referrer.id },
+          data: { loyaltyPoints: { increment: referral.business.referralBonusPoints } },
+        });
+      }
+    }
+  }
+
+  return prisma.client.create({
+    data: {
+      organizationId,
+      name: name.trim(),
+      phone: cleanPhone,
+      referralCode: await generateUniqueReferralCode(),
+      referredById,
+    },
   });
 }
 
