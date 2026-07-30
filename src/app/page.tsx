@@ -150,12 +150,12 @@ export default function HomePage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-ink text-cream">
       <header className="fixed inset-x-0 top-4 z-40">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-6">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
             <span className="rounded-full border border-white/10 bg-charcoal/90 px-5 py-2.5 text-xl font-bold tracking-tight text-gold shadow-lg shadow-black/30 backdrop-blur-md">
               Turnify
             </span>
-            <nav className="hidden items-center gap-1 rounded-full border border-white/10 bg-charcoal/90 px-2 py-1.5 shadow-lg shadow-black/30 backdrop-blur-md md:flex">
+            <nav className="flex items-center justify-center gap-1 rounded-full border border-white/10 bg-charcoal/90 px-2 py-1.5 shadow-lg shadow-black/30 backdrop-blur-md md:justify-start">
               <NavDropdown
                 label="Producto"
                 items={[
@@ -182,13 +182,13 @@ export default function HomePage() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="hidden items-center gap-1 rounded-full border border-white/10 bg-charcoal/90 px-2 py-1.5 shadow-lg shadow-black/30 backdrop-blur-md md:flex">
+          <div className="flex items-center justify-between gap-3 md:justify-start">
+            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-charcoal/90 px-2 py-1.5 shadow-lg shadow-black/30 backdrop-blur-md">
               <a
                 href={waLink("Hola, necesito ayuda con Turnify.")}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full px-3 py-1.5 text-sm transition-colors hover:text-gold"
+                className="hidden rounded-full px-3 py-1.5 text-sm transition-colors hover:text-gold md:inline"
               >
                 Soporte
               </a>
@@ -221,7 +221,7 @@ export default function HomePage() {
           className="pointer-events-none absolute -right-20 top-40 h-80 w-80 animate-blobMove rounded-full bg-gold/10 blur-3xl [animation-delay:-6s]"
         />
 
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-32 lg:grid-cols-2">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-48 md:pt-32 lg:grid-cols-2">
           <Reveal>
             <p className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-gold">
               <span className="relative flex h-2 w-2">
