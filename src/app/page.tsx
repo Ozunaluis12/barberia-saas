@@ -3,6 +3,7 @@ import CategoryShowcase from "./CategoryShowcase";
 import Reveal from "./Reveal";
 import Counter from "./Counter";
 import NavDropdown from "./NavDropdown";
+import SoftwareTour from "./SoftwareTour";
 
 const WHATSAPP_NUMBER = "573004177979";
 function waLink(message: string) {
@@ -474,7 +475,32 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="scroll-mt-24 border-t border-white/10 bg-charcoal/60" id="categorias">
+      <section className="scroll-mt-24 border-t border-white/10 bg-charcoal/60" id="recorrido">
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          <Reveal className="text-center">
+            <Eyebrow>Cómo funciona todo</Eyebrow>
+            <h2 className="text-3xl font-bold">De la primera reserva a la gestión del negocio</h2>
+            <p className="mx-auto mt-3 max-w-2xl text-cream/70">
+              Un recorrido paso a paso por todo el software — se reproduce solo, como un video.
+              Pasa el mouse para pausarlo o haz clic en un paso para saltar directo.
+            </p>
+          </Reveal>
+
+          <Reveal delay={150} className="mt-12">
+            <SoftwareTour />
+          </Reveal>
+
+          <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-cream/40">
+            Vistas ilustrativas con datos de ejemplo. Pruébalo tú mismo en la{" "}
+            <Link href="/book/demo-barberia" className="text-gold hover:underline">
+              demo de reserva
+            </Link>
+            .
+          </p>
+        </div>
+      </section>
+
+      <section className="scroll-mt-24 border-t border-white/10" id="categorias">
         <div className="mx-auto max-w-6xl px-6 py-16">
           <Reveal className="text-center">
             <Eyebrow>Especializado por rubro</Eyebrow>
