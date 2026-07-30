@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requirePermission } from "@/lib/guard";
+import { requirePermission, requireSession } from "@/lib/guard";
 import { BUSINESS_CATEGORIES } from "@/lib/vocabulary";
 import { uploadImage } from "@/lib/images";
 import { logAudit } from "@/lib/audit";
@@ -73,4 +73,10 @@ export async function updateBusinessSettings(formData: FormData) {
   await logAudit(session, "settings.update");
 
   revalidatePath("/dashboard/settings");
+}
+
+export async function dismissOnboarding() {
+  const session = await requireSession();
+  await prisma.business.update({ where: { id: session.businessId }, data: { onboardingDismissed: true } });
+  revalidatePath("/dashboard");
 }

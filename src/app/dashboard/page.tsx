@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
+import { dismissOnboarding } from "@/app/actions/settings";
 
 export default async function DashboardHome() {
   const session = await requireSession();
@@ -35,9 +36,41 @@ export default async function DashboardHome() {
     0
   );
 
+  const onboardingSteps = [
+    { label: `Agrega tu primer ${vocab.staffSingular.toLowerCase()}`, done: staffCount > 0, href: "/dashboard/staff" },
+    { label: "Agrega tu primer servicio", done: serviceCount > 0, href: "/dashboard/services" },
+    { label: "Configura tu teléfono de contacto", done: !!business?.phone, href: "/dashboard/settings" },
+  ];
+  const showOnboarding = !business?.onboardingDismissed && onboardingSteps.some((s) => !s.done);
+
   return (
     <div>
       <h1 className="text-2xl font-bold">Resumen de hoy</h1>
+
+      {showOnboarding && (
+        <div className="mt-4 rounded-lg border border-gold/40 bg-charcoal p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-gold">Primeros pasos</h2>
+            <form action={dismissOnboarding}>
+              <button className="text-xs text-cream/50 hover:text-cream">Ocultar</button>
+            </form>
+          </div>
+          <ul className="mt-3 space-y-2 text-sm">
+            {onboardingSteps.map((s) => (
+              <li key={s.label} className="flex items-center gap-2">
+                <span className={s.done ? "text-green-400" : "text-cream/30"}>{s.done ? "✓" : "○"}</span>
+                {s.done ? (
+                  <span className="text-cream/50 line-through">{s.label}</span>
+                ) : (
+                  <Link href={s.href} className="text-gold hover:underline">
+                    {s.label}
+                  </Link>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-white/10 bg-charcoal p-5">
@@ -69,39 +102,41 @@ export default async function DashboardHome() {
 
       <h2 className="mt-8 text-lg font-semibold">Agenda de hoy</h2>
       <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
-        <table className="w-full text-sm">
-          <thead className="bg-charcoal text-left text-cream/60">
-            <tr>
-              <th className="px-4 py-2">Hora</th>
-              <th className="px-4 py-2">Cliente</th>
-              <th className="px-4 py-2">{vocab.staffSingular}</th>
-              <th className="px-4 py-2">Servicio</th>
-              <th className="px-4 py-2">Origen</th>
-            </tr>
-          </thead>
-          <tbody>
-            {todayAppointments.map((a) => (
-              <tr key={a.id} className="border-t border-white/5">
-                <td className="px-4 py-2">
-                  {a.startTime.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
-                </td>
-                <td className="px-4 py-2">{a.clientName}</td>
-                <td className="px-4 py-2">{a.staff.name}</td>
-                <td className="px-4 py-2">{a.service.name}</td>
-                <td className="px-4 py-2 text-cream/60">
-                  {a.source === "WALK_IN" ? vocab.walkInLabel : "Online"}
-                </td>
-              </tr>
-            ))}
-            {todayAppointments.length === 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-charcoal text-left text-cream/60">
               <tr>
-                <td className="px-4 py-6 text-center text-cream/40" colSpan={5}>
-                  No hay citas para hoy.
-                </td>
+                <th className="px-4 py-2">Hora</th>
+                <th className="px-4 py-2">Cliente</th>
+                <th className="px-4 py-2">{vocab.staffSingular}</th>
+                <th className="px-4 py-2">Servicio</th>
+                <th className="px-4 py-2">Origen</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {todayAppointments.map((a) => (
+                <tr key={a.id} className="border-t border-white/5">
+                  <td className="px-4 py-2">
+                    {a.startTime.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}
+                  </td>
+                  <td className="px-4 py-2">{a.clientName}</td>
+                  <td className="px-4 py-2">{a.staff.name}</td>
+                  <td className="px-4 py-2">{a.service.name}</td>
+                  <td className="px-4 py-2 text-cream/60">
+                    {a.source === "WALK_IN" ? vocab.walkInLabel : "Online"}
+                  </td>
+                </tr>
+              ))}
+              {todayAppointments.length === 0 && (
+                <tr>
+                  <td className="px-4 py-6 text-center text-cream/40" colSpan={5}>
+                    No hay citas para hoy.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

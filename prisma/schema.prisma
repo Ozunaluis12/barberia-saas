@@ -45,6 +45,7 @@ model Business {
   loyaltyPointsPerVisit   Int      @default(1)
   loyaltyRewardThreshold  Int      @default(10)
   referralBonusPoints    Int      @default(0) // 0 = programa de referidos desactivado
+  onboardingDismissed    Boolean  @default(false)
   cashDiscrepancyAlertThreshold Float @default(5) // avisa por correo al dueño si el faltante/sobrante de una caja supera este monto
   createdAt               DateTime @default(now())
 
