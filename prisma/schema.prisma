@@ -57,6 +57,7 @@ model Business {
   productSales   ProductSale[]
   payrollPayouts PayrollPayout[]
   waitlistEntries WaitlistEntry[]
+  coupons         Coupon[]
 }
 
 // Historial de un cliente a nivel de organización: si canceló tarde o no
@@ -172,6 +173,24 @@ model Service {
   waitlistEntries WaitlistEntry[]
 }
 
+// Cupón de descuento — solo aplica a la reserva pública de citas (no a venta
+// de productos ni a citas sin cita previa).
+model Coupon {
+  id            String    @id @default(cuid())
+  businessId    String
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  code          String
+  discountType  String // PERCENT, FIXED
+  discountValue Float
+  maxUses       Int?
+  usedCount     Int       @default(0)
+  expiresAt     DateTime?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+
+  @@unique([businessId, code])
+}
+
 // Producto físico que el negocio vende además de sus servicios (ej. shampoo,
 // cera, cremas). No participa en el flujo de reserva de citas — es solo
 // catálogo/venta directa en el local.
@@ -237,6 +256,7 @@ model Appointment {
   reminderSentAt    DateTime? // evita mandar el mismo recordatorio dos veces
   paymentReminderSentAt DateTime? // evita repetir el aviso de "confirma tu pago pronto" antes de expirar
   recurrenceGroupId String? // comparte id entre todas las citas de una misma serie recurrente; null = cita suelta
+  couponCode        String? // cupón aplicado al reservar, si hubo
   createdAt         DateTime    @default(now())
   review            Review?
 

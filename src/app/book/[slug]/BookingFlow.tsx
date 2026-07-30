@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { fetchSlots, createBooking, joinWaitlist } from "@/app/actions/booking";
+import { validateCoupon } from "@/app/actions/coupons";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import Avatar from "@/components/Avatar";
 
@@ -93,6 +94,10 @@ export default function BookingFlow({
   const [waitlistJoined, setWaitlistJoined] = useState(false);
   const [repeatEvery, setRepeatEvery] = useState<0 | 1 | 2 | 4>(0); // 0 = no repetir
   const [repeatCount, setRepeatCount] = useState(4);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountType: string; discountValue: number } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
   const [result, setResult] = useState<
     | {
         ok: true;
@@ -108,7 +113,26 @@ export default function BookingFlow({
 
   const days = useMemo(() => nextDays(14), []);
   const selectedService = services.find((s) => s.id === serviceId) ?? null;
-  const paymentAmount = selectedService?.depositAmount ?? advancePayment.amount ?? selectedService?.price ?? 0;
+  const baseAmount = selectedService?.depositAmount ?? advancePayment.amount ?? selectedService?.price ?? 0;
+  const paymentAmount = appliedCoupon
+    ? appliedCoupon.discountType === "PERCENT"
+      ? baseAmount * (1 - appliedCoupon.discountValue / 100)
+      : Math.max(0, baseAmount - appliedCoupon.discountValue)
+    : baseAmount;
+
+  async function handleApplyCoupon() {
+    if (!couponInput.trim()) return;
+    setCheckingCoupon(true);
+    setCouponError(null);
+    const res = await validateCoupon(businessSlug, couponInput);
+    setCheckingCoupon(false);
+    if (res.valid) {
+      setAppliedCoupon({ code: couponInput.trim().toUpperCase(), discountType: res.discountType, discountValue: res.discountValue });
+    } else {
+      setAppliedCoupon(null);
+      setCouponError(res.error);
+    }
+  }
 
   useEffect(() => {
     if (step !== 3 || !serviceId) return;
@@ -140,6 +164,7 @@ export default function BookingFlow({
       clientName,
       clientPhone,
       website,
+      couponCode: appliedCoupon?.code,
       recurrence:
         repeatEvery > 0
           ? { intervalWeeks: repeatEvery as 1 | 2 | 4, occurrences: repeatCount }
@@ -226,7 +251,7 @@ export default function BookingFlow({
 
   return (
     <div className="rounded-lg border border-white/10 bg-charcoal p-6">
-      <ol className="mb-6 flex gap-2 text-xs text-cream/50">
+      <ol className="mb-6 flex flex-wrap gap-2 text-xs text-cream/50">
         {["Servicio", vocab.staffSingular, "Horario", "Tus datos"].map((label, i) => (
           <li
             key={label}
@@ -349,7 +374,7 @@ export default function BookingFlow({
               )}
             </div>
           )}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {slots.map((s) => (
               <button
                 key={`${s.time}-${s.staffId}`}
@@ -437,6 +462,45 @@ export default function BookingFlow({
               />
             </div>
           )}
+          <div>
+            <label className="text-sm text-cream/70">Código de descuento (opcional)</label>
+            <div className="mt-1 flex gap-2">
+              <input
+                value={couponInput}
+                onChange={(e) => {
+                  setCouponInput(e.target.value);
+                  setAppliedCoupon(null);
+                  setCouponError(null);
+                }}
+                placeholder="CODIGO"
+                className="flex-1 rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+              />
+              <button
+                type="button"
+                disabled={!couponInput.trim() || checkingCoupon}
+                onClick={handleApplyCoupon}
+                className="rounded-md border border-white/20 px-4 py-2 text-sm hover:border-gold hover:text-gold disabled:opacity-40"
+              >
+                {checkingCoupon ? "..." : "Aplicar"}
+              </button>
+            </div>
+            {appliedCoupon && (
+              <p className="mt-1 text-sm text-gold">
+                Cupón {appliedCoupon.code} aplicado
+                {selectedService && (
+                  <>
+                    {" "}— nuevo precio: $
+                    {(
+                      appliedCoupon.discountType === "PERCENT"
+                        ? selectedService.price * (1 - appliedCoupon.discountValue / 100)
+                        : Math.max(0, selectedService.price - appliedCoupon.discountValue)
+                    ).toFixed(2)}
+                  </>
+                )}
+              </p>
+            )}
+            {couponError && <p className="mt-1 text-sm text-red-400">{couponError}</p>}
+          </div>
           {advancePayment.enabled && (
             <PaymentInstructions advancePayment={advancePayment} amount={paymentAmount} />
           )}

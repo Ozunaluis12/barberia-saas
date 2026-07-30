@@ -37,6 +37,7 @@ export type CreateBookingResult =
       appointmentId: string;
       recurrence?: { created: number; requested: number; skippedDays: string[] };
       pendingPayment?: boolean;
+      finalPrice?: number;
     }
   | { ok: false; error: string };
 
@@ -49,6 +50,7 @@ export async function createBooking(params: {
   clientName: string;
   clientPhone: string;
   website?: string; // honeypot: si llega lleno, es un bot
+  couponCode?: string;
   recurrence?: { intervalWeeks: 1 | 2 | 4; occurrences: number }; // occurrences = total incluyendo la primera
 }): Promise<CreateBookingResult> {
   if (params.website && params.website.trim() !== "") {
@@ -108,6 +110,28 @@ export async function createBooking(params: {
       // repetición por adelantado es un problema de cobro recurrente aparte.
       const requiresAdvancePayment = business.advancePaymentEnabled;
 
+      // El cupón se vuelve a validar aquí adentro (nunca se confía en el precio
+      // que mandó el cliente) — solo aplica a la primera cita, no a repeticiones.
+      let finalPrice = service.price;
+      let couponCode: string | null = null;
+      if (params.couponCode && params.couponCode.trim() !== "") {
+        const coupon = await tx.coupon.findFirst({
+          where: { businessId: business.id, code: params.couponCode.trim().toUpperCase(), active: true },
+        });
+        if (
+          coupon &&
+          (!coupon.expiresAt || coupon.expiresAt >= new Date()) &&
+          (coupon.maxUses === null || coupon.usedCount < coupon.maxUses)
+        ) {
+          finalPrice =
+            coupon.discountType === "PERCENT"
+              ? service.price * (1 - coupon.discountValue / 100)
+              : Math.max(0, service.price - coupon.discountValue);
+          couponCode = coupon.code;
+          await tx.coupon.update({ where: { id: coupon.id }, data: { usedCount: { increment: 1 } } });
+        }
+      }
+
       const appointment = await tx.appointment.create({
         data: {
           businessId: business.id,
@@ -121,8 +145,9 @@ export async function createBooking(params: {
           status: requiresAdvancePayment ? "PENDING_PAYMENT" : "CONFIRMED",
           source: "ONLINE",
           anyStaffRequested: params.staffId === null,
-          priceCharged: service.price,
+          priceCharged: finalPrice,
           recurrenceGroupId,
+          couponCode,
           ...(requiresAdvancePayment
             ? { paymentMethod: "TRANSFER", paymentStatus: "AWAITING_VERIFICATION" }
             : {}),
@@ -176,6 +201,7 @@ export async function createBooking(params: {
         staffName: match.staffName,
         startTime: startTime.toISOString(),
         appointmentId: appointment.id,
+        finalPrice,
         ...(recurrenceGroupId ? { recurrence } : {}),
         ...(requiresAdvancePayment ? { pendingPayment: true } : {}),
       };
