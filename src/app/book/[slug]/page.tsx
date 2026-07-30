@@ -76,6 +76,7 @@ export default async function BookPage({
             name: s.name,
             durationMinutes: s.durationMinutes,
             price: s.price,
+            depositAmount: s.depositAmount,
           }))}
           staff={business.staff.map((s) => ({ id: s.id, name: s.name, photoUrl: s.photoUrl }))}
           cancellationNoticeHours={business.cancellationNoticeHours}

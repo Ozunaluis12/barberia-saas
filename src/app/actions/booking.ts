@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { prisma } from "@/lib/db";
 import { getAvailableSlots, combineDayAndTime } from "@/lib/availability";
 import { findOrCreateClient } from "@/lib/clients";
+import { sendWhatsAppMessage } from "@/lib/notifications";
 
 function addDaysToDay(day: string, days: number): string {
   const d = new Date(`${day}T00:00:00`);
@@ -65,8 +66,8 @@ export async function createBooking(params: {
   // Todo lo demás corre dentro de una transacción con un lock exclusivo por negocio,
   // para que dos reservas simultáneas no puedan leer el mismo hueco como libre y
   // terminar chocando (condición de carrera).
-  return prisma.$transaction(
-    async (tx) => {
+  const result = await prisma.$transaction(
+    async (tx): Promise<CreateBookingResult> => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${business.id})::bigint)`;
 
       const slots = await getAvailableSlots(
@@ -167,6 +168,18 @@ export async function createBooking(params: {
     },
     { timeout: 15000, maxWait: 15000 }
   );
+
+  // Fuera de la transacción: si quedó pendiente de pago, se le avisa al negocio
+  // por el mismo WhatsApp donde va a recibir el comprobante, para que no se le
+  // pase el plazo de confirmación revisando el panel manualmente.
+  if (result.ok && result.pendingPayment && business.phone) {
+    await sendWhatsAppMessage(
+      business.phone,
+      `Nueva reserva con pago pendiente: ${params.clientName.trim()} agendó ${service.name} el ${new Date(result.startTime).toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })} a las ${new Date(result.startTime).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}. Tienes ${business.advancePaymentExpirationHours} horas para confirmar el pago antes de que se libere el horario.`
+    );
+  }
+
+  return result;
 }
 
 export type JoinWaitlistResult = { ok: true } | { ok: false; error: string };

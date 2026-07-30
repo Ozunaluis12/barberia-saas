@@ -163,6 +163,7 @@ model Service {
   imageUrl        String?
   durationMinutes Int      @default(30)
   price           Float
+  depositAmount   Float? // seña específica de este servicio; null = usa la seña general del negocio (o el precio completo)
   active          Boolean  @default(true)
   createdAt       DateTime @default(now())
 
@@ -231,6 +232,7 @@ model Appointment {
   paymentStatus     String      @default("PENDING") // PENDING, PAID, REFUNDED, AWAITING_VERIFICATION
   paidAt            DateTime? // cuándo se marcó como pagada (para acotar sesiones de caja)
   reminderSentAt    DateTime? // evita mandar el mismo recordatorio dos veces
+  paymentReminderSentAt DateTime? // evita repetir el aviso de "confirma tu pago pronto" antes de expirar
   recurrenceGroupId String? // comparte id entre todas las citas de una misma serie recurrente; null = cita suelta
   createdAt         DateTime    @default(now())
   review            Review?

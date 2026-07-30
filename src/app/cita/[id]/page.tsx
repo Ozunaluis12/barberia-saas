@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getPublicAppointment } from "@/app/actions/clientCancel";
 import { getVocabulary } from "@/lib/vocabulary";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import CancelButton from "./CancelButton";
 import ReviewForm from "./ReviewForm";
 
@@ -9,6 +10,7 @@ const STATUS_LABEL: Record<string, string> = {
   COMPLETED: "Completada",
   CANCELLED: "Cancelada",
   NO_SHOW: "No asistió",
+  PENDING_PAYMENT: "Pago pendiente de confirmar",
 };
 
 export default async function ClientAppointmentPage({
@@ -52,6 +54,50 @@ export default async function ClientAppointmentPage({
             <span className="text-cream/50">Estado:</span> {STATUS_LABEL[appt.status] ?? appt.status}
           </p>
         </div>
+
+        {appt.status === "PENDING_PAYMENT" && (
+          <div className="mt-8 space-y-3 rounded-md border border-gold/40 bg-ink p-4 text-sm">
+            <p className="font-semibold text-gold">
+              Paga ${(appt.service.depositAmount ?? appt.business.advancePaymentAmount ?? appt.priceCharged ?? appt.service.price).toFixed(2)} por adelantado para
+              confirmar tu cita
+            </p>
+            {appt.business.paymentQrUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={appt.business.paymentQrUrl}
+                alt="QR de pago"
+                className="mx-auto h-40 w-40 object-contain"
+              />
+            )}
+            {appt.business.paymentBrebKey && (
+              <p className="text-cream/80">
+                Llave Bre-B: <span className="font-semibold text-cream">{appt.business.paymentBrebKey}</span>
+              </p>
+            )}
+            {appt.business.paymentAccountInfo && (
+              <p className="whitespace-pre-line text-cream/80">{appt.business.paymentAccountInfo}</p>
+            )}
+            {(() => {
+              const message = `Hola, soy ${appt.clientName}. Reservé ${appt.service.name} en ${appt.business.name} el ${appt.startTime.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })} a las ${appt.startTime.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}. Aquí está mi comprobante de pago.`;
+              const link = appt.business.phone ? buildWhatsAppLink(appt.business.phone, message) : null;
+              return link ? (
+                <a
+                  href={link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-md bg-gold px-4 py-2 text-center font-semibold text-ink hover:bg-gold/90"
+                >
+                  Ya pagué, enviar comprobante
+                </a>
+              ) : (
+                <p className="text-cream/50">Envía tu comprobante de pago al negocio.</p>
+              );
+            })()}
+            <p className="text-xs text-cream/50">
+              Si el negocio no confirma tu pago a tiempo, este horario podría liberarse.
+            </p>
+          </div>
+        )}
 
         {appt.status === "CONFIRMED" && isUpcoming && (
           <div className="mt-8">

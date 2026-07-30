@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
-import { updateAppointmentStatus, markAppointmentPaid, confirmAdvancePayment } from "@/app/actions/appointments";
+import { updateAppointmentStatus, markAppointmentPaid, confirmAdvancePayment, rejectAdvancePayment } from "@/app/actions/appointments";
 import { getVocabulary } from "@/lib/vocabulary";
 import WalkInForm from "./WalkInForm";
 import CopyReviewLinkButton from "./CopyReviewLinkButton";
@@ -135,7 +135,7 @@ export default async function AppointmentsPage({
                       <form action={confirmAdvancePayment.bind(null, a.id)}>
                         <button className="text-green-400 hover:underline">Confirmar pago</button>
                       </form>
-                      <form action={updateAppointmentStatus.bind(null, a.id, "CANCELLED")}>
+                      <form action={rejectAdvancePayment.bind(null, a.id)}>
                         <button className="text-red-400 hover:underline">Rechazar</button>
                       </form>
                     </div>

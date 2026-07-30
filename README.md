@@ -70,10 +70,16 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **Recibo en PDF** por cita pagada o venta de producto, descargable desde
   Citas y Catálogo — es un comprobante interno, no una factura electrónica.
 - **Pago anticipado manual sin pasarela**: cada negocio decide si exige pago
-  para reservar en línea (precio completo o una seña fija), muestra su QR,
-  llave Bre-B y cuenta(s), y el cliente envía el comprobante por WhatsApp. El
-  horario se reserva de inmediato como "pago pendiente" y el negocio lo
-  confirma o rechaza desde Citas — si no se confirma a tiempo, se libera solo.
+  para reservar en línea (precio completo, una seña fija del negocio, o una
+  seña específica por servicio), muestra su QR, llave Bre-B y cuenta(s), y el
+  cliente envía el comprobante por WhatsApp. El horario se reserva de
+  inmediato como "pago pendiente" — visible también si el cliente vuelve a
+  `/cita/[id]` — y el negocio lo confirma o rechaza desde Citas (avisando al
+  cliente por WhatsApp en ambos casos). Si no se confirma a tiempo, el
+  horario se libera solo, no sin antes recordarle al cliente a mitad de
+  camino que falta su comprobante; el dueño también recibe un aviso por
+  WhatsApp apenas entra una reserva pendiente, y el resumen del panel muestra
+  cuántas hay por verificar.
 - **Instalable como app** (PWA) desde el navegador del celular.
 
 ## Stack
@@ -104,8 +110,9 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **Staff** — miembro del equipo (el roster, no la cuenta de acceso), con % de
   comisión opcional, horario y días laborales, y rangos de `StaffTimeOff`
   (vacaciones/incapacidad) que bloquean la reserva esos días.
-- **Service** — servicio agendable, con duración, precio y descripción
-  opcional.
+- **Service** — servicio agendable, con duración, precio, descripción y seña
+  de pago anticipado opcionales (si no se define, usa la seña general del
+  negocio o el precio completo).
 - **Product** — producto físico en venta (sin relación con las citas), con
   descripción, precio y stock opcional propios; cada venta queda en `ProductSale`.
 - **Client** — historial de un cliente dentro de una organización, con

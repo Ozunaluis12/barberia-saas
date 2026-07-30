@@ -8,6 +8,7 @@ const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
   DURACION_INVALIDA: "La duración debe ser un número mayor a 0.",
   PRECIO_INVALIDO: "El precio no puede ser negativo.",
+  "SEÑA_INVALIDA": "La seña no puede ser negativa.",
 };
 
 export default async function EditServicePage({
@@ -101,6 +102,20 @@ export default async function EditServicePage({
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             />
           </div>
+        </div>
+        <div>
+          <label className="text-sm text-cream/70">
+            Seña para pago anticipado (vacío = usa la seña general del negocio)
+          </label>
+          <input
+            type="number"
+            name="depositAmount"
+            step="0.01"
+            min={0}
+            placeholder="Usar la seña general"
+            defaultValue={service.depositAmount ?? ""}
+            className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+          />
         </div>
         <button
           type="submit"

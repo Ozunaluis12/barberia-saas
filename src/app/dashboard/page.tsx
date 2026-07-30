@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
@@ -23,9 +24,10 @@ export default async function DashboardHome() {
     orderBy: { startTime: "asc" },
   });
 
-  const [staffCount, serviceCount] = await Promise.all([
+  const [staffCount, serviceCount, pendingPaymentCount] = await Promise.all([
     prisma.staff.count({ where: { businessId: session.businessId, active: true } }),
     prisma.service.count({ where: { businessId: session.businessId, active: true } }),
+    prisma.appointment.count({ where: { businessId: session.businessId, status: "PENDING_PAYMENT" } }),
   ]);
 
   const estimatedRevenue = todayAppointments.reduce(
@@ -37,7 +39,7 @@ export default async function DashboardHome() {
     <div>
       <h1 className="text-2xl font-bold">Resumen de hoy</h1>
 
-      <div className="mt-6 grid grid-cols-3 gap-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-white/10 bg-charcoal p-5">
           <p className="text-sm text-cream/60">Citas hoy</p>
           <p className="mt-1 text-3xl font-bold text-gold">{todayAppointments.length}</p>
@@ -52,6 +54,17 @@ export default async function DashboardHome() {
             {staffCount} / {serviceCount}
           </p>
         </div>
+        <Link
+          href="/dashboard/appointments"
+          className="rounded-lg border border-white/10 bg-charcoal p-5 hover:border-gold"
+        >
+          <p className="text-sm text-cream/60">Pagos por verificar</p>
+          <p
+            className={`mt-1 text-3xl font-bold ${pendingPaymentCount > 0 ? "text-yellow-400" : "text-gold"}`}
+          >
+            {pendingPaymentCount}
+          </p>
+        </Link>
       </div>
 
       <h2 className="mt-8 text-lg font-semibold">Agenda de hoy</h2>

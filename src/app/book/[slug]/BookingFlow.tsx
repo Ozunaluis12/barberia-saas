@@ -5,7 +5,7 @@ import { fetchSlots, createBooking, joinWaitlist } from "@/app/actions/booking";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import Avatar from "@/components/Avatar";
 
-type Service = { id: string; name: string; durationMinutes: number; price: number };
+type Service = { id: string; name: string; durationMinutes: number; price: number; depositAmount: number | null };
 type StaffMember = { id: string; name: string; photoUrl?: string | null };
 type Slot = { time: string; staffId: string; staffName: string };
 type Vocab = {
@@ -107,7 +107,7 @@ export default function BookingFlow({
 
   const days = useMemo(() => nextDays(14), []);
   const selectedService = services.find((s) => s.id === serviceId) ?? null;
-  const paymentAmount = advancePayment.amount ?? selectedService?.price ?? 0;
+  const paymentAmount = selectedService?.depositAmount ?? advancePayment.amount ?? selectedService?.price ?? 0;
 
   useEffect(() => {
     if (step !== 3 || !serviceId) return;

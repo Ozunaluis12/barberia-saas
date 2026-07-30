@@ -7,6 +7,7 @@ import { requireSession } from "@/lib/guard";
 import { getAvailableSlots, combineDayAndTime } from "@/lib/availability";
 import { findOrCreateClient, applyClientStrike } from "@/lib/clients";
 import { notifyWaitlistForFreedSlot } from "@/lib/waitlist";
+import { sendWhatsAppMessage } from "@/lib/notifications";
 
 export type CreateWalkInResult = { ok: true } | { ok: false; error: string };
 
@@ -124,12 +125,46 @@ export async function confirmAdvancePayment(appointmentId: string) {
   const session = await requireSession();
   const appt = await prisma.appointment.findFirst({
     where: { id: appointmentId, businessId: session.businessId, status: "PENDING_PAYMENT" },
+    include: { business: true, service: true },
   });
   if (!appt) return;
 
   await prisma.appointment.update({
     where: { id: appointmentId },
     data: { status: "CONFIRMED", paymentStatus: "PAID", paidAt: new Date() },
+  });
+
+  await sendWhatsAppMessage(
+    appt.clientPhone,
+    `Hola ${appt.clientName}, confirmamos tu pago: tu cita de ${appt.service.name} en ${appt.business.name} el ${appt.startTime.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })} a las ${appt.startTime.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })} quedó agendada. ¡Te esperamos!`
+  );
+
+  revalidatePath("/dashboard/appointments");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/reports");
+}
+
+/** El negocio rechaza un pago anticipado (no llegó el comprobante o no coincide) — libera el horario. */
+export async function rejectAdvancePayment(appointmentId: string) {
+  const session = await requireSession();
+  const appt = await prisma.appointment.findFirst({
+    where: { id: appointmentId, businessId: session.businessId, status: "PENDING_PAYMENT" },
+    include: { business: true, service: true },
+  });
+  if (!appt) return;
+
+  await prisma.appointment.update({ where: { id: appointmentId }, data: { status: "CANCELLED" } });
+
+  await sendWhatsAppMessage(
+    appt.clientPhone,
+    `Hola ${appt.clientName}, no pudimos confirmar tu pago para la cita de ${appt.service.name} en ${appt.business.name}, así que liberamos ese horario. Si fue un error, escríbenos o vuelve a reservar.`
+  );
+
+  await notifyWaitlistForFreedSlot({
+    businessId: appt.businessId,
+    serviceId: appt.serviceId,
+    staffId: appt.staffId,
+    day: appt.startTime.toISOString().slice(0, 10),
   });
 
   revalidatePath("/dashboard/appointments");
