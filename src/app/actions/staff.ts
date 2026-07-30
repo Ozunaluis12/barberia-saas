@@ -7,7 +7,7 @@ import { requirePermission } from "@/lib/guard";
 import { uploadImage } from "@/lib/images";
 
 type ParsedStaff =
-  | { error: "NOMBRE_REQUERIDO" | "COMISION_INVALIDA" | "HORARIO_INVALIDO" }
+  | { error: "NOMBRE_REQUERIDO" | "COMISION_INVALIDA" | "HORARIO_INVALIDO" | "COLCHON_INVALIDO" }
   | {
       data: {
         name: string;
@@ -15,6 +15,7 @@ type ParsedStaff =
         workStart: string;
         workEnd: string;
         workDays: string;
+        bufferMinutes: number;
       };
     };
 
@@ -24,6 +25,7 @@ function parseStaffInput(formData: FormData): ParsedStaff {
   const workStart = String(formData.get("workStart") ?? "09:00");
   const workEnd = String(formData.get("workEnd") ?? "19:00");
   const workDays = formData.getAll("workDays").map(String).join(",") || "1,2,3,4,5,6";
+  const bufferMinutes = Number(formData.get("bufferMinutes") ?? 0);
 
   if (!name) return { error: "NOMBRE_REQUERIDO" };
 
@@ -40,7 +42,11 @@ function parseStaffInput(formData: FormData): ParsedStaff {
     return { error: "HORARIO_INVALIDO" };
   }
 
-  return { data: { name, commissionPercent, workStart, workEnd, workDays } };
+  if (!Number.isFinite(bufferMinutes) || bufferMinutes < 0) {
+    return { error: "COLCHON_INVALIDO" };
+  }
+
+  return { data: { name, commissionPercent, workStart, workEnd, workDays, bufferMinutes } };
 }
 
 export async function createStaff(formData: FormData) {

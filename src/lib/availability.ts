@@ -40,7 +40,8 @@ async function freeSlotsForStaff(
   workEnd: string,
   workDays: string,
   day: string,
-  durationMinutes: number
+  durationMinutes: number,
+  bufferMinutes: number
 ): Promise<string[]> {
   const dow = new Date(`${day}T12:00:00`).getDay();
   if (!workDays.split(",").map(Number).includes(dow)) return [];
@@ -79,9 +80,10 @@ async function freeSlotsForStaff(
 
     if (slotStart < now) continue;
 
-    const overlaps = existing.some(
-      (a) => slotStart < a.endTime && slotEnd > a.startTime
-    );
+    const overlaps = existing.some((a) => {
+      const blockedEnd = new Date(a.endTime.getTime() + bufferMinutes * 60000);
+      return slotStart < blockedEnd && slotEnd > a.startTime;
+    });
     if (!overlaps) slots.push(minutesToHHMM(t));
   }
 
@@ -144,7 +146,8 @@ export async function getAvailableSlots(
         s.workEnd,
         s.workDays,
         day,
-        service.durationMinutes
+        service.durationMinutes,
+        s.bufferMinutes
       ),
     }))
   );

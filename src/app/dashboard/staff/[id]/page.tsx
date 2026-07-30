@@ -11,6 +11,7 @@ const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
   COMISION_INVALIDA: "La comisión debe ser un número entre 0 y 100.",
   HORARIO_INVALIDO: "Revisa el horario: la hora de inicio debe ser antes que la de fin.",
+  COLCHON_INVALIDO: "El colchón debe ser un número de minutos mayor o igual a 0.",
   RANGO_INVALIDO: "Revisa las fechas: el inicio debe ser antes o igual al fin.",
 };
 
@@ -107,6 +108,18 @@ export default async function EditStaffPage({
             max={100}
             placeholder="Sin comisión"
             defaultValue={staff.commissionPercent ?? ""}
+            className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+          />
+        </div>
+        <div>
+          <label className="text-sm text-cream/70">
+            Minutos de colchón después de cada cita (limpieza/descanso)
+          </label>
+          <input
+            type="number"
+            name="bufferMinutes"
+            min={0}
+            defaultValue={staff.bufferMinutes}
             className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
           />
         </div>

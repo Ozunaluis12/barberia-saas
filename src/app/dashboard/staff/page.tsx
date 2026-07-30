@@ -10,6 +10,7 @@ const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
   COMISION_INVALIDA: "La comisión debe ser un número entre 0 y 100.",
   HORARIO_INVALIDO: "Revisa el horario: la hora de inicio debe ser antes que la de fin.",
+  COLCHON_INVALIDO: "El colchón debe ser un número de minutos mayor o igual a 0.",
   NO_ENCONTRADO: "No se encontró a esa persona.",
 };
 
@@ -39,6 +40,7 @@ export default async function StaffPage({
       )}
 
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-charcoal text-left text-cream/60">
             <tr>
@@ -96,6 +98,7 @@ export default async function StaffPage({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="mt-8 max-w-lg rounded-lg border border-white/10 bg-charcoal p-6">
@@ -148,6 +151,18 @@ export default async function StaffPage({
               min={0}
               max={100}
               placeholder="Sin comisión"
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">
+              Minutos de colchón después de cada cita (limpieza/descanso)
+            </label>
+            <input
+              type="number"
+              name="bufferMinutes"
+              min={0}
+              defaultValue={0}
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             />
           </div>
