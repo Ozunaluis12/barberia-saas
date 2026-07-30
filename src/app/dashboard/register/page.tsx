@@ -88,7 +88,7 @@ export default async function RegisterPage({
                   step="0.01"
                   min={0}
                   required
-                  className="mt-1 block w-40 rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+                  className="mt-1 block w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold sm:w-40"
                 />
               </div>
               <div className="flex-1">
@@ -182,6 +182,7 @@ export default async function RegisterPage({
         </a>
       </div>
       <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-charcoal text-left text-cream/60">
             <tr>
@@ -228,6 +229,7 @@ export default async function RegisterPage({
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

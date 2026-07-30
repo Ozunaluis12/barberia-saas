@@ -84,7 +84,7 @@ export default async function ReportsPage({
         alguien, aquí solo se muestra el ingreso que generó.
       </p>
 
-      <form className="mt-6 flex items-end gap-4">
+      <form className="mt-6 flex flex-wrap items-end gap-4">
         <div>
           <label className="text-sm text-cream/70">Desde</label>
           <input
@@ -123,7 +123,7 @@ export default async function ReportsPage({
         </p>
       )}
 
-      <form action={closePayrollPeriod} className="mt-4 flex items-center gap-3">
+      <form action={closePayrollPeriod} className="mt-4 flex flex-wrap items-center gap-3">
         <input type="hidden" name="from" value={fromValue} />
         <input type="hidden" name="to" value={toValue} />
         <button
@@ -139,6 +139,7 @@ export default async function ReportsPage({
       </form>
 
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-charcoal text-left text-cream/60">
             <tr>
@@ -185,10 +186,12 @@ export default async function ReportsPage({
             </tfoot>
           )}
         </table>
+        </div>
       </div>
 
       <h2 className="mt-10 text-lg font-semibold">Historial de pagos por período</h2>
       <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-charcoal text-left text-cream/60">
             <tr>
@@ -227,6 +230,7 @@ export default async function ReportsPage({
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

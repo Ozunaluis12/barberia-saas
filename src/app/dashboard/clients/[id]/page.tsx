@@ -95,6 +95,7 @@ export default async function ClientDetailPage({
 
       <h2 className="mt-8 text-lg font-semibold">Historial de procedimientos</h2>
       <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-charcoal text-left text-cream/60">
             <tr>
@@ -135,6 +136,7 @@ export default async function ClientDetailPage({
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

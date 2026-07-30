@@ -137,7 +137,7 @@ export default function WalkInForm({
 
       <div>
         <label className="text-sm text-cream/70">Horario disponible</label>
-        <div className="mt-2 grid grid-cols-4 gap-2">
+        <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
           {slots.map((s) => (
             <button
               type="button"

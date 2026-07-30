@@ -80,7 +80,7 @@ export default async function AnalyticsPage({
         Calculado sobre citas completadas y ventas de producto en el rango elegido.
       </p>
 
-      <form className="mt-6 flex items-end gap-4">
+      <form className="mt-6 flex flex-wrap items-end gap-4">
         <div>
           <label className="text-sm text-cream/70">Desde</label>
           <input

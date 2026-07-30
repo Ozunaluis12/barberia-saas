@@ -21,6 +21,7 @@ export default async function WaitlistPage() {
       </p>
 
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-charcoal text-left text-cream/60">
             <tr>
@@ -62,6 +63,7 @@ export default async function WaitlistPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

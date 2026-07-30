@@ -48,6 +48,7 @@ export default async function CatalogPage({
       )}
 
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-charcoal text-left text-cream/60">
             <tr>
@@ -87,7 +88,7 @@ export default async function CatalogPage({
                   </span>
                 </td>
                 <td className="px-4 py-2 text-right">
-                  <div className="flex items-center justify-end gap-3">
+                  <div className="flex flex-wrap items-center justify-end gap-3">
                     <form
                       action={sellProduct.bind(null, p.id)}
                       className="flex items-center gap-1"
@@ -132,10 +133,12 @@ export default async function CatalogPage({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <h2 className="mt-10 text-lg font-semibold">Ventas recientes</h2>
       <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-charcoal text-left text-cream/60">
             <tr>
@@ -174,6 +177,7 @@ export default async function CatalogPage({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       <div className="mt-8 max-w-lg rounded-lg border border-white/10 bg-charcoal p-6">
