@@ -1,9 +1,19 @@
 import { redirect } from "next/navigation";
 import { getSession, type SessionPayload } from "@/lib/session";
+import { prisma } from "@/lib/db";
 
 export async function requireSession(): Promise<SessionPayload> {
   const session = await getSession();
   if (!session) redirect("/login");
+
+  // Soporte puede suspender una empresa (falta de pago, etc.) sin borrar sus
+  // datos — el equipo simplemente no puede entrar hasta que se reactive.
+  const business = await prisma.business.findUnique({
+    where: { id: session.businessId },
+    select: { subscriptionStatus: true },
+  });
+  if (business?.subscriptionStatus === "SUSPENDED") redirect("/cuenta-suspendida");
+
   return session;
 }
 

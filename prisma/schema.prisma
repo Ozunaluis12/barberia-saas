@@ -32,6 +32,12 @@ model Business {
   phone                   String?
   address                 String?
   plan                    String   @default("GRATIS") // GRATIS, PRO
+  // Suscripción — controlada por Soporte, no por el dueño del negocio.
+  subscriptionStatus      String   @default("ACTIVE") // ACTIVE, SUSPENDED
+  subscriptionRenewsAt    DateTime? // próxima fecha de renovación/vencimiento; null = sin definir aún
+  subscriptionNotes       String? // texto libre de soporte: método de pago, acuerdos, historial breve
+  suspendedAt             DateTime?
+  suspendedReason         String?
   cancellationNoticeHours Int      @default(3)
   reminderChannels        String   @default("") // CSV de EMAIL,SMS,WHATSAPP — "" = sin recordatorios; puede tener varios a la vez
   reminderHoursBefore     Int      @default(24)
@@ -416,6 +422,19 @@ model WaitlistEntry {
   createdAt   DateTime  @default(now())
 
   @@index([businessId, day])
+}
+
+// Cuenta interna de Soporte (el equipo que crea, activa/desactiva y da
+// soporte a las empresas clientes). Deliberadamente separada de User: no
+// pertenece a ninguna Organization/Business, tiene su propia sesión, y no
+// hay registro público — se crea por bootstrap en el seed.
+model SupportUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
 }
 
 // Bitácora de acciones sensibles (dinero y accesos) — no instrumenta todo el

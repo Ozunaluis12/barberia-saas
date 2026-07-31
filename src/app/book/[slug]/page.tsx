@@ -23,6 +23,17 @@ export default async function BookPage({
 
   if (!business) notFound();
 
+  if (business.subscriptionStatus === "SUSPENDED") {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-ink px-4 text-center text-cream">
+        <div>
+          <h1 className="text-2xl font-bold">{business.name}</h1>
+          <p className="mt-2 text-cream/60">Este negocio no está disponible para reservas en este momento.</p>
+        </div>
+      </main>
+    );
+  }
+
   const vocab = getVocabulary(business.category);
 
   const [ratingSummary, featuredReviews] = await Promise.all([

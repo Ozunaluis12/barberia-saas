@@ -239,10 +239,29 @@ async function seedBusiness(config: SeedBusinessConfig) {
   console.log(`  Login panel: ${config.ownerEmail} / ${config.ownerPassword}`);
 }
 
+/**
+ * Crea/actualiza la cuenta de Soporte a partir de variables de entorno — no
+ * hay registro público para esto, se define manualmente en el hosting.
+ */
+async function seedSupportUser() {
+  const email = process.env.SUPPORT_EMAIL;
+  const password = process.env.SUPPORT_PASSWORD;
+  if (!email || !password) return;
+
+  const passwordHash = await bcrypt.hash(password, 10);
+  await prisma.supportUser.upsert({
+    where: { email },
+    update: { passwordHash },
+    create: { email, passwordHash, name: "Soporte" },
+  });
+  console.log(`Cuenta de soporte lista: ${email}`);
+}
+
 async function main() {
   for (const config of DEMO_BUSINESSES) {
     await seedBusiness(config);
   }
+  await seedSupportUser();
 }
 
 main()
