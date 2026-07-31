@@ -82,6 +82,11 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   cuántas hay por verificar.
 - **Reembolsos reales**: marcar una cita pagada como reembolsada (con motivo
   obligatorio) la excluye automáticamente de reportes, nómina y analítica.
+- **Enlaces de WhatsApp con un clic**: en Citas, cada cita confirmada tiene
+  botones para mandar el recordatorio o el enlace de cancelación por
+  WhatsApp, y cada cita completada uno para pedir reseña — abren WhatsApp
+  con el mensaje ya escrito, listos para enviar desde el número real del
+  negocio, sin depender de Twilio ni de la aprobación de Meta.
 - **Protección anti-spam sin dependencias externas**: rate-limit por teléfono
   e IP en reservas/lista de espera/login/signup/recuperación de contraseña, y
   campo honeypot en los formularios públicos.
