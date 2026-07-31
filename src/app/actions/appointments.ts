@@ -6,7 +6,6 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/guard";
 import { getAvailableSlots, combineDayAndTime } from "@/lib/availability";
 import { findOrCreateClient, applyClientStrike } from "@/lib/clients";
-import { notifyWaitlistForFreedSlot } from "@/lib/waitlist";
 import { sendWhatsAppMessage } from "@/lib/notifications";
 import { logAudit } from "@/lib/audit";
 
@@ -150,13 +149,6 @@ export async function updateAppointmentStatus(appointmentId: string, status: str
         data: { sessionsRemaining: { increment: 1 } },
       });
     }
-
-    await notifyWaitlistForFreedSlot({
-      businessId: appt.businessId,
-      serviceId: appt.serviceId,
-      staffId: appt.staffId,
-      day: appt.startTime.toISOString().slice(0, 10),
-    });
   }
 
   revalidatePath("/dashboard/appointments");
@@ -205,13 +197,6 @@ export async function rejectAdvancePayment(appointmentId: string) {
     appt.clientPhone,
     `Hola ${appt.clientName}, no pudimos confirmar tu pago para la cita de ${appt.service.name} en ${appt.business.name}, así que liberamos ese horario. Si fue un error, escríbenos o vuelve a reservar.`
   );
-
-  await notifyWaitlistForFreedSlot({
-    businessId: appt.businessId,
-    serviceId: appt.serviceId,
-    staffId: appt.staffId,
-    day: appt.startTime.toISOString().slice(0, 10),
-  });
 
   await logAudit(session, "payment.rejected", `${appt.clientName} — ${appt.service.name}`);
 

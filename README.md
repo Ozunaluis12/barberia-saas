@@ -58,8 +58,8 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   miembro del equipo para un rango de fechas, con historial, para no
   recalcular (ni pagar dos veces) el mismo período.
 - **Lista de espera**: si un día no tiene cupo, el cliente puede pedir que le
-  avisen por WhatsApp — al cancelarse una cita de ese día/servicio, se le
-  notifica automáticamente.
+  avisen. El negocio decide a mano a quién y cuándo avisar por WhatsApp desde
+  el panel, y puede quitar a alguien de la lista en cualquier momento.
 - **Difusión masiva por WhatsApp**: el dueño manda un mismo mensaje/promoción
   a todos los clientes que no lo hayan desactivado.
 - **Citas recurrentes**: el cliente puede pedir repetir su cita cada 1/2/4
@@ -173,7 +173,8 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **PayrollPayout** — cierre congelado de comisión de un staff para un rango
   de fechas, para no recalcular el mismo período dos veces.
 - **WaitlistEntry** — cliente esperando que se libere un horario en un día
-  sin cupo; se le avisa por WhatsApp al cancelarse una cita que calce.
+  sin cupo; el negocio le avisa por WhatsApp a mano desde el panel, no
+  automáticamente.
 - **Coupon** — código de descuento (porcentaje o monto fijo) por negocio, con
   límite de usos y vencimiento opcionales; solo aplica a la reserva pública.
 - **AuditLog** — bitácora de acciones sensibles (dinero y accesos), con el
@@ -259,7 +260,6 @@ src/
     vocabulary.ts           vocabulario dinámico según el rubro del negocio
     images.ts               subida de fotos a Cloudinary
     notifications.ts        envío de recordatorios: WhatsApp (Twilio) y correo (Resend); punto de extensión para SMS
-    waitlist.ts             aviso automático a la lista de espera al liberarse un horario
     whatsapp.ts             arma enlaces wa.me (comprobante de pago anticipado)
     rateLimit.ts            rate-limit en memoria + IP del cliente (anti-spam sin dependencias)
     audit.ts                registra entradas en la bitácora de auditoría

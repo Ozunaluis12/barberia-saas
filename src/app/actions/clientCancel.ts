@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { applyClientStrike } from "@/lib/clients";
-import { notifyWaitlistForFreedSlot } from "@/lib/waitlist";
 import { getAvailableSlots, combineDayAndTime } from "@/lib/availability";
 
 export async function getPublicAppointment(appointmentId: string) {
@@ -59,13 +58,6 @@ export async function cancelAppointmentByClient(appointmentId: string): Promise<
       data: { sessionsRemaining: { increment: 1 } },
     });
   }
-
-  await notifyWaitlistForFreedSlot({
-    businessId: appt.businessId,
-    serviceId: appt.serviceId,
-    staffId: appt.staffId,
-    day: appt.startTime.toISOString().slice(0, 10),
-  });
 
   revalidatePath("/dashboard/appointments");
   revalidatePath("/dashboard");
@@ -160,14 +152,6 @@ export async function rescheduleAppointmentByClient(
   );
 
   if (result.ok) {
-    // El horario viejo que se libera puede calzar con alguien en lista de espera.
-    await notifyWaitlistForFreedSlot({
-      businessId: appt.businessId,
-      serviceId: appt.serviceId,
-      staffId: appt.staffId,
-      day: appt.startTime.toISOString().slice(0, 10),
-    });
-
     revalidatePath("/dashboard/appointments");
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/calendar");

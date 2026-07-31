@@ -1,6 +1,6 @@
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
-import { removeWaitlistEntry } from "@/app/actions/waitlist";
+import { removeWaitlistEntry, notifyWaitlistEntry } from "@/app/actions/waitlist";
 
 export default async function WaitlistPage() {
   const session = await requireSession();
@@ -16,9 +16,9 @@ export default async function WaitlistPage() {
     <div>
       <h1 className="text-2xl font-bold">Lista de espera</h1>
       <p className="mt-1 text-sm text-cream/60">
-        Clientes que pidieron que se les avise si se libera un horario en un día sin cupo. Al
-        cancelarse una cita de ese día/servicio, se les envía un aviso por WhatsApp automáticamente
-        (si está configurado).
+        Clientes que pidieron que se les avise si se libera un horario en un día sin cupo. Tú
+        decides a quién avisar y cuándo — presiona &ldquo;Avisar&rdquo; para mandarle un WhatsApp
+        cuando se libere un cupo que le sirva.
       </p>
 
       <div className="mt-6 overflow-hidden rounded-lg border border-white/10">
@@ -55,9 +55,16 @@ export default async function WaitlistPage() {
                   )}
                 </td>
                 <td className="px-4 py-2 text-right">
-                  <form action={removeWaitlistEntry.bind(null, e.id)}>
-                    <button className="text-xs text-red-400 hover:underline">Quitar</button>
-                  </form>
+                  <div className="flex flex-wrap items-center justify-end gap-3">
+                    {!e.notifiedAt && (
+                      <form action={notifyWaitlistEntry.bind(null, e.id)}>
+                        <button className="text-xs text-gold hover:underline">Avisar</button>
+                      </form>
+                    )}
+                    <form action={removeWaitlistEntry.bind(null, e.id)}>
+                      <button className="text-xs text-red-400 hover:underline">Quitar</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             ))}

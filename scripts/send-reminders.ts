@@ -1,6 +1,5 @@
 import { prisma } from "../src/lib/db";
 import { sendAppointmentReminder, sendWhatsAppMessage, type ReminderChannel } from "../src/lib/notifications";
-import { notifyWaitlistForFreedSlot } from "../src/lib/waitlist";
 import { sendWeeklyDigestEmail } from "../src/lib/email";
 import { getOwnerEmails } from "../src/lib/owners";
 
@@ -77,12 +76,6 @@ async function expirePendingPayments() {
       });
       if (count === 0) continue;
 
-      await notifyWaitlistForFreedSlot({
-        businessId: appt.businessId,
-        serviceId: appt.serviceId,
-        staffId: appt.staffId,
-        day: appt.startTime.toISOString().slice(0, 10),
-      });
       expired++;
     }
   }
