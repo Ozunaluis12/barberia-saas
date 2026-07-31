@@ -12,7 +12,7 @@ export default async function AnalyticsPage({
   const rangeStart = from ? new Date(`${from}T00:00:00`) : new Date(new Date().setDate(new Date().getDate() - 30));
   const rangeEnd = to ? new Date(`${to}T23:59:59`) : new Date();
 
-  const [appointments, productSales] = await Promise.all([
+  const [appointments, productSales, expenses] = await Promise.all([
     prisma.appointment.findMany({
       where: {
         businessId: session.businessId,
@@ -26,7 +26,15 @@ export default async function AnalyticsPage({
       where: { businessId: session.businessId, createdAt: { gte: rangeStart, lte: rangeEnd } },
       include: { product: true },
     }),
+    prisma.expense.findMany({
+      where: { businessId: session.businessId, date: { gte: rangeStart, lte: rangeEnd } },
+    }),
   ]);
+
+  const appointmentRevenue = appointments.reduce((sum, a) => sum + (a.priceCharged ?? a.service.price), 0);
+  const productRevenue = productSales.reduce((sum, s) => sum + s.total, 0);
+  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const netProfit = appointmentRevenue + productRevenue - totalExpenses;
 
   // Horas pico
   const byHour = new Map<number, number>();
@@ -122,6 +130,15 @@ export default async function AnalyticsPage({
               <p className="text-sm text-cream/40">No hay citas completadas en este rango.</p>
             )}
           </div>
+        </div>
+
+        <div className="rounded-lg border border-white/10 bg-charcoal p-6">
+          <h2 className="text-lg font-semibold">Ganancia neta</h2>
+          <p className="mt-4 text-4xl font-bold text-gold">${netProfit.toFixed(2)}</p>
+          <p className="mt-1 text-sm text-cream/60">
+            Ingreso (${(appointmentRevenue + productRevenue).toFixed(2)}) menos gastos del período
+            (${totalExpenses.toFixed(2)}).
+          </p>
         </div>
 
         <div className="rounded-lg border border-white/10 bg-charcoal p-6">

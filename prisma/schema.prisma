@@ -60,6 +60,7 @@ model Business {
   payrollPayouts PayrollPayout[]
   waitlistEntries WaitlistEntry[]
   coupons         Coupon[]
+  expenses        Expense[]
 }
 
 // Historial de un cliente a nivel de organización: si canceló tarde o no
@@ -196,6 +197,21 @@ model Coupon {
   createdAt     DateTime  @default(now())
 
   @@unique([businessId, code])
+}
+
+// Gasto operativo (arriendo, insumos, servicios) para que Reportes/Analítica
+// muestren ganancia real, no solo ingreso bruto.
+model Expense {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category    String
+  amount      Float
+  description String?
+  date        DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([businessId, date])
 }
 
 // Producto físico que el negocio vende además de sus servicios (ej. shampoo,

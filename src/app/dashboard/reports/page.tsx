@@ -66,6 +66,12 @@ export default async function ReportsPage({
     { revenue: 0, commission: 0, businessShare: 0 }
   );
 
+  const expenses = await prisma.expense.findMany({
+    where: { businessId: session.businessId, date: { gte: rangeStart, lte: rangeEnd } },
+  });
+  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const netProfit = totals.businessShare - totalExpenses;
+
   const fromValue = rangeStart.toISOString().slice(0, 10);
   const toValue = rangeEnd.toISOString().slice(0, 10);
 
@@ -187,6 +193,20 @@ export default async function ReportsPage({
           )}
         </table>
         </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-4 rounded-lg border border-white/10 bg-charcoal p-4 text-sm">
+        <p>
+          <span className="text-cream/60">Gastos del período: </span>
+          <span className="font-semibold text-red-400">${totalExpenses.toFixed(2)}</span>
+        </p>
+        <p>
+          <span className="text-cream/60">Ganancia neta (queda del negocio − gastos): </span>
+          <span className="font-semibold text-gold">${netProfit.toFixed(2)}</span>
+        </p>
+        <a href="/dashboard/expenses" className="ml-auto text-xs text-gold hover:underline">
+          Gestionar gastos →
+        </a>
       </div>
 
       <h2 className="mt-10 text-lg font-semibold">Historial de pagos por período</h2>
