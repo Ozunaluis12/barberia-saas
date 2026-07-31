@@ -51,6 +51,15 @@ export async function cancelAppointmentByClient(appointmentId: string): Promise<
     await applyClientStrike(appt.clientId);
   }
 
+  // Si la cita se pagó consumiendo una sesión de un paquete, se devuelve al
+  // cancelar — si no, el cliente pierde una sesión que sí pagó.
+  if (appt.packagePurchaseId) {
+    await prisma.clientPackagePurchase.update({
+      where: { id: appt.packagePurchaseId },
+      data: { sessionsRemaining: { increment: 1 } },
+    });
+  }
+
   await notifyWaitlistForFreedSlot({
     businessId: appt.businessId,
     serviceId: appt.serviceId,

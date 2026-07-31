@@ -53,7 +53,10 @@ export async function createWalkIn(formData: FormData): Promise<CreateWalkInResu
 
       // Si el staff eligió consumir una sesión de un paquete prepagado, se
       // vuelve a validar aquí adentro (nunca se confía en lo que mandó el
-      // formulario) antes de descontar el saldo y cobrar $0.
+      // formulario) antes de descontar el saldo y cobrar $0. Si el paquete
+      // ya no tiene saldo (por ejemplo, alguien más se adelantó con la
+      // última sesión), se rechaza en vez de cobrar de más en silencio —
+      // el staff pidió explícitamente usar el paquete.
       let usedPackage: { id: string } | null = null;
       if (packagePurchaseId) {
         const purchase = await tx.clientPackagePurchase.findFirst({
@@ -65,13 +68,17 @@ export async function createWalkIn(formData: FormData): Promise<CreateWalkInResu
             servicePackage: { serviceId },
           },
         });
-        if (purchase) {
-          await tx.clientPackagePurchase.update({
-            where: { id: purchase.id },
-            data: { sessionsRemaining: { decrement: 1 } },
-          });
-          usedPackage = purchase;
+        if (!purchase) {
+          return {
+            ok: false,
+            error: "El paquete ya no tiene sesiones disponibles. Quita la casilla para cobrar el servicio.",
+          };
         }
+        await tx.clientPackagePurchase.update({
+          where: { id: purchase.id },
+          data: { sessionsRemaining: { decrement: 1 } },
+        });
+        usedPackage = purchase;
       }
 
       await tx.appointment.create({
@@ -135,6 +142,15 @@ export async function updateAppointmentStatus(appointmentId: string, status: str
   }
 
   if (status === "CANCELLED") {
+    // Si la cita se pagó consumiendo una sesión de un paquete, se devuelve al
+    // cancelar — si no, el cliente pierde una sesión que sí pagó.
+    if (appt.packagePurchaseId) {
+      await prisma.clientPackagePurchase.update({
+        where: { id: appt.packagePurchaseId },
+        data: { sessionsRemaining: { increment: 1 } },
+      });
+    }
+
     await notifyWaitlistForFreedSlot({
       businessId: appt.businessId,
       serviceId: appt.serviceId,

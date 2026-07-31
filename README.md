@@ -359,6 +359,7 @@ servicio aparte con sus propias variables: también necesita `RESEND_API_KEY`
   reseñas, reportes de desempeño y comisiones, historial de clientes con
   sanciones. El campo `plan` existe en el modelo de datos pero **no hay
   ninguna limitación ni cobro implementado todavía**.
-- **Pro** (en construcción, sin fecha) — multi-sucursal, recordatorios
-  automáticos por WhatsApp/SMS y cobro en línea. Ninguno de los tres está
-  construido; no anunciar como disponible hasta que lo estén.
+- **Pro** (en construcción, sin fecha) — recordatorios automáticos por SMS y
+  cobro en línea con pasarela. Multi-sucursal ya está construido (ver
+  `/dashboard/locations`) y disponible hoy sin restricción de plan; los otros
+  dos no están construidos, no anunciarlos como disponibles hasta que lo estén.

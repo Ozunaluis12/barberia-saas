@@ -68,7 +68,15 @@ async function expirePendingPayments() {
     });
 
     for (const appt of stale) {
-      await prisma.appointment.update({ where: { id: appt.id }, data: { status: "CANCELLED" } });
+      // Guarda status: "PENDING_PAYMENT" en el where para no pisar una cita que
+      // el negocio acaba de confirmar/rechazar justo entre el findMany de arriba
+      // y este update — si ya cambió de estado, count sale 0 y se ignora.
+      const { count } = await prisma.appointment.updateMany({
+        where: { id: appt.id, status: "PENDING_PAYMENT" },
+        data: { status: "CANCELLED" },
+      });
+      if (count === 0) continue;
+
       await notifyWaitlistForFreedSlot({
         businessId: appt.businessId,
         serviceId: appt.serviceId,
