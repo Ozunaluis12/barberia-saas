@@ -108,6 +108,42 @@ export async function sendLowStockAlert(to: string, details: LowStockDetails): P
   }
 }
 
+export type WeeklyDigestDetails = {
+  businessName: string;
+  revenue: number;
+  appointmentCount: number;
+  topServiceName: string | null;
+};
+
+export async function sendWeeklyDigestEmail(to: string, details: WeeklyDigestDetails): Promise<SendResult> {
+  if (!resend) {
+    console.log(
+      `[email:resumen] Resend no configurado. Resumen de ${details.businessName}: $${details.revenue} en ${details.appointmentCount} citas`
+    );
+    return { sent: false, reason: "RESEND_API_KEY no configurado" };
+  }
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: `Tu resumen semanal de ${details.businessName}`,
+      html: `
+        <p>Así te fue la última semana en <strong>${details.businessName}</strong>:</p>
+        <ul>
+          <li><strong>Ingreso:</strong> $${details.revenue.toFixed(2)}</li>
+          <li><strong>Citas completadas:</strong> ${details.appointmentCount}</li>
+          <li><strong>Servicio más pedido:</strong> ${details.topServiceName ?? "—"}</li>
+        </ul>
+      `,
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error("[email:resumen] Error enviando correo:", error);
+    return { sent: false, reason: "Error al enviar el correo" };
+  }
+}
+
 export type CashDiscrepancyDetails = {
   businessName: string;
   drawerLabel: string; // nombre del staff o "Caja general"

@@ -47,6 +47,7 @@ model Business {
   referralBonusPoints    Int      @default(0) // 0 = programa de referidos desactivado
   onboardingDismissed    Boolean  @default(false)
   cashDiscrepancyAlertThreshold Float @default(5) // avisa por correo al dueño si el faltante/sobrante de una caja supera este monto
+  lastDigestSentAt        DateTime? // evita mandar el resumen semanal dos veces si el cron se traslapa
   createdAt               DateTime @default(now())
 
   users        User[]

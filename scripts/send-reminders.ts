@@ -1,6 +1,8 @@
 import { prisma } from "../src/lib/db";
 import { sendAppointmentReminder, sendWhatsAppMessage, type ReminderChannel } from "../src/lib/notifications";
 import { notifyWaitlistForFreedSlot } from "../src/lib/waitlist";
+import { sendWeeklyDigestEmail } from "../src/lib/email";
+import { getOwnerEmails } from "../src/lib/owners";
 
 // Se corre cada 15 minutos (ver render.yaml). La ventana de búsqueda coincide
 // con ese intervalo para que cada cita reciba su recordatorio una sola vez.
@@ -80,9 +82,69 @@ async function expirePendingPayments() {
   console.log(`Pagos pendientes expirados: ${expired}.`);
 }
 
+/**
+ * Resumen semanal por correo a los dueños: ingreso, citas completadas y
+ * servicio más pedido de los últimos 7 días. Solo se considera los lunes, y
+ * `lastDigestSentAt` evita un segundo envío si el cron (cada 15 min) se
+ * traslapa o se corre más de una vez ese día.
+ */
+async function sendWeeklyDigests() {
+  if (new Date().getDay() !== 1) return; // solo lunes
+
+  const sixDaysAgo = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const now = new Date();
+
+  const businesses = await prisma.business.findMany({
+    where: { OR: [{ lastDigestSentAt: null }, { lastDigestSentAt: { lt: sixDaysAgo } }] },
+  });
+
+  let sent = 0;
+
+  for (const business of businesses) {
+    const ownerEmails = await getOwnerEmails(business.organizationId);
+    if (ownerEmails.length === 0) continue;
+
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        businessId: business.id,
+        status: "COMPLETED",
+        paymentStatus: { not: "REFUNDED" },
+        startTime: { gte: sevenDaysAgo, lte: now },
+      },
+      include: { service: true },
+    });
+
+    const revenue = appointments.reduce((sum, a) => sum + (a.priceCharged ?? a.service.price), 0);
+
+    const byService = new Map<string, number>();
+    for (const a of appointments) {
+      byService.set(a.service.name, (byService.get(a.service.name) ?? 0) + 1);
+    }
+    const topServiceName =
+      Array.from(byService.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+    await Promise.all(
+      ownerEmails.map((email) =>
+        sendWeeklyDigestEmail(email, {
+          businessName: business.name,
+          revenue,
+          appointmentCount: appointments.length,
+          topServiceName,
+        })
+      )
+    );
+    await prisma.business.update({ where: { id: business.id }, data: { lastDigestSentAt: now } });
+    sent++;
+  }
+
+  console.log(`Resúmenes semanales enviados: ${sent}.`);
+}
+
 async function main() {
   await remindPendingPayments();
   await expirePendingPayments();
+  await sendWeeklyDigests();
 
   const businesses = await prisma.business.findMany({
     where: { reminderChannel: { not: "NONE" } },
