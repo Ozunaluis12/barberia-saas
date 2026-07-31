@@ -67,8 +67,10 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **Panel de analítica**: horas pico, servicios/productos más vendidos y tasa
   de clientes recurrentes.
 - **Reporte de caja en PDF** descargable, además del CSV existente.
-- **Recibo en PDF** por cita pagada o venta de producto, descargable desde
-  Citas y Catálogo — es un comprobante interno, no una factura electrónica.
+- **Recibo en PDF con formato de factura** por cita pagada o venta de
+  producto, descargable desde Citas y Catálogo — número consecutivo real
+  por negocio y NIT si está configurado. Sigue siendo un comprobante
+  interno, no una factura electrónica válida ante la DIAN.
 - **Pago anticipado manual sin pasarela**: cada negocio decide si exige pago
   para reservar en línea (precio completo, una seña fija del negocio, o una
   seña específica por servicio), muestra su QR, llave Bre-B y cuenta(s), y el
@@ -211,9 +213,15 @@ pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive e
   `src/lib/notifications.ts` tiene el punto de extensión listo para
   conectarlo cuando se decida el proveedor.
 - **Factura electrónica legal** — el recibo en PDF (por cita o venta de
-  producto) es solo un comprobante interno. Facturación electrónica de
-  verdad (DIAN en Colombia, CFDI/SAT en México, etc.) requiere elegir un
-  proveedor autorizado por país y no está conectada todavía.
+  producto) ya tiene número consecutivo real y NIT (`Business.taxId`,
+  `Business.nextReceiptNumber`, asignado por `src/lib/receipts.ts`), pero
+  sigue siendo solo un comprobante interno. Para que sea un "documento
+  equivalente POS" válido ante la DIAN (Colombia) hace falta: registrar el
+  negocio ante la DIAN con responsabilidad de facturación electrónica, una
+  resolución de numeración autorizada, generar el documento en XML UBL con
+  CUDE y firma digital, y enviarlo a validar — normalmente a través de un
+  proveedor tecnológico autorizado (Siigo, Alegra, Factus, etc.). Nada de
+  esto está conectado todavía.
 - **Cobro de la suscripción a los dueños de negocio** — `Business.plan`
   (`GRATIS`/`PRO`) existe pero no está conectado a ninguna pasarela de pago;
   hoy no hay forma de cobrarle a un negocio por usar Turnify ni de que el
