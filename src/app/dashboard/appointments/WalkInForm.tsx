@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getWalkInSlots } from "@/app/actions/appointments";
 import { createWalkIn } from "@/app/actions/appointments";
+import { findClientPackageBalance, type PackageBalance } from "@/app/actions/packages";
 
 type Service = { id: string; name: string };
 type StaffMember = { id: string; name: string };
@@ -29,6 +30,8 @@ export default function WalkInForm({
   const [clientEmail, setClientEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [packageBalance, setPackageBalance] = useState<PackageBalance>(null);
+  const [usePackage, setUsePackage] = useState(false);
 
   useEffect(() => {
     if (!open || !serviceId) return;
@@ -39,6 +42,23 @@ export default function WalkInForm({
       day,
     } as never).then(setSlots);
   }, [open, serviceId, staffChoice, day]);
+
+  // Consulta si el cliente ya tiene sesiones de un paquete prepagado para este
+  // servicio, para poder ofrecer usarlas en vez de cobrar de nuevo.
+  useEffect(() => {
+    if (!open || !serviceId || clientPhone.trim().length < 7) {
+      setPackageBalance(null);
+      setUsePackage(false);
+      return;
+    }
+    const timer = setTimeout(() => {
+      findClientPackageBalance(clientPhone, serviceId).then((balance) => {
+        setPackageBalance(balance);
+        setUsePackage(!!balance);
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [open, serviceId, clientPhone]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,6 +73,7 @@ export default function WalkInForm({
     fd.set("clientEmail", clientEmail);
     fd.set("day", day);
     fd.set("time", chosenSlot.time);
+    if (usePackage && packageBalance) fd.set("packagePurchaseId", packageBalance.purchaseId);
     const result = await createWalkIn(fd);
     setLoading(false);
     if (!result.ok) {
@@ -72,6 +93,8 @@ export default function WalkInForm({
     setClientPhone("");
     setClientEmail("");
     setChosenSlot(null);
+    setPackageBalance(null);
+    setUsePackage(false);
   }
 
   if (!open) {
@@ -191,6 +214,17 @@ export default function WalkInForm({
           className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2"
         />
       </div>
+
+      {packageBalance && (
+        <label className="flex items-center gap-2 rounded-md border border-gold/30 bg-gold/5 px-3 py-2 text-sm">
+          <input
+            type="checkbox"
+            checked={usePackage}
+            onChange={(e) => setUsePackage(e.target.checked)}
+          />
+          Usar sesión de &ldquo;{packageBalance.packageName}&rdquo; (quedan {packageBalance.sessionsRemaining})
+        </label>
+      )}
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 

@@ -62,6 +62,8 @@ model Business {
   waitlistEntries WaitlistEntry[]
   coupons         Coupon[]
   expenses        Expense[]
+  servicePackages   ServicePackage[]
+  packagePurchases  ClientPackagePurchase[]
 }
 
 // Historial de un cliente a nivel de organización: si canceló tarde o no
@@ -82,8 +84,9 @@ model Client {
   referrals      Client[] @relation("ClientReferrals")
   createdAt      DateTime @default(now())
 
-  appointments Appointment[]
-  reviews      Review[]
+  appointments     Appointment[]
+  reviews          Review[]
+  packagePurchases ClientPackagePurchase[]
 
   @@unique([organizationId, phone])
 }
@@ -180,6 +183,7 @@ model Service {
 
   appointments    Appointment[]
   waitlistEntries WaitlistEntry[]
+  packages        ServicePackage[]
 }
 
 // Cupón de descuento — solo aplica a la reserva pública de citas (no a venta
@@ -213,6 +217,41 @@ model Expense {
   createdAt   DateTime @default(now())
 
   @@index([businessId, date])
+}
+
+// Paquete de sesiones prepagadas de un servicio (ej. "5 cortes por $80.000"),
+// definido por el dueño. `ClientPackagePurchase` es lo que un cliente
+// concreto compró de ese paquete, con el saldo que le va quedando.
+model ServicePackage {
+  id           String   @id @default(cuid())
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  serviceId    String
+  service      Service  @relation(fields: [serviceId], references: [id])
+  name         String
+  sessionCount Int
+  price        Float
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  purchases ClientPackagePurchase[]
+}
+
+model ClientPackagePurchase {
+  id                String         @id @default(cuid())
+  businessId        String
+  business          Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  clientId          String
+  client            Client         @relation(fields: [clientId], references: [id])
+  servicePackageId  String
+  servicePackage    ServicePackage @relation(fields: [servicePackageId], references: [id])
+  sessionsRemaining Int
+  purchasedAt       DateTime       @default(now())
+  expiresAt         DateTime?
+
+  appointments Appointment[]
+
+  @@index([clientId, servicePackageId])
 }
 
 // Producto físico que el negocio vende además de sus servicios (ej. shampoo,
@@ -283,6 +322,8 @@ model Appointment {
   paymentReminderSentAt DateTime? // evita repetir el aviso de "confirma tu pago pronto" antes de expirar
   recurrenceGroupId String? // comparte id entre todas las citas de una misma serie recurrente; null = cita suelta
   couponCode        String? // cupón aplicado al reservar, si hubo
+  packagePurchaseId String? // si esta cita consumió una sesión de un paquete prepagado
+  packagePurchase   ClientPackagePurchase? @relation(fields: [packagePurchaseId], references: [id])
   createdAt         DateTime    @default(now())
   review            Review?
 

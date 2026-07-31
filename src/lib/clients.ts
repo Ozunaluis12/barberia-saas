@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
  * como el mismo cliente. Si no parece un teléfono real (ej. el placeholder
  * "N/A" de un walk-in sin teléfono), lo deja tal cual para no forzar de más.
  */
-function normalizePhone(phone: string): string {
+export function normalizePhone(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   return digits.length >= 7 ? digits : phone.trim();
 }

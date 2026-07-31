@@ -22,6 +22,7 @@ export async function createWalkIn(formData: FormData): Promise<CreateWalkInResu
   const clientEmail = String(formData.get("clientEmail") ?? "").trim();
   const day = String(formData.get("day") ?? "");
   const time = String(formData.get("time") ?? "");
+  const packagePurchaseId = String(formData.get("packagePurchaseId") ?? "").trim() || null;
 
   if (!staffId || !serviceId || !clientName || !day || !time) {
     return { ok: false, error: "Faltan datos: elige servicio, persona y horario." };
@@ -50,6 +51,29 @@ export async function createWalkIn(formData: FormData): Promise<CreateWalkInResu
       const startTime = combineDayAndTime(day, time);
       const endTime = new Date(startTime.getTime() + service.durationMinutes * 60000);
 
+      // Si el staff eligió consumir una sesión de un paquete prepagado, se
+      // vuelve a validar aquí adentro (nunca se confía en lo que mandó el
+      // formulario) antes de descontar el saldo y cobrar $0.
+      let usedPackage: { id: string } | null = null;
+      if (packagePurchaseId) {
+        const purchase = await tx.clientPackagePurchase.findFirst({
+          where: {
+            id: packagePurchaseId,
+            businessId: session.businessId,
+            clientId: client.id,
+            sessionsRemaining: { gt: 0 },
+            servicePackage: { serviceId },
+          },
+        });
+        if (purchase) {
+          await tx.clientPackagePurchase.update({
+            where: { id: purchase.id },
+            data: { sessionsRemaining: { decrement: 1 } },
+          });
+          usedPackage = purchase;
+        }
+      }
+
       await tx.appointment.create({
         data: {
           businessId: session.businessId,
@@ -63,7 +87,8 @@ export async function createWalkIn(formData: FormData): Promise<CreateWalkInResu
           endTime,
           status: "CONFIRMED",
           source: "WALK_IN",
-          priceCharged: service.price,
+          priceCharged: usedPackage ? 0 : service.price,
+          packagePurchaseId: usedPackage?.id ?? null,
         },
       });
 
