@@ -54,6 +54,13 @@ export default async function LoginPage({
             ¿Olvidaste tu contraseña?
           </Link>
         </p>
+
+        <p className="mt-6 text-center text-xs text-cream/40">
+          ¿Eres del equipo de soporte de Turnify?{" "}
+          <Link href="/soporte/login" className="hover:underline">
+            Entra aquí
+          </Link>
+        </p>
       </div>
     </main>
   );
