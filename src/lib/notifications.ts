@@ -18,10 +18,16 @@ export type ReminderPayload = {
 
 export type ReminderResult = { sent: boolean; reason?: string };
 
-/** Deja solo dígitos con un "+" adelante; devuelve null si no parece un teléfono real. */
+/**
+ * Deja solo dígitos con un "+" adelante; devuelve null si no parece un
+ * teléfono real. Si parece un celular colombiano local (10 dígitos, empieza
+ * en 3) sin indicativo de país, le agrega +57 — así es como la mayoría de
+ * la gente escribe su número al reservar, sin pensarlo.
+ */
 export function toE164(phone: string): string | null {
   const digits = phone.replace(/[^\d]/g, "");
   if (digits.length < 8) return null;
+  if (digits.length === 10 && digits.startsWith("3")) return `+57${digits}`;
   return `+${digits}`;
 }
 

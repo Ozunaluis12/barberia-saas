@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import {
@@ -8,6 +9,7 @@ import {
   refundAppointmentPayment,
 } from "@/app/actions/appointments";
 import { getVocabulary } from "@/lib/vocabulary";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 import WalkInForm from "./WalkInForm";
 import CopyReviewLinkButton from "./CopyReviewLinkButton";
 
@@ -34,6 +36,11 @@ export default async function AppointmentsPage({
   const { error } = await searchParams;
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");
+
+  const h = await headers();
+  const host = h.get("host");
+  const protocol = host?.includes("localhost") ? "http" : "https";
+  const citaLink = (appointmentId: string) => (host ? `${protocol}://${host}/cita/${appointmentId}` : null);
 
   const [appointments, services, staffMembers] = await Promise.all([
     prisma.appointment.findMany({
@@ -167,21 +174,65 @@ export default async function AppointmentsPage({
                     </div>
                   )}
                   {a.status === "CONFIRMED" && (
-                    <div className="flex justify-end gap-2 text-xs">
-                      <form action={updateAppointmentStatus.bind(null, a.id, "COMPLETED")}>
-                        <button className="text-green-400 hover:underline">Completar</button>
-                      </form>
-                      <form action={updateAppointmentStatus.bind(null, a.id, "NO_SHOW")}>
-                        <button className="text-yellow-400 hover:underline">No asistió</button>
-                      </form>
-                      <form action={updateAppointmentStatus.bind(null, a.id, "CANCELLED")}>
-                        <button className="text-red-400 hover:underline">Cancelar</button>
-                      </form>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <div className="flex flex-wrap justify-end gap-2 text-xs">
+                        <form action={updateAppointmentStatus.bind(null, a.id, "COMPLETED")}>
+                          <button className="text-green-400 hover:underline">Completar</button>
+                        </form>
+                        <form action={updateAppointmentStatus.bind(null, a.id, "NO_SHOW")}>
+                          <button className="text-yellow-400 hover:underline">No asistió</button>
+                        </form>
+                        <form action={updateAppointmentStatus.bind(null, a.id, "CANCELLED")}>
+                          <button className="text-red-400 hover:underline">Cancelar</button>
+                        </form>
+                      </div>
+                      <div className="flex flex-wrap justify-end gap-2 text-xs">
+                        {(() => {
+                          const link = citaLink(a.id);
+                          if (!link) return null;
+                          const dateLabel = `${a.startTime.toLocaleDateString("es", { day: "2-digit", month: "2-digit" })} a las ${a.startTime.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })}`;
+                          const reminderLink = buildWhatsAppLink(
+                            a.clientPhone,
+                            `Hola ${a.clientName}, te recordamos tu cita de ${a.service.name} en ${business?.name} el ${dateLabel}. Detalles: ${link}`
+                          );
+                          const cancelLink = buildWhatsAppLink(
+                            a.clientPhone,
+                            `Hola ${a.clientName}, si necesitas cancelar o reprogramar tu cita de ${a.service.name} el ${dateLabel}, hazlo aquí: ${link}`
+                          );
+                          return (
+                            <>
+                              {reminderLink && (
+                                <a href={reminderLink} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">
+                                  Recordatorio
+                                </a>
+                              )}
+                              {cancelLink && (
+                                <a href={cancelLink} target="_blank" rel="noopener noreferrer" className="text-gold hover:underline">
+                                  Enviar cancelación
+                                </a>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
                   )}
                   {a.status === "COMPLETED" && (
-                    <div className="flex justify-end">
+                    <div className="flex flex-wrap justify-end gap-2">
                       <CopyReviewLinkButton appointmentId={a.id} />
+                      {(() => {
+                        const link = citaLink(a.id);
+                        if (!link) return null;
+                        const reviewLink = buildWhatsAppLink(
+                          a.clientPhone,
+                          `Hola ${a.clientName}, gracias por visitarnos en ${business?.name}. Nos encantaría que nos dejaras tu opinión: ${link}`
+                        );
+                        return reviewLink ? (
+                          <a href={reviewLink} target="_blank" rel="noopener noreferrer" className="text-xs text-gold hover:underline">
+                            Enviar reseña
+                          </a>
+                        ) : null;
+                      })()}
                     </div>
                   )}
                 </td>
