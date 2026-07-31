@@ -34,8 +34,12 @@ export default async function CalendarPage({
     : [];
 
   const viewingAll = isOwner && businessParam === "all";
-  const selectedBusinessId =
-    isOwner && businessParam && businessParam !== "all" ? businessParam : session.businessId;
+  // businessParam viene de la URL y no es de fiar: solo se acepta si de verdad
+  // pertenece a una sucursal de esta organización (si no, cualquiera podría
+  // pedir /dashboard/calendar?business=<id-de-otro-negocio> y ver sus citas).
+  const isValidBranch =
+    isOwner && businessParam && businessParam !== "all" && branches.some((b) => b.id === businessParam);
+  const selectedBusinessId = isValidBranch ? businessParam! : session.businessId;
 
   const appointments = await prisma.appointment.findMany({
     where: viewingAll
