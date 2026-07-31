@@ -4,6 +4,7 @@ import { getPublicAppointment } from "@/app/actions/clientCancel";
 import { getVocabulary } from "@/lib/vocabulary";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import CancelButton from "./CancelButton";
+import RescheduleButton from "./RescheduleButton";
 import ReviewForm from "./ReviewForm";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -106,7 +107,11 @@ export default async function ClientAppointmentPage({
         )}
 
         {appt.status === "CONFIRMED" && isUpcoming && (
-          <div className="mt-8">
+          <div className="mt-8 space-y-3">
+            <RescheduleButton
+              appointmentId={appt.id}
+              noticeHours={appt.business.cancellationNoticeHours}
+            />
             <CancelButton
               appointmentId={appt.id}
               noticeHours={appt.business.cancellationNoticeHours}

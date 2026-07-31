@@ -41,7 +41,8 @@ async function freeSlotsForStaff(
   workDays: string,
   day: string,
   durationMinutes: number,
-  bufferMinutes: number
+  bufferMinutes: number,
+  excludeAppointmentId?: string
 ): Promise<string[]> {
   const dow = new Date(`${day}T12:00:00`).getDay();
   if (!workDays.split(",").map(Number).includes(dow)) return [];
@@ -63,6 +64,7 @@ async function freeSlotsForStaff(
       staffId,
       status: { not: "CANCELLED" },
       startTime: { gte: dayStart, lt: dayEnd },
+      ...(excludeAppointmentId ? { id: { not: excludeAppointmentId } } : {}),
     },
     select: { startTime: true, endTime: true },
   });
@@ -102,10 +104,11 @@ export async function getAvailableSlots(
     serviceId: string;
     staffId: string | null;
     day: string; // YYYY-MM-DD
+    excludeAppointmentId?: string; // para reprogramar: no bloquear el propio horario actual de la cita
   },
   db: DbClient = prisma
 ): Promise<Slot[]> {
-  const { businessId, serviceId, staffId, day } = params;
+  const { businessId, serviceId, staffId, day, excludeAppointmentId } = params;
 
   const service = await db.service.findFirst({
     where: { id: serviceId, businessId },
@@ -147,7 +150,8 @@ export async function getAvailableSlots(
         s.workDays,
         day,
         service.durationMinutes,
-        s.bufferMinutes
+        s.bufferMinutes,
+        excludeAppointmentId
       ),
     }))
   );
