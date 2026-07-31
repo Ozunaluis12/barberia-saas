@@ -99,6 +99,24 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   rechazar/reembolsar un pago) visible solo para el dueño.
 - **Checklist de onboarding**: guía los primeros pasos (agregar personal,
   servicio, teléfono) en el resumen del panel hasta completarlos u ocultarla.
+- **Alertas de stock bajo**: cada producto puede tener un stock mínimo
+  configurable; al cruzarlo en una venta, se avisa por correo a los dueños.
+- **Control de gastos operativos**: registro de gastos (arriendo, insumos,
+  servicios) que se descuenta del ingreso en Reportes y Analítica para
+  mostrar la ganancia real, no solo el ingreso bruto.
+- **Resumen semanal automático por correo**: cada lunes, los dueños reciben
+  un correo con el ingreso, las citas completadas y el servicio más pedido
+  de la última semana, sin tener que entrar al panel.
+- **Reprogramar cita desde el enlace público**: además de cancelar, el
+  cliente puede mover su cita a otro horario libre del mismo especialista
+  desde `/cita/[id]`, respetando el mismo margen de anticipación que exige
+  una cancelación.
+- **Paquetes de sesiones prepagadas**: el dueño arma paquetes de un servicio
+  (ej. "5 cortes por $80.000") y se los vende a un cliente; al registrar un
+  walk-in para ese cliente y servicio, el panel ofrece consumir una sesión
+  del paquete en vez de cobrar de nuevo.
+- **Metas de venta por especialista**: meta de ingreso mensual opcional por
+  miembro del equipo, con barra de progreso visible en Reportes.
 - **Instalable como app** (PWA) desde el navegador del celular.
 
 ## Stack
@@ -129,13 +147,14 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   vincula a un miembro del roster para restringir qué caja puede operar.
 - **Staff** — miembro del equipo (el roster, no la cuenta de acceso), con % de
   comisión opcional, horario y días laborales, minutos de colchón después de
-  cada cita, y rangos de `StaffTimeOff` (vacaciones/incapacidad) que bloquean
-  la reserva esos días.
+  cada cita, meta de ingreso mensual opcional, y rangos de `StaffTimeOff`
+  (vacaciones/incapacidad) que bloquean la reserva esos días.
 - **Service** — servicio agendable, con duración, precio, descripción y seña
   de pago anticipado opcionales (si no se define, usa la seña general del
   negocio o el precio completo).
 - **Product** — producto físico en venta (sin relación con las citas), con
-  descripción, precio y stock opcional propios; cada venta queda en `ProductSale`.
+  descripción, precio, stock y stock mínimo (para la alerta) opcionales
+  propios; cada venta queda en `ProductSale`.
 - **Client** — historial de un cliente dentro de una organización, con
   contador de `strikes`, puntos de fidelidad, si acepta difusión por WhatsApp,
   correo opcional (para recordatorios), su `referralCode` propio y quién lo
@@ -143,9 +162,10 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **Appointment** — cita, con estado (`CONFIRMED`, `CANCELLED`, `COMPLETED`,
   `NO_SHOW`, `PENDING_PAYMENT`), origen (`ONLINE`/`WALK_IN`), método/estado de
   pago (incluye `TRANSFER`/`AWAITING_VERIFICATION`/`REFUNDED` con motivo y
-  fecha), `paidAt`, `couponCode` si se usó uno, `clientEmail` (snapshot
-  opcional, igual que `clientName`/`clientPhone`) y `recurrenceGroupId`
-  opcional si pertenece a una serie recurrente.
+  fecha), `paidAt`, `couponCode` si se usó uno, `packagePurchaseId` si se
+  pagó consumiendo un paquete prepagado, `clientEmail` (snapshot opcional,
+  igual que `clientName`/`clientPhone`) y `recurrenceGroupId` opcional si
+  pertenece a una serie recurrente.
 - **Review** — reseña (1 a 5) que un cliente deja tras una cita completada.
 - **CashSession** — apertura/cierre de caja por empleado o general, con monto
   esperado (calculado, incluye ventas de producto en efectivo), contado, la
@@ -159,6 +179,12 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
 - **AuditLog** — bitácora de acciones sensibles (dinero y accesos), con el
   nombre del usuario guardado como snapshot para seguir siendo legible aunque
   la cuenta se borre o desactive.
+- **Expense** — gasto operativo (categoría, monto, descripción, fecha) que se
+  descuenta del ingreso en Reportes y Analítica.
+- **ServicePackage** — paquete de sesiones prepagadas de un servicio (nombre,
+  número de sesiones, precio), definido por el dueño.
+- **ClientPackagePurchase** — lo que un cliente concreto compró de un
+  `ServicePackage`, con las sesiones que le van quedando (`sessionsRemaining`).
 
 El vocabulario que se muestra en pantalla (cómo se llama al personal, la
 pregunta del paso 2 de la reserva, etc.) según el `category` del negocio vive en
@@ -200,7 +226,7 @@ src/
     signup/, login/        alta e inicio de sesión (con selector de rubro)
     book/[slug]/           flujo de reserva del cliente
     catalogo/[slug]/        catálogo público (servicios, productos y equipo, sin reservar)
-    cita/[id]/              confirmación, cancelación y reseña de una cita
+    cita/[id]/              confirmación, cancelación, reprogramar y reseña de una cita
     dashboard/
       page.tsx              resumen
       staff/                 gestión del roster, con foto (con [id] para editar)
@@ -216,6 +242,8 @@ src/
       waitlist/                lista de espera por día/servicio
       broadcast/               difusión masiva por WhatsApp (solo dueño)
       coupons/                 cupones de descuento para la reserva pública
+      packages/                paquetes de sesiones prepagadas y sus ventas
+      expenses/                gastos operativos del negocio
       audit/                   bitácora de acciones sensibles (solo dueño)
       team/                   cuentas de Personal y sus permisos ([id] = editar)
       locations/              sucursales de la organización
@@ -235,6 +263,7 @@ src/
     whatsapp.ts             arma enlaces wa.me (comprobante de pago anticipado)
     rateLimit.ts            rate-limit en memoria + IP del cliente (anti-spam sin dependencias)
     audit.ts                registra entradas en la bitácora de auditoría
+    owners.ts               resuelve los correos de los dueños de una organización, para alertas
 prisma/
   schema.prisma             modelo de datos
   seed.ts                   datos de ejemplo (barbería, salón y spa)
