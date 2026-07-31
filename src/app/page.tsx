@@ -160,10 +160,10 @@ export default function HomePage() {
               <NavDropdown
                 label="Producto"
                 items={[
-                  { label: "Cómo funciona", href: "#proceso" },
-                  { label: "Panel en vivo", href: "#producto" },
+                  { label: "Proceso operativo", href: "#proceso" },
+                  { label: "Cómo funciona todo", href: "#recorrido" },
+                  { label: "Recorrido por la plataforma", href: "#producto" },
                   { label: "Funcionalidades", href: "#funcionalidades" },
-                  { label: "Ver demo de reserva", href: "/book/demo-barberia" },
                 ]}
               />
               <Link
@@ -251,12 +251,6 @@ export default function HomePage() {
               >
                 Solicitar acceso
               </a>
-              <Link
-                href="/book/demo-barberia"
-                className="rounded-md border border-white/20 px-6 py-3 font-semibold transition-all duration-300 hover:scale-105 hover:border-gold hover:text-gold"
-              >
-                Probar reserva de cliente
-              </Link>
             </div>
             <p className="mt-4 text-sm text-cream/50">
               Te ayudamos a activarlo — escríbenos y coordinamos el plan que mejor se ajuste a tu
@@ -466,11 +460,6 @@ export default function HomePage() {
           </div>
           <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-cream/40">
             Vistas ilustrativas con datos de ejemplo para mostrar la interfaz real de Turnify.
-            Pruébalo tú mismo en la{" "}
-            <Link href="/book/demo-barberia" className="text-gold hover:underline">
-              demo de reserva
-            </Link>
-            .
           </p>
         </div>
       </section>
@@ -491,11 +480,7 @@ export default function HomePage() {
           </Reveal>
 
           <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-cream/40">
-            Vistas ilustrativas con datos de ejemplo. Pruébalo tú mismo en la{" "}
-            <Link href="/book/demo-barberia" className="text-gold hover:underline">
-              demo de reserva
-            </Link>
-            .
+            Vistas ilustrativas con datos de ejemplo.
           </p>
         </div>
       </section>
