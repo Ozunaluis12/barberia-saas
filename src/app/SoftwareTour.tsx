@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type Slide = {
+export type Slide = {
   step: string;
   title: string;
   caption: string;
@@ -15,7 +15,7 @@ function Pill({ tone, children }: { tone: "green" | "yellow"; children: React.Re
   return <span className={`rounded-full px-2 py-0.5 text-[10px] ${classes}`}>{children}</span>;
 }
 
-const SLIDES: Slide[] = [
+const DEFAULT_SLIDES: Slide[] = [
   {
     step: "1. Reserva",
     title: "El cliente reserva solo, desde su celular",
@@ -148,21 +148,21 @@ const SLIDES: Slide[] = [
   },
 ];
 
-const SLIDE_DURATION = 4500;
+const SLIDE_DURATION = 3200;
 
-export default function SoftwareTour() {
+export default function SoftwareTour({ slides = DEFAULT_SLIDES }: { slides?: Slide[] }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     if (paused) return;
     const id = setInterval(() => {
-      setIndex((i) => (i + 1) % SLIDES.length);
+      setIndex((i) => (i + 1) % slides.length);
     }, SLIDE_DURATION);
     return () => clearInterval(id);
-  }, [paused]);
+  }, [paused, slides.length]);
 
-  const active = SLIDES[index];
+  const active = slides[index];
 
   return (
     <div
@@ -176,7 +176,7 @@ export default function SoftwareTour() {
             {active.step}
           </span>
           <span className="text-[11px] text-cream/40">
-            {index + 1} / {SLIDES.length}
+            {index + 1} / {slides.length}
           </span>
         </div>
 
@@ -189,7 +189,7 @@ export default function SoftwareTour() {
       </div>
 
       <div className="mt-5 flex items-center justify-center gap-2">
-        {SLIDES.map((s, i) => (
+        {slides.map((s, i) => (
           <button
             key={s.step}
             type="button"
