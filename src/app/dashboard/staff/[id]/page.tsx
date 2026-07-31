@@ -12,6 +12,7 @@ const ERRORS: Record<string, string> = {
   COMISION_INVALIDA: "La comisión debe ser un número entre 0 y 100.",
   HORARIO_INVALIDO: "Revisa el horario: la hora de inicio debe ser antes que la de fin.",
   COLCHON_INVALIDO: "El colchón debe ser un número de minutos mayor o igual a 0.",
+  META_INVALIDA: "La meta mensual no puede ser negativa.",
   RANGO_INVALIDO: "Revisa las fechas: el inicio debe ser antes o igual al fin.",
 };
 
@@ -108,6 +109,20 @@ export default async function EditStaffPage({
             max={100}
             placeholder="Sin comisión"
             defaultValue={staff.commissionPercent ?? ""}
+            className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+          />
+        </div>
+        <div>
+          <label className="text-sm text-cream/70">
+            Meta de ingreso mensual (opcional, se muestra su progreso en Reportes)
+          </label>
+          <input
+            type="number"
+            name="monthlyRevenueGoal"
+            min={0}
+            step="0.01"
+            placeholder="Sin meta"
+            defaultValue={staff.monthlyRevenueGoal ?? ""}
             className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
           />
         </div>

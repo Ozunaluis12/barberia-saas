@@ -33,13 +33,22 @@ export default async function ReportsPage({
 
   const byStaff = new Map<
     string,
-    { name: string; commissionPercent: number | null; count: number; revenue: number }
+    {
+      staffId: string;
+      name: string;
+      commissionPercent: number | null;
+      monthlyRevenueGoal: number | null;
+      count: number;
+      revenue: number;
+    }
   >();
 
   for (const a of appointments) {
     const entry = byStaff.get(a.staffId) ?? {
+      staffId: a.staffId,
       name: a.staff.name,
       commissionPercent: a.staff.commissionPercent,
+      monthlyRevenueGoal: a.staff.monthlyRevenueGoal,
       count: 0,
       revenue: 0,
     };
@@ -155,11 +164,15 @@ export default async function ReportsPage({
               <th className="px-4 py-2">% comisión</th>
               <th className="px-4 py-2">Le corresponde</th>
               <th className="px-4 py-2">Se queda el negocio</th>
+              <th className="px-4 py-2">Meta del mes</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.name} className="border-t border-white/5">
+              <tr
+                key={r.staffId}
+                className={`border-t border-white/5 ${r.staffId === session.staffId ? "bg-gold/5" : ""}`}
+              >
                 <td className="px-4 py-2 font-medium">{r.name}</td>
                 <td className="px-4 py-2">{r.count}</td>
                 <td className="px-4 py-2">${r.revenue.toFixed(2)}</td>
@@ -168,11 +181,30 @@ export default async function ReportsPage({
                   {r.commission === null ? "—" : `$${r.commission.toFixed(2)}`}
                 </td>
                 <td className="px-4 py-2">${r.businessShare.toFixed(2)}</td>
+                <td className="px-4 py-2">
+                  {r.monthlyRevenueGoal === null ? (
+                    "—"
+                  ) : (
+                    <div className="w-32">
+                      <div className="h-2 rounded bg-white/10">
+                        <div
+                          className="h-2 rounded bg-gold"
+                          style={{
+                            width: `${Math.min(100, (r.revenue / r.monthlyRevenueGoal) * 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="mt-1 text-[10px] text-cream/50">
+                        ${r.revenue.toFixed(0)} / ${r.monthlyRevenueGoal.toFixed(0)}
+                      </p>
+                    </div>
+                  )}
+                </td>
               </tr>
             ))}
             {rows.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-cream/40" colSpan={6}>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={7}>
                   No hay citas completadas en este rango.
                 </td>
               </tr>
@@ -188,6 +220,7 @@ export default async function ReportsPage({
                 <td className="px-4 py-2"></td>
                 <td className="px-4 py-2 text-gold">${totals.commission.toFixed(2)}</td>
                 <td className="px-4 py-2">${totals.businessShare.toFixed(2)}</td>
+                <td className="px-4 py-2"></td>
               </tr>
             </tfoot>
           )}

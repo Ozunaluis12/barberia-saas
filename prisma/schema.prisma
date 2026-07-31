@@ -143,6 +143,7 @@ model Staff {
   workEnd           String   @default("19:00") // HH:mm
   workDays          String   @default("1,2,3,4,5,6") // 0=domingo..6=sábado
   bufferMinutes     Int      @default(0) // minutos de limpieza/descanso después de cada cita
+  monthlyRevenueGoal Float? // null = sin meta definida
   createdAt         DateTime @default(now())
 
   appointments    Appointment[]
