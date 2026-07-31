@@ -40,6 +40,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     doc.on("end", () => resolve(Buffer.concat(chunks)));
   });
 
+  if (sale.business.logoUrl) {
+    try {
+      const logoRes = await fetch(sale.business.logoUrl);
+      const logoBuffer = Buffer.from(await logoRes.arrayBuffer());
+      doc.image(logoBuffer, doc.page.width - 40 - 60, 40, { width: 60 });
+    } catch {
+      // Si el logo no se pudo descargar, la factura sigue solo con texto.
+    }
+  }
+
   doc.fontSize(16).text(sale.business.name, { align: "left" });
   if (sale.business.taxId) {
     doc.fontSize(9).fillColor("#555").text(`NIT: ${sale.business.taxId}`);

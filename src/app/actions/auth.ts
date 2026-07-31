@@ -8,17 +8,8 @@ import { createSession, clearSession } from "@/lib/session";
 import { sendPasswordResetPin } from "@/lib/email";
 import { BUSINESS_CATEGORIES } from "@/lib/vocabulary";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
-
-const DIACRITICS_REGEX = new RegExp("[\\u0300-\\u036f]", "g");
-
-function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(DIACRITICS_REGEX, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
+import { slugify } from "@/lib/slug";
+import { sendAccountSetupPin } from "@/lib/email";
 
 export async function signupAction(formData: FormData) {
   const businessName = String(formData.get("businessName") ?? "").trim();
@@ -135,6 +126,27 @@ function hashPin(userId: string, pin: string): string {
 
 function generatePin(): string {
   return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
+}
+
+/**
+ * Para cuentas que Soporte crea a nombre de un cliente (empresa nueva, socio
+ * adicional): en vez de que Soporte escriba una contraseña, se le manda al
+ * dueño un PIN para que la defina él mismo en /reset-password — mismo
+ * mecanismo que "olvidé mi contraseña", solo que aquí es la primera vez.
+ */
+export async function createPasswordSetupToken(userId: string, email: string, businessName: string) {
+  await prisma.passwordResetToken.deleteMany({ where: { userId, usedAt: null } });
+
+  const pin = generatePin();
+  await prisma.passwordResetToken.create({
+    data: {
+      userId,
+      tokenHash: hashPin(userId, pin),
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    },
+  });
+
+  await sendAccountSetupPin(email, pin, businessName);
 }
 
 /**

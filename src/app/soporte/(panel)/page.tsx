@@ -9,10 +9,20 @@ export default async function SupportHomePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Empresas</h1>
-      <p className="mt-1 text-sm text-cream/60">
-        Todas las organizaciones registradas en Turnify y sus sucursales.
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Empresas</h1>
+          <p className="mt-1 text-sm text-cream/60">
+            Todas las organizaciones registradas en Turnify y sus sucursales.
+          </p>
+        </div>
+        <Link
+          href="/soporte/empresas/nueva"
+          className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink hover:bg-gold/90"
+        >
+          + Nueva empresa
+        </Link>
+      </div>
 
       <div className="mt-6 space-y-6">
         {organizations.map((org) => (

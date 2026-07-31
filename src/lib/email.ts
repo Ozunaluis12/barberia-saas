@@ -30,6 +30,31 @@ export async function sendPasswordResetPin(to: string, pin: string): Promise<Sen
   }
 }
 
+export async function sendAccountSetupPin(to: string, pin: string, businessName: string): Promise<SendResult> {
+  if (!resend) {
+    console.log(`[email:cuenta-nueva] Resend no configurado. PIN para ${to}: ${pin}`);
+    return { sent: false, reason: "RESEND_API_KEY no configurado" };
+  }
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: `Tu cuenta de ${businessName} en Turnify está lista`,
+      html: `
+        <p>Soporte de Turnify creó tu acceso a <strong>${businessName}</strong>. Usa este código
+        para elegir tu contraseña:</p>
+        <p style="font-size: 32px; font-weight: bold; letter-spacing: 4px;">${pin}</p>
+        <p>Vence en 15 minutos. Si no esperabas este correo, ignóralo.</p>
+      `,
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error("[email:cuenta-nueva] Error enviando correo:", error);
+    return { sent: false, reason: "Error al enviar el correo" };
+  }
+}
+
 export type AppointmentReminderDetails = {
   clientName: string;
   businessName: string;

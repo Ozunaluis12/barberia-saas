@@ -56,6 +56,7 @@ model Business {
   lastDigestSentAt        DateTime? // evita mandar el resumen semanal dos veces si el cron se traslapa
   taxId                   String? // NIT o documento de identificación tributaria, para la factura
   nextReceiptNumber       Int      @default(1) // consecutivo de la próxima factura/recibo a emitir
+  logoUrl                 String? // logo propio del negocio; se usa en sus facturas PDF en vez de solo texto
   createdAt               DateTime @default(now())
 
   users        User[]
@@ -67,6 +68,7 @@ model Business {
   cashSessions   CashSession[]
   productSales   ProductSale[]
   payrollPayouts PayrollPayout[]
+  subscriptionInvoices SubscriptionInvoice[]
   waitlistEntries WaitlistEntry[]
   coupons         Coupon[]
   expenses        Expense[]
@@ -435,6 +437,23 @@ model SupportUser {
   name         String
   active       Boolean  @default(true)
   createdAt    DateTime @default(now())
+}
+
+// Historial trazable de pagos de suscripción, registrado por Soporte —
+// complementa (no reemplaza) el campo de notas libres de Business.
+model SubscriptionInvoice {
+  id             String   @id @default(cuid())
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  amount         Float
+  periodStart    DateTime
+  periodEnd      DateTime
+  paidAt         DateTime @default(now())
+  notes          String?
+  recordedByName String // snapshot de qué cuenta de soporte lo registró, igual que AuditLog.userName
+  createdAt      DateTime @default(now())
+
+  @@index([businessId, createdAt])
 }
 
 // Bitácora de acciones sensibles (dinero y accesos) — no instrumenta todo el
