@@ -343,16 +343,21 @@ mano en el dashboard (o aceptar que Render cree recursos nuevos `turnify-db`/
 `turnify-app` en el próximo sync del Blueprint).
 
 **Variables opcionales que hay que cargar a mano:** `render.yaml` declara
-`RESEND_API_KEY`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` y
-`CLOUDINARY_API_SECRET` como `sync: false` — Render crea el campo vacío en el
-dashboard del servicio `turnify-app` pero no adivina el valor. Sin esas tres
-de Cloudinary, el formulario de subir foto sigue funcionando pero la imagen no
-se guarda (falla en silencio). Hay que pegarlas a mano en **turnify-app →
-Environment** y volver a desplegar. El cron `turnify-reminders` es un
-servicio aparte con sus propias variables: también necesita `RESEND_API_KEY`
-(para los recordatorios por correo) y `TWILIO_ACCOUNT_SID`/
-`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_FROM` (para WhatsApp) cargadas a mano en
-**turnify-reminders → Environment** — no las hereda de `turnify-app`.
+`RESEND_API_KEY`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
+`CLOUDINARY_API_SECRET`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` y
+`TWILIO_WHATSAPP_FROM` como `sync: false` — Render crea el campo vacío en el
+dashboard pero no adivina el valor. Sin las tres de Cloudinary, el formulario
+de subir foto sigue funcionando pero la imagen no se guarda (falla en
+silencio); sin las tres de Twilio, ningún WhatsApp automático se manda de
+verdad (confirmar/rechazar pago anticipado, difusión masiva, avisar a la
+lista de espera, recordatorios) — solo queda registrado en el log. Hay que
+pegarlas a mano en **turnify-app → Environment** y volver a desplegar.
+
+El cron `turnify-reminders` es un servicio **aparte, con sus propias
+variables — no hereda nada de `turnify-app`**: necesita su propio
+`RESEND_API_KEY` (recordatorios y resumen semanal por correo) y sus propias
+`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_FROM` (recordatorios
+por WhatsApp), cargadas a mano en **turnify-reminders → Environment**.
 
 ## Planes
 
