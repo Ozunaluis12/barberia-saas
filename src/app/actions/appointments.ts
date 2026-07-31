@@ -8,6 +8,7 @@ import { getAvailableSlots, combineDayAndTime } from "@/lib/availability";
 import { findOrCreateClient, applyClientStrike } from "@/lib/clients";
 import { sendWhatsAppMessage } from "@/lib/notifications";
 import { logAudit } from "@/lib/audit";
+import { assignReceiptNumber } from "@/lib/receipts";
 
 export type CreateWalkInResult = { ok: true } | { ok: false; error: string };
 
@@ -165,9 +166,10 @@ export async function confirmAdvancePayment(appointmentId: string) {
   });
   if (!appt) return;
 
+  const receiptNumber = await assignReceiptNumber(session.businessId);
   await prisma.appointment.update({
     where: { id: appointmentId },
-    data: { status: "CONFIRMED", paymentStatus: "PAID", paidAt: new Date() },
+    data: { status: "CONFIRMED", paymentStatus: "PAID", paidAt: new Date(), receiptNumber },
   });
 
   await sendWhatsAppMessage(
@@ -229,9 +231,10 @@ export async function markAppointmentPaid(appointmentId: string, paymentMethod: 
     }
   }
 
+  const receiptNumber = appt.receiptNumber ?? (await assignReceiptNumber(session.businessId));
   await prisma.appointment.update({
     where: { id: appointmentId },
-    data: { paymentMethod, paymentStatus: "PAID", paidAt: new Date() },
+    data: { paymentMethod, paymentStatus: "PAID", paidAt: new Date(), receiptNumber },
   });
 
   revalidatePath("/dashboard/appointments");

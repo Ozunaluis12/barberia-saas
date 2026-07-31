@@ -48,6 +48,8 @@ model Business {
   onboardingDismissed    Boolean  @default(false)
   cashDiscrepancyAlertThreshold Float @default(5) // avisa por correo al dueño si el faltante/sobrante de una caja supera este monto
   lastDigestSentAt        DateTime? // evita mandar el resumen semanal dos veces si el cron se traslapa
+  taxId                   String? // NIT o documento de identificación tributaria, para la factura
+  nextReceiptNumber       Int      @default(1) // consecutivo de la próxima factura/recibo a emitir
   createdAt               DateTime @default(now())
 
   users        User[]
@@ -289,6 +291,7 @@ model ProductSale {
   paymentMethod String // CASH, CARD_IN_PERSON
   soldByUserId  String
   soldBy        User     @relation(fields: [soldByUserId], references: [id])
+  receiptNumber Int? // consecutivo de factura/recibo, asignado al vender
   createdAt     DateTime @default(now())
 
   @@index([businessId, createdAt])
@@ -317,6 +320,7 @@ model Appointment {
   paymentMethod     String      @default("UNPAID") // UNPAID, CASH, CARD_IN_PERSON, ONLINE, TRANSFER
   paymentStatus     String      @default("PENDING") // PENDING, PAID, REFUNDED, AWAITING_VERIFICATION
   paidAt            DateTime? // cuándo se marcó como pagada (para acotar sesiones de caja)
+  receiptNumber     Int? // consecutivo de factura/recibo, asignado al marcar como pagada
   refundedAt        DateTime?
   refundReason      String?
   reminderSentAt    DateTime? // evita mandar el mismo recordatorio dos veces

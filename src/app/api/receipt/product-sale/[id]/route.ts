@@ -3,6 +3,7 @@ import PDFDocument from "pdfkit";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { formatCOP } from "@/lib/money";
+import { assignReceiptNumber } from "@/lib/receipts";
 
 const PAYMENT_LABEL: Record<string, string> = {
   CASH: "Efectivo",
@@ -14,11 +15,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session) return new NextResponse("No autorizado", { status: 401 });
 
   const { id } = await params;
-  const sale = await prisma.productSale.findFirst({
+  let sale = await prisma.productSale.findFirst({
     where: { id, businessId: session.businessId },
     include: { business: true, product: true, soldBy: true },
   });
   if (!sale) return new NextResponse("No encontrado", { status: 404 });
+
+  // Ventas registradas antes de que existiera el consecutivo: se les asigna
+  // uno la primera vez que alguien pide su recibo, para que ninguna quede
+  // sin número.
+  if (sale.receiptNumber === null) {
+    const receiptNumber = await assignReceiptNumber(session.businessId);
+    sale = await prisma.productSale.update({
+      where: { id: sale.id },
+      data: { receiptNumber },
+      include: { business: true, product: true, soldBy: true },
+    });
+  }
 
   const doc = new PDFDocument({ margin: 40, size: "A5" });
   const chunks: Buffer[] = [];
@@ -28,6 +41,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   });
 
   doc.fontSize(16).text(sale.business.name, { align: "left" });
+  if (sale.business.taxId) {
+    doc.fontSize(9).fillColor("#555").text(`NIT: ${sale.business.taxId}`);
+  }
   if (sale.business.address) {
     doc.fontSize(9).fillColor("#555").text(sale.business.address);
   }
@@ -35,7 +51,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     doc.fontSize(9).fillColor("#555").text(sale.business.phone);
   }
   doc.moveDown(1);
-  doc.fontSize(13).fillColor("#000").text("Recibo de venta");
+  doc.fontSize(13).fillColor("#000").text(`Factura de venta No. ${sale.receiptNumber}`);
   doc
     .fontSize(9)
     .fillColor("#555")
@@ -82,9 +98,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   doc
     .fontSize(8)
     .fillColor("#999")
-    .text("Este recibo es un comprobante interno del negocio y no reemplaza una factura electrónica.", {
-      align: "center",
-    });
+    .text(
+      "Documento de uso interno. No es una factura electrónica ni un documento equivalente POS válido ante la DIAN.",
+      { align: "center" }
+    );
 
   doc.end();
   const buffer = await done;
@@ -92,7 +109,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="recibo-venta-${sale.id}.pdf"`,
+      "Content-Disposition": `attachment; filename="factura-${sale.receiptNumber}.pdf"`,
     },
   });
 }

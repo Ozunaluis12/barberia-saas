@@ -7,6 +7,7 @@ import { requirePermission } from "@/lib/guard";
 import { uploadImage } from "@/lib/images";
 import { sendLowStockAlert } from "@/lib/email";
 import { getOwnerEmails } from "@/lib/owners";
+import { assignReceiptNumber } from "@/lib/receipts";
 
 type ParsedProduct =
   | { error: "NOMBRE_REQUERIDO" | "PRECIO_INVALIDO" | "STOCK_INVALIDO" | "MINSTOCK_INVALIDO" }
@@ -101,6 +102,8 @@ export async function sellProduct(productId: string, formData: FormData) {
     redirect(`/dashboard/catalog?error=STOCK_INSUFICIENTE`);
   }
 
+  const receiptNumber = await assignReceiptNumber(session.businessId);
+
   await prisma.$transaction([
     ...(product!.stock !== null
       ? [prisma.product.update({ where: { id: productId }, data: { stock: { decrement: quantity } } })]
@@ -114,6 +117,7 @@ export async function sellProduct(productId: string, formData: FormData) {
         total: product!.price * quantity,
         paymentMethod,
         soldByUserId: session.userId,
+        receiptNumber,
       },
     }),
   ]);

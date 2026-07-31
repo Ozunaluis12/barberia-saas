@@ -62,6 +62,21 @@ export default async function SettingsPage({
                 className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
               />
             </div>
+            <div>
+              <label className="text-sm text-cream/70">
+                NIT o documento de identificación tributaria (opcional)
+              </label>
+              <input
+                name="taxId"
+                defaultValue={business.taxId ?? ""}
+                placeholder="900.123.456-7"
+                className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+              />
+              <p className="mt-1 text-xs text-cream/50">
+                Aparece en los recibos. Los recibos de Turnify son un comprobante interno, no una
+                factura electrónica válida ante la DIAN todavía.
+              </p>
+            </div>
           </div>
         </div>
 
