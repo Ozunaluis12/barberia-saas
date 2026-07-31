@@ -136,7 +136,8 @@ Appointments, resolviendo lo que esas plataformas hacen mal:
   sucursales (`Business`). `Client` vive aquí, no en la sucursal, para
   compartirse entre todas las ubicaciones del mismo dueño.
 - **Business** — una sucursal/ubicación: tiene un `category` (rubro), plan
-  (`GRATIS`/`PRO`), política de cancelación, canal de recordatorios, la
+  (`GRATIS`/`PRO`), política de cancelación, canales de recordatorios (se
+  puede activar varios a la vez), la
   configuración del programa de fidelidad y de referidos, el umbral de alerta
   por diferencia de caja, la configuración de pago anticipado (QR, llave
   Bre-B, cuenta, monto de la seña y horas para expirar) y si ya se ocultó el

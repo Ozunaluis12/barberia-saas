@@ -33,7 +33,7 @@ model Business {
   address                 String?
   plan                    String   @default("GRATIS") // GRATIS, PRO
   cancellationNoticeHours Int      @default(3)
-  reminderChannel         String   @default("NONE") // NONE, EMAIL, SMS, WHATSAPP
+  reminderChannels        String   @default("") // CSV de EMAIL,SMS,WHATSAPP — "" = sin recordatorios; puede tener varios a la vez
   reminderHoursBefore     Int      @default(24)
   advancePaymentEnabled          Boolean  @default(false) // exige pago anticipado (transferencia/QR/Bre-B) para reservar en línea
   advancePaymentAmount           Float?   // null = cobra el precio completo del servicio; número = seña fija

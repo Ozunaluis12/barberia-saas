@@ -17,10 +17,12 @@ export async function updateBusinessSettings(formData: FormData) {
   const category = (BUSINESS_CATEGORIES as readonly string[]).includes(categoryInput)
     ? categoryInput
     : "BARBERSHOP";
-  const reminderChannelInput = String(formData.get("reminderChannel") ?? "NONE");
-  const reminderChannel = ["NONE", "EMAIL", "SMS", "WHATSAPP"].includes(reminderChannelInput)
-    ? reminderChannelInput
-    : "NONE";
+  const VALID_REMINDER_CHANNELS = ["EMAIL", "SMS", "WHATSAPP"];
+  const reminderChannels = formData
+    .getAll("reminderChannels")
+    .map(String)
+    .filter((c) => VALID_REMINDER_CHANNELS.includes(c))
+    .join(",");
   const reminderHoursBefore = Math.max(1, Number(formData.get("reminderHoursBefore") ?? 24));
   const loyaltyEnabled = formData.get("loyaltyEnabled") === "on";
   const loyaltyPointsPerVisit = Math.max(1, Number(formData.get("loyaltyPointsPerVisit") ?? 1));
@@ -54,7 +56,7 @@ export async function updateBusinessSettings(formData: FormData) {
       address: address || null,
       cancellationNoticeHours,
       category,
-      reminderChannel,
+      reminderChannels,
       reminderHoursBefore,
       loyaltyEnabled,
       loyaltyPointsPerVisit,

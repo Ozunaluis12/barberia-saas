@@ -88,22 +88,33 @@ export default async function SettingsPage({
         <div className="max-w-lg rounded-lg border border-white/10 bg-charcoal p-6">
           <h2 className="text-lg font-semibold">Recordatorios de citas</h2>
           <p className="mt-1 text-sm text-cream/60">
-            WhatsApp y correo ya envían el recordatorio de verdad. El correo solo le llega al
-            cliente si dejó su email al reservar. SMS todavía no está conectado.
+            WhatsApp y correo ya envían el recordatorio de verdad — puedes activar los dos a la
+            vez. El correo solo le llega al cliente si dejó su email al reservar. SMS todavía no
+            está conectado.
           </p>
           <div className="mt-4 space-y-4">
             <div>
-              <label className="text-sm text-cream/70">Canal</label>
-              <select
-                name="reminderChannel"
-                defaultValue={business.reminderChannel}
-                className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
-              >
-                <option value="NONE">Sin recordatorios</option>
-                <option value="EMAIL">Correo</option>
-                <option value="SMS">SMS</option>
-                <option value="WHATSAPP">WhatsApp</option>
-              </select>
+              <label className="text-sm text-cream/70">Canales (puedes elegir varios)</label>
+              <div className="mt-2 flex flex-wrap gap-4">
+                {(() => {
+                  const active = new Set(business.reminderChannels.split(",").filter(Boolean));
+                  return [
+                    { value: "WHATSAPP", label: "WhatsApp" },
+                    { value: "EMAIL", label: "Correo" },
+                    { value: "SMS", label: "SMS" },
+                  ].map((c) => (
+                    <label key={c.value} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        name="reminderChannels"
+                        value={c.value}
+                        defaultChecked={active.has(c.value)}
+                      />
+                      {c.label}
+                    </label>
+                  ));
+                })()}
+              </div>
             </div>
             <div>
               <label className="text-sm text-cream/70">Horas de anticipación</label>

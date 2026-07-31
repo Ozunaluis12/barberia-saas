@@ -1,9 +1,11 @@
 // Recordatorios de citas. WhatsApp está conectado con Twilio, EMAIL con
 // Resend; SMS todavía no (imprime el mensaje en los logs en vez de enviarlo).
+// Un negocio puede activar varios canales a la vez — se manda por todos los
+// que tenga activos, no solo uno.
 
 import { sendAppointmentReminderEmail } from "@/lib/email";
 
-export type ReminderChannel = "NONE" | "EMAIL" | "SMS" | "WHATSAPP";
+export type ReminderChannel = "EMAIL" | "SMS" | "WHATSAPP";
 
 export type ReminderPayload = {
   clientName: string;
@@ -81,10 +83,6 @@ export async function sendAppointmentReminder(
   channel: ReminderChannel,
   payload: ReminderPayload
 ): Promise<ReminderResult> {
-  if (channel === "NONE") {
-    return { sent: false, reason: "Este negocio no tiene recordatorios activados." };
-  }
-
   if (channel === "WHATSAPP") {
     return sendWhatsAppMessage(payload.clientPhone, buildReminderBody(payload));
   }
@@ -107,4 +105,18 @@ export async function sendAppointmentReminder(
       `${payload.serviceName} en ${payload.businessName} el ${payload.startTime.toISOString()}`
   );
   return { sent: false, reason: `El canal ${channel} todavía no está conectado.` };
+}
+
+/**
+ * Manda el recordatorio por todos los canales que el negocio tenga activos a
+ * la vez (ej. WhatsApp y correo juntos), no solo por uno. La cita se
+ * considera "recordada" si al menos un canal lo logró.
+ */
+export async function sendAppointmentReminders(
+  channels: ReminderChannel[],
+  payload: ReminderPayload
+): Promise<{ channel: ReminderChannel; result: ReminderResult }[]> {
+  return Promise.all(
+    channels.map(async (channel) => ({ channel, result: await sendAppointmentReminder(channel, payload) }))
+  );
 }

@@ -1,5 +1,5 @@
 import { prisma } from "../src/lib/db";
-import { sendAppointmentReminder, sendWhatsAppMessage, type ReminderChannel } from "../src/lib/notifications";
+import { sendAppointmentReminders, sendWhatsAppMessage, type ReminderChannel } from "../src/lib/notifications";
 import { sendWeeklyDigestEmail } from "../src/lib/email";
 import { getOwnerEmails } from "../src/lib/owners";
 
@@ -148,13 +148,16 @@ async function main() {
   await sendWeeklyDigests();
 
   const businesses = await prisma.business.findMany({
-    where: { reminderChannel: { not: "NONE" } },
+    where: { reminderChannels: { not: "" } },
   });
 
   let sent = 0;
   let skipped = 0;
 
   for (const business of businesses) {
+    const channels = business.reminderChannels.split(",").filter(Boolean) as ReminderChannel[];
+    if (channels.length === 0) continue;
+
     const windowStart = new Date(Date.now() + business.reminderHoursBefore * 60 * 60 * 1000);
     const windowEnd = new Date(windowStart.getTime() + WINDOW_MINUTES * 60 * 1000);
 
@@ -169,7 +172,7 @@ async function main() {
     });
 
     for (const appt of appointments) {
-      const result = await sendAppointmentReminder(business.reminderChannel as ReminderChannel, {
+      const results = await sendAppointmentReminders(channels, {
         clientName: appt.clientName,
         clientPhone: appt.clientPhone,
         clientEmail: appt.clientEmail,
@@ -178,14 +181,17 @@ async function main() {
         startTime: appt.startTime,
       });
 
-      if (result.sent) {
+      // Se marca como recordada si al menos un canal lo logró — si el negocio
+      // tiene WhatsApp y correo activos, no hace falta que los dos funcionen.
+      if (results.some((r) => r.result.sent)) {
         await prisma.appointment.update({
           where: { id: appt.id },
           data: { reminderSentAt: new Date() },
         });
         sent++;
       } else {
-        console.log(`No se recordó a ${appt.clientName} (cita ${appt.id}): ${result.reason}`);
+        const reasons = results.map((r) => `${r.channel}: ${r.result.reason}`).join(" | ");
+        console.log(`No se recordó a ${appt.clientName} (cita ${appt.id}): ${reasons}`);
         skipped++;
       }
     }
