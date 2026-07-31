@@ -96,7 +96,7 @@ export default async function EditServicePage({
             <input
               type="number"
               name="price"
-              step="0.01"
+              step="1"
               min={0}
               defaultValue={service.price}
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
@@ -110,7 +110,7 @@ export default async function EditServicePage({
           <input
             type="number"
             name="depositAmount"
-            step="0.01"
+            step="1"
             min={0}
             placeholder="Usar la seña general"
             defaultValue={service.depositAmount ?? ""}

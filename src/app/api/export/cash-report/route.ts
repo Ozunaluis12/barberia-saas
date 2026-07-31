@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { formatCOP } from "@/lib/money";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -69,11 +70,11 @@ export async function GET(req: NextRequest) {
       { width: 105 }
     );
     doc.text(s.staff ? s.staff.name : "General", colX.staff, y, { width: 130 });
-    doc.text(`$${(s.expectedAmount ?? 0).toFixed(2)}`, colX.expected, y, { width: 70 });
-    doc.text(`$${(s.countedAmount ?? 0).toFixed(2)}`, colX.counted, y, { width: 70 });
+    doc.text(formatCOP(s.expectedAmount ?? 0), colX.expected, y, { width: 70 });
+    doc.text(formatCOP(s.countedAmount ?? 0), colX.counted, y, { width: 70 });
     const diff = s.difference ?? 0;
     doc.fillColor(diff === 0 ? "#000" : diff > 0 ? "#0a7a2f" : "#b91c1c");
-    doc.text(`${diff > 0 ? "+" : ""}${diff.toFixed(2)}`, colX.diff, y, { width: 90 });
+    doc.text(`${diff > 0 ? "+" : ""}${formatCOP(diff)}`, colX.diff, y, { width: 90 });
     totalDifference += diff;
     doc.moveDown(0.6);
   }
@@ -88,7 +89,7 @@ export async function GET(req: NextRequest) {
       .strokeColor("#ccc")
       .stroke();
     doc.moveDown(0.3);
-    doc.fontSize(10).fillColor("#000").text(`Diferencia total: ${totalDifference >= 0 ? "+" : ""}${totalDifference.toFixed(2)}`);
+    doc.fontSize(10).fillColor("#000").text(`Diferencia total: ${totalDifference >= 0 ? "+" : ""}${formatCOP(totalDifference)}`);
   }
 
   doc.end();

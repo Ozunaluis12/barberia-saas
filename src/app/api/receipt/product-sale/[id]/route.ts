@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { formatCOP } from "@/lib/money";
 
 const PAYMENT_LABEL: Record<string, string> = {
   CASH: "Efectivo",
@@ -61,8 +62,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   doc.moveDown(0.5);
 
   doc.text(`${sale.product.name} x${sale.quantity}`, 40, doc.y, { continued: true, width: 250 });
-  doc.text(`$${sale.total.toFixed(2)}`, { align: "right" });
-  doc.fontSize(9).fillColor("#555").text(`Precio unitario: $${sale.unitPrice.toFixed(2)}`);
+  doc.text(formatCOP(sale.total), { align: "right" });
+  doc.fontSize(9).fillColor("#555").text(`Precio unitario: ${formatCOP(sale.unitPrice)}`);
   doc.moveDown(0.8);
 
   doc
@@ -73,7 +74,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   doc.moveDown(0.5);
 
   doc.fontSize(11).fillColor("#000").text("Total", 40, doc.y, { continued: true, width: 250 });
-  doc.text(`$${sale.total.toFixed(2)}`, { align: "right" });
+  doc.text(formatCOP(sale.total), { align: "right" });
   doc.moveDown(0.5);
   doc.fontSize(9).fillColor("#555").text(`Método de pago: ${PAYMENT_LABEL[sale.paymentMethod] ?? sale.paymentMethod}`);
 

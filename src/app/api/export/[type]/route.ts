@@ -54,7 +54,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
       "Teléfono",
       "Personal",
       "Servicio",
-      "Precio",
+      "Precio (COP)",
       "Estado",
       "Origen",
       "Pago",
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
         a.clientPhone,
         a.staff.name,
         a.service.name,
-        (a.priceCharged ?? a.service.price).toFixed(2),
+        Math.round(a.priceCharged ?? a.service.price),
         a.status,
         a.source,
         a.paymentStatus,
@@ -108,23 +108,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ type
       byStaff.set(a.staffId, entry);
     }
 
+    // Montos en pesos colombianos enteros (sin centavos, sin separador de
+    // miles) para que sigan siendo números que Excel/hojas de cálculo sumen
+    // directamente, no texto formateado.
     csv += toCsvRow([
       "Personal",
       "Citas completadas",
-      "Ingreso",
+      "Ingreso (COP)",
       "% comisión",
-      "Le corresponde",
-      "Se queda el negocio",
+      "Le corresponde (COP)",
+      "Se queda el negocio (COP)",
     ]);
     for (const r of byStaff.values()) {
       const commission = r.commissionPercent === null ? null : r.revenue * (r.commissionPercent / 100);
       csv += toCsvRow([
         r.name,
         r.count,
-        r.revenue.toFixed(2),
+        Math.round(r.revenue),
         r.commissionPercent ?? "",
-        commission !== null ? commission.toFixed(2) : "",
-        (r.revenue - (commission ?? 0)).toFixed(2),
+        commission !== null ? Math.round(commission) : "",
+        Math.round(r.revenue - (commission ?? 0)),
       ]);
     }
     filename = "reportes.csv";

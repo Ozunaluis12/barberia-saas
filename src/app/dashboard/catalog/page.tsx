@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { createProduct, toggleProductActive, sellProduct } from "@/app/actions/products";
+import { formatCOP } from "@/lib/money";
 
 const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
@@ -75,7 +76,7 @@ export default async function CatalogPage({
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-2 text-cream/70">${p.price.toFixed(2)}</td>
+                <td className="px-4 py-2 text-cream/70">{formatCOP(p.price)}</td>
                 <td className="px-4 py-2 text-cream/70">
                   {p.stock === null ? "—" : p.stock}
                 </td>
@@ -158,7 +159,7 @@ export default async function CatalogPage({
                 </td>
                 <td className="px-4 py-2">{s.product.name}</td>
                 <td className="px-4 py-2 text-cream/70">{s.quantity}</td>
-                <td className="px-4 py-2 text-cream/70">${s.total.toFixed(2)}</td>
+                <td className="px-4 py-2 text-cream/70">{formatCOP(s.total)}</td>
                 <td className="px-4 py-2 text-right">
                   <a
                     href={`/api/receipt/product-sale/${s.id}`}
@@ -215,7 +216,7 @@ export default async function CatalogPage({
             <input
               type="number"
               name="price"
-              step="0.01"
+              step="1"
               min={0}
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             />

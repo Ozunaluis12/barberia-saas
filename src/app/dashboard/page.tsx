@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
 import { dismissOnboarding } from "@/app/actions/settings";
+import { formatCOP } from "@/lib/money";
 
 export default async function DashboardHome() {
   const session = await requireSession();
@@ -79,7 +80,7 @@ export default async function DashboardHome() {
         </div>
         <div className="rounded-lg border border-white/10 bg-charcoal p-5">
           <p className="text-sm text-cream/60">Ingreso estimado hoy</p>
-          <p className="mt-1 text-3xl font-bold text-gold">${estimatedRevenue.toFixed(2)}</p>
+          <p className="mt-1 text-3xl font-bold text-gold">{formatCOP(estimatedRevenue)}</p>
         </div>
         <div className="rounded-lg border border-white/10 bg-charcoal p-5">
           <p className="text-sm text-cream/60">{vocab.staffPlural} activos / servicios</p>

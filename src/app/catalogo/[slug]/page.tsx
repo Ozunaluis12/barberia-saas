@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
 import Avatar from "@/components/Avatar";
+import { formatCOP } from "@/lib/money";
 
 export default async function PublicCatalogPage({
   params,
@@ -64,7 +65,7 @@ export default async function PublicCatalogPage({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium">{s.name}</p>
-                    <p className="shrink-0 font-semibold text-gold">${s.price.toFixed(2)}</p>
+                    <p className="shrink-0 font-semibold text-gold">{formatCOP(s.price)}</p>
                   </div>
                   <p className="text-xs text-cream/50">{s.durationMinutes} min</p>
                   {s.description && (
@@ -102,7 +103,7 @@ export default async function PublicCatalogPage({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium">{p.name}</p>
-                    <p className="shrink-0 font-semibold text-gold">${p.price.toFixed(2)}</p>
+                    <p className="shrink-0 font-semibold text-gold">{formatCOP(p.price)}</p>
                   </div>
                   {p.description && (
                     <p className="mt-1 text-sm text-cream/70">{p.description}</p>

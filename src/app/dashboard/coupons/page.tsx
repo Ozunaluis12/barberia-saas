@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { createCoupon, toggleCouponActive } from "@/app/actions/coupons";
+import { formatCOP } from "@/lib/money";
 
 const ERRORS: Record<string, string> = {
   CODIGO_REQUERIDO: "El código es obligatorio.",
@@ -54,7 +55,7 @@ export default async function CouponsPage({
                 <tr key={c.id} className="border-t border-white/5">
                   <td className="px-4 py-2 font-medium">{c.code}</td>
                   <td className="px-4 py-2 text-cream/70">
-                    {c.discountType === "PERCENT" ? `${c.discountValue}%` : `$${c.discountValue.toFixed(2)}`}
+                    {c.discountType === "PERCENT" ? `${c.discountValue}%` : formatCOP(c.discountValue)}
                   </td>
                   <td className="px-4 py-2 text-cream/70">
                     {c.usedCount}
@@ -124,7 +125,7 @@ export default async function CouponsPage({
               <input
                 type="number"
                 name="discountValue"
-                step="0.01"
+                step="1"
                 min={0}
                 required
                 className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"

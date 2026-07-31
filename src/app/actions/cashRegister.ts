@@ -7,6 +7,7 @@ import { requireSession } from "@/lib/guard";
 import { sendCashDiscrepancyAlert } from "@/lib/email";
 import { logAudit } from "@/lib/audit";
 import { getOwnerEmails } from "@/lib/owners";
+import { formatCOP } from "@/lib/money";
 
 /**
  * Solo el dueño, o el miembro del roster vinculado a esa caja personal, puede
@@ -44,7 +45,7 @@ export async function openCashSession(formData: FormData) {
     },
   });
 
-  await logAudit(session, "cash.opened", `Monto inicial: $${openingAmount.toFixed(2)}`);
+  await logAudit(session, "cash.opened", `Monto inicial: ${formatCOP(openingAmount)}`);
 
   revalidatePath("/dashboard/register");
   redirect("/dashboard/register");
@@ -148,7 +149,7 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
   await logAudit(
     session,
     "cash.closed",
-    `${staff?.name ?? "Caja general"}: esperado $${expectedAmount.toFixed(2)}, contado $${countedAmount.toFixed(2)}, diferencia $${difference.toFixed(2)}`
+    `${staff?.name ?? "Caja general"}: esperado ${formatCOP(expectedAmount)}, contado ${formatCOP(countedAmount)}, diferencia ${formatCOP(difference)}`
   );
 
   revalidatePath("/dashboard/register");

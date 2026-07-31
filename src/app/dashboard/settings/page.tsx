@@ -197,7 +197,7 @@ export default async function SettingsPage({
             <input
               type="number"
               name="cashDiscrepancyAlertThreshold"
-              step="0.01"
+              step="1"
               min={0}
               defaultValue={business.cashDiscrepancyAlertThreshold}
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
@@ -275,7 +275,7 @@ export default async function SettingsPage({
                 <input
                   type="number"
                   name="advancePaymentAmount"
-                  step="0.01"
+                  step="1"
                   min={0}
                   placeholder="Precio completo"
                   defaultValue={business.advancePaymentAmount ?? ""}

@@ -1,5 +1,6 @@
 import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
+import { formatCOP } from "@/lib/money";
 
 export default async function AnalyticsPage({
   searchParams,
@@ -134,10 +135,10 @@ export default async function AnalyticsPage({
 
         <div className="rounded-lg border border-white/10 bg-charcoal p-6">
           <h2 className="text-lg font-semibold">Ganancia neta</h2>
-          <p className="mt-4 text-4xl font-bold text-gold">${netProfit.toFixed(2)}</p>
+          <p className="mt-4 text-4xl font-bold text-gold">{formatCOP(netProfit)}</p>
           <p className="mt-1 text-sm text-cream/60">
-            Ingreso (${(appointmentRevenue + productRevenue).toFixed(2)}) menos gastos del período
-            (${totalExpenses.toFixed(2)}).
+            Ingreso ({formatCOP(appointmentRevenue + productRevenue)}) menos gastos del período
+            ({formatCOP(totalExpenses)}).
           </p>
         </div>
 

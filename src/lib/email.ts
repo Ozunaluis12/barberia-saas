@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { formatCOP } from "@/lib/money";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const FROM_ADDRESS = process.env.RESEND_FROM_ADDRESS ?? "Turnify <onboarding@resend.dev>";
@@ -118,7 +119,7 @@ export type WeeklyDigestDetails = {
 export async function sendWeeklyDigestEmail(to: string, details: WeeklyDigestDetails): Promise<SendResult> {
   if (!resend) {
     console.log(
-      `[email:resumen] Resend no configurado. Resumen de ${details.businessName}: $${details.revenue} en ${details.appointmentCount} citas`
+      `[email:resumen] Resend no configurado. Resumen de ${details.businessName}: ${formatCOP(details.revenue)} en ${details.appointmentCount} citas`
     );
     return { sent: false, reason: "RESEND_API_KEY no configurado" };
   }
@@ -131,7 +132,7 @@ export async function sendWeeklyDigestEmail(to: string, details: WeeklyDigestDet
       html: `
         <p>Así te fue la última semana en <strong>${details.businessName}</strong>:</p>
         <ul>
-          <li><strong>Ingreso:</strong> $${details.revenue.toFixed(2)}</li>
+          <li><strong>Ingreso:</strong> ${formatCOP(details.revenue)}</li>
           <li><strong>Citas completadas:</strong> ${details.appointmentCount}</li>
           <li><strong>Servicio más pedido:</strong> ${details.topServiceName ?? "—"}</li>
         </ul>
@@ -159,11 +160,11 @@ export async function sendCashDiscrepancyAlert(
   details: CashDiscrepancyDetails
 ): Promise<SendResult> {
   const sign = details.difference > 0 ? "sobrante" : "faltante";
-  const amount = Math.abs(details.difference).toFixed(2);
+  const amount = formatCOP(Math.abs(details.difference));
 
   if (!resend) {
     console.log(
-      `[email:caja] Resend no configurado. Alerta para ${to}: ${sign} de $${amount} en ${details.drawerLabel}`
+      `[email:caja] Resend no configurado. Alerta para ${to}: ${sign} de ${amount} en ${details.drawerLabel}`
     );
     return { sent: false, reason: "RESEND_API_KEY no configurado" };
   }
@@ -172,14 +173,14 @@ export async function sendCashDiscrepancyAlert(
     await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: `⚠️ ${details.businessName}: ${sign} de $${amount} al cerrar caja (${details.drawerLabel})`,
+      subject: `⚠️ ${details.businessName}: ${sign} de ${amount} al cerrar caja (${details.drawerLabel})`,
       html: `
         <p>Se cerró una caja con una diferencia mayor al umbral configurado.</p>
         <ul>
           <li><strong>Caja:</strong> ${details.drawerLabel}</li>
-          <li><strong>Esperado:</strong> $${details.expectedAmount.toFixed(2)}</li>
-          <li><strong>Contado:</strong> $${details.countedAmount.toFixed(2)}</li>
-          <li><strong>Diferencia:</strong> ${details.difference > 0 ? "+" : ""}$${details.difference.toFixed(2)} (${sign})</li>
+          <li><strong>Esperado:</strong> ${formatCOP(details.expectedAmount)}</li>
+          <li><strong>Contado:</strong> ${formatCOP(details.countedAmount)}</li>
+          <li><strong>Diferencia:</strong> ${details.difference > 0 ? "+" : ""}${formatCOP(details.difference)} (${sign})</li>
           <li><strong>Cerrada por:</strong> ${details.closedByName}</li>
           <li><strong>Notas:</strong> ${details.notes ?? "(sin notas)"}</li>
         </ul>

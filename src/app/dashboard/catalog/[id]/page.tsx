@@ -85,7 +85,7 @@ export default async function EditProductPage({
           <input
             type="number"
             name="price"
-            step="0.01"
+            step="1"
             min={0}
             defaultValue={product.price}
             className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"

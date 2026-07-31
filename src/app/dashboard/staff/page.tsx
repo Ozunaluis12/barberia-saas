@@ -163,7 +163,7 @@ export default async function StaffPage({
               type="number"
               name="monthlyRevenueGoal"
               min={0}
-              step="0.01"
+              step="1"
               placeholder="Sin meta"
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             />

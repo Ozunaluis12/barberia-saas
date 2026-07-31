@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { createService, toggleServiceActive } from "@/app/actions/services";
 import { getVocabulary } from "@/lib/vocabulary";
+import { formatCOP } from "@/lib/money";
 
 const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
@@ -66,7 +67,7 @@ export default async function ServicesPage({
                   </div>
                 </td>
                 <td className="px-4 py-2 text-cream/70">{s.durationMinutes} min</td>
-                <td className="px-4 py-2 text-cream/70">${s.price.toFixed(2)}</td>
+                <td className="px-4 py-2 text-cream/70">{formatCOP(s.price)}</td>
                 <td className="px-4 py-2">
                   <span
                     className={`rounded-full px-2 py-1 text-xs ${
@@ -150,7 +151,7 @@ export default async function ServicesPage({
               <input
                 type="number"
                 name="price"
-                step="0.01"
+                step="1"
                 min={0}
                 className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
               />
@@ -163,7 +164,7 @@ export default async function ServicesPage({
             <input
               type="number"
               name="depositAmount"
-              step="0.01"
+              step="1"
               min={0}
               placeholder="Usar la seña general"
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"

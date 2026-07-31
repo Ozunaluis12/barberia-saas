@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchSlots, createBooking, joinWaitlist } from "@/app/actions/booking";
 import { validateCoupon } from "@/app/actions/coupons";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { formatCOP } from "@/lib/money";
 import Avatar from "@/components/Avatar";
 
 type Service = { id: string; name: string; durationMinutes: number; price: number; depositAmount: number | null };
@@ -30,7 +31,7 @@ function PaymentInstructions({ advancePayment, amount }: { advancePayment: Advan
   return (
     <div className="space-y-3 rounded-md border border-gold/40 bg-ink p-4">
       <p className="text-sm font-semibold text-gold">
-        Paga ${amount.toFixed(2)} por adelantado para reservar
+        Paga {formatCOP(amount)} por adelantado para reservar
       </p>
       {advancePayment.qrUrl && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -286,7 +287,7 @@ export default function BookingFlow({
                 <span className="font-medium">{s.name}</span>
                 <span className="ml-2 text-sm text-cream/50">{s.durationMinutes} min</span>
               </span>
-              <span className="font-semibold text-gold">${s.price.toFixed(2)}</span>
+              <span className="font-semibold text-gold">{formatCOP(s.price)}</span>
             </button>
           ))}
           {services.length === 0 && (
@@ -513,12 +514,12 @@ export default function BookingFlow({
                 Cupón {appliedCoupon.code} aplicado
                 {selectedService && (
                   <>
-                    {" "}— nuevo precio: $
-                    {(
+                    {" "}— nuevo precio:{" "}
+                    {formatCOP(
                       appliedCoupon.discountType === "PERCENT"
                         ? selectedService.price * (1 - appliedCoupon.discountValue / 100)
                         : Math.max(0, selectedService.price - appliedCoupon.discountValue)
-                    ).toFixed(2)}
+                    )}
                   </>
                 )}
               </p>

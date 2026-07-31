@@ -2,6 +2,7 @@ import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
 import { closePayrollPeriod } from "@/app/actions/payroll";
+import { formatCOP } from "@/lib/money";
 
 const PAYROLL_ERRORS: Record<string, string> = {
   RANGO_INVALIDO: "Elige un rango de fechas válido antes de cerrar el período.",
@@ -175,12 +176,12 @@ export default async function ReportsPage({
               >
                 <td className="px-4 py-2 font-medium">{r.name}</td>
                 <td className="px-4 py-2">{r.count}</td>
-                <td className="px-4 py-2">${r.revenue.toFixed(2)}</td>
+                <td className="px-4 py-2">{formatCOP(r.revenue)}</td>
                 <td className="px-4 py-2">{r.commissionPercent === null ? "—" : `${r.commissionPercent}%`}</td>
                 <td className="px-4 py-2 text-gold">
-                  {r.commission === null ? "—" : `$${r.commission.toFixed(2)}`}
+                  {r.commission === null ? "—" : formatCOP(r.commission)}
                 </td>
-                <td className="px-4 py-2">${r.businessShare.toFixed(2)}</td>
+                <td className="px-4 py-2">{formatCOP(r.businessShare)}</td>
                 <td className="px-4 py-2">
                   {r.monthlyRevenueGoal === null ? (
                     "—"
@@ -195,7 +196,7 @@ export default async function ReportsPage({
                         />
                       </div>
                       <p className="mt-1 text-[10px] text-cream/50">
-                        ${r.revenue.toFixed(0)} / ${r.monthlyRevenueGoal.toFixed(0)}
+                        {formatCOP(r.revenue)} / {formatCOP(r.monthlyRevenueGoal)}
                       </p>
                     </div>
                   )}
@@ -216,10 +217,10 @@ export default async function ReportsPage({
                 <td className="px-4 py-2" colSpan={2}>
                   Total
                 </td>
-                <td className="px-4 py-2">${totals.revenue.toFixed(2)}</td>
+                <td className="px-4 py-2">{formatCOP(totals.revenue)}</td>
                 <td className="px-4 py-2"></td>
-                <td className="px-4 py-2 text-gold">${totals.commission.toFixed(2)}</td>
-                <td className="px-4 py-2">${totals.businessShare.toFixed(2)}</td>
+                <td className="px-4 py-2 text-gold">{formatCOP(totals.commission)}</td>
+                <td className="px-4 py-2">{formatCOP(totals.businessShare)}</td>
                 <td className="px-4 py-2"></td>
               </tr>
             </tfoot>
@@ -231,11 +232,11 @@ export default async function ReportsPage({
       <div className="mt-4 flex flex-wrap gap-4 rounded-lg border border-white/10 bg-charcoal p-4 text-sm">
         <p>
           <span className="text-cream/60">Gastos del período: </span>
-          <span className="font-semibold text-red-400">${totalExpenses.toFixed(2)}</span>
+          <span className="font-semibold text-red-400">{formatCOP(totalExpenses)}</span>
         </p>
         <p>
           <span className="text-cream/60">Ganancia neta (queda del negocio − gastos): </span>
-          <span className="font-semibold text-gold">${netProfit.toFixed(2)}</span>
+          <span className="font-semibold text-gold">{formatCOP(netProfit)}</span>
         </p>
         <a href="/dashboard/expenses" className="ml-auto text-xs text-gold hover:underline">
           Gestionar gastos →
@@ -264,11 +265,11 @@ export default async function ReportsPage({
                   {p.periodEnd.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })}
                 </td>
                 <td className="px-4 py-2 font-medium">{p.staff.name}</td>
-                <td className="px-4 py-2 text-cream/70">${p.revenue.toFixed(2)}</td>
+                <td className="px-4 py-2 text-cream/70">{formatCOP(p.revenue)}</td>
                 <td className="px-4 py-2 text-cream/70">
                   {p.commissionPercent === null ? "—" : `${p.commissionPercent}%`}
                 </td>
-                <td className="px-4 py-2 text-gold">${p.commissionAmount.toFixed(2)}</td>
+                <td className="px-4 py-2 text-gold">{formatCOP(p.commissionAmount)}</td>
                 <td className="px-4 py-2 text-cream/50">
                   {p.createdAt.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })}
                 </td>

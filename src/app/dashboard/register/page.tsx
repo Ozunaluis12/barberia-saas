@@ -2,6 +2,7 @@ import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
 import { openCashSession, closeCashSession } from "@/app/actions/cashRegister";
+import { formatCOP } from "@/lib/money";
 
 const ERRORS: Record<string, string> = {
   CAJA_YA_ABIERTA: "Ya hay una caja abierta para esa selección.",
@@ -75,7 +76,7 @@ export default async function RegisterPage({
                 <p className="font-semibold">{s.staff ? s.staff.name : "Caja general"}</p>
                 <p className="text-xs text-cream/50">
                   Abierta {s.openedAt.toLocaleString("es", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}{" "}
-                  · Monto inicial ${s.openingAmount.toFixed(2)}
+                  · Monto inicial {formatCOP(s.openingAmount)}
                 </p>
               </div>
             </div>
@@ -85,7 +86,7 @@ export default async function RegisterPage({
                 <input
                   type="number"
                   name="countedAmount"
-                  step="0.01"
+                  step="1"
                   min={0}
                   required
                   className="mt-1 block w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold sm:w-40"
@@ -156,7 +157,7 @@ export default async function RegisterPage({
               <input
                 type="number"
                 name="openingAmount"
-                step="0.01"
+                step="1"
                 min={0}
                 defaultValue={0}
                 className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
@@ -202,8 +203,8 @@ export default async function RegisterPage({
                   {s.closedAt?.toLocaleString("es", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                 </td>
                 <td className="px-4 py-2">{s.staff ? s.staff.name : "General"}</td>
-                <td className="px-4 py-2 text-cream/70">${(s.expectedAmount ?? 0).toFixed(2)}</td>
-                <td className="px-4 py-2 text-cream/70">${(s.countedAmount ?? 0).toFixed(2)}</td>
+                <td className="px-4 py-2 text-cream/70">{formatCOP(s.expectedAmount ?? 0)}</td>
+                <td className="px-4 py-2 text-cream/70">{formatCOP(s.countedAmount ?? 0)}</td>
                 <td
                   className={`px-4 py-2 font-semibold ${
                     (s.difference ?? 0) === 0
@@ -214,7 +215,7 @@ export default async function RegisterPage({
                   }`}
                 >
                   {(s.difference ?? 0) > 0 ? "+" : ""}
-                  {(s.difference ?? 0).toFixed(2)}
+                  {formatCOP(s.difference ?? 0)}
                 </td>
                 <td className="px-4 py-2 text-cream/50">{s.closedBy?.name ?? "—"}</td>
                 <td className="px-4 py-2 text-cream/50">{s.notes ?? "—"}</td>

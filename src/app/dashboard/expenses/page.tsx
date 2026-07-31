@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { createExpense, deleteExpense } from "@/app/actions/expenses";
+import { formatCOP } from "@/lib/money";
 
 const ERRORS: Record<string, string> = {
   CATEGORIA_REQUERIDA: "La categoría es obligatoria.",
@@ -56,7 +57,7 @@ export default async function ExpensesPage({
                   </td>
                   <td className="px-4 py-2 font-medium">{e.category}</td>
                   <td className="px-4 py-2 text-cream/60">{e.description ?? "—"}</td>
-                  <td className="px-4 py-2 text-cream/70">${e.amount.toFixed(2)}</td>
+                  <td className="px-4 py-2 text-cream/70">{formatCOP(e.amount)}</td>
                   <td className="px-4 py-2 text-right">
                     <form action={deleteExpense.bind(null, e.id)}>
                       <button className="text-xs text-red-400 hover:underline">Eliminar</button>
@@ -94,7 +95,7 @@ export default async function ExpensesPage({
               <input
                 type="number"
                 name="amount"
-                step="0.01"
+                step="1"
                 min={0}
                 required
                 className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"

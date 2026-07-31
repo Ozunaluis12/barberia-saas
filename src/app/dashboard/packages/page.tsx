@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { createServicePackage, toggleServicePackageActive, sellServicePackage } from "@/app/actions/packages";
+import { formatCOP } from "@/lib/money";
 
 const ERRORS: Record<string, string> = {
   SERVICIO_INVALIDO: "Elige un servicio válido.",
@@ -68,7 +69,7 @@ export default async function PackagesPage({
                   <td className="px-4 py-2 font-medium">{p.name}</td>
                   <td className="px-4 py-2 text-cream/70">{p.service.name}</td>
                   <td className="px-4 py-2 text-cream/70">{p.sessionCount}</td>
-                  <td className="px-4 py-2 text-cream/70">${p.price.toFixed(2)}</td>
+                  <td className="px-4 py-2 text-cream/70">{formatCOP(p.price)}</td>
                   <td className="px-4 py-2">
                     <span
                       className={`rounded-full px-2 py-1 text-xs ${
@@ -200,7 +201,7 @@ export default async function PackagesPage({
               <input
                 type="number"
                 name="price"
-                step="0.01"
+                step="1"
                 min={0}
                 required
                 className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
