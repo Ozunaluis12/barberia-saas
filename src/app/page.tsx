@@ -174,6 +174,7 @@ export default function HomePage() {
               </Link>
               <NavDropdown
                 label="Categorías"
+                align="end"
                 items={[
                   { label: "Barbería", href: "#categorias" },
                   { label: "Salón de belleza", href: "#categorias" },

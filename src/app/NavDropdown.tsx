@@ -9,7 +9,16 @@ export type NavItem = {
   external?: boolean;
 };
 
-export default function NavDropdown({ label, items }: { label: string; items: NavItem[] }) {
+export default function NavDropdown({
+  label,
+  items,
+  align = "start",
+}: {
+  label: string;
+  items: NavItem[];
+  /** Desde qué lado del botón se despliega el menú, para que no se salga de la pantalla en celular. */
+  align?: "start" | "end";
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -51,7 +60,11 @@ export default function NavDropdown({ label, items }: { label: string; items: Na
       </button>
 
       {open && (
-        <div className="absolute left-1/2 top-full z-50 mt-2 w-56 -translate-x-1/2 animate-modalIn rounded-xl border border-white/10 bg-charcoal p-2 shadow-2xl shadow-black/40">
+        <div
+          className={`absolute top-full z-50 mt-2 w-56 max-w-[calc(100vw-2rem)] animate-modalIn rounded-xl border border-white/10 bg-charcoal p-2 shadow-2xl shadow-black/40 ${
+            align === "end" ? "right-0" : "left-0"
+          }`}
+        >
           {items.map((item) =>
             item.external ? (
               <a
