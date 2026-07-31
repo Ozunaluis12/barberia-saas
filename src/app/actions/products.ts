@@ -5,16 +5,27 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requirePermission } from "@/lib/guard";
 import { uploadImage } from "@/lib/images";
+import { sendLowStockAlert } from "@/lib/email";
+import { getOwnerEmails } from "@/lib/owners";
 
 type ParsedProduct =
-  | { error: "NOMBRE_REQUERIDO" | "PRECIO_INVALIDO" | "STOCK_INVALIDO" }
-  | { data: { name: string; description: string | null; price: number; stock: number | null } };
+  | { error: "NOMBRE_REQUERIDO" | "PRECIO_INVALIDO" | "STOCK_INVALIDO" | "MINSTOCK_INVALIDO" }
+  | {
+      data: {
+        name: string;
+        description: string | null;
+        price: number;
+        stock: number | null;
+        minStock: number | null;
+      };
+    };
 
 function parseProductInput(formData: FormData): ParsedProduct {
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const price = Number(formData.get("price") ?? NaN);
   const stockInput = String(formData.get("stock") ?? "").trim();
+  const minStockInput = String(formData.get("minStock") ?? "").trim();
 
   if (!name) return { error: "NOMBRE_REQUERIDO" };
   if (!Number.isFinite(price) || price < 0) return { error: "PRECIO_INVALIDO" };
@@ -26,7 +37,14 @@ function parseProductInput(formData: FormData): ParsedProduct {
     stock = parsedStock;
   }
 
-  return { data: { name, description: description || null, price, stock } };
+  let minStock: number | null = null;
+  if (minStockInput !== "") {
+    const parsedMinStock = Number(minStockInput);
+    if (!Number.isInteger(parsedMinStock) || parsedMinStock < 0) return { error: "MINSTOCK_INVALIDO" };
+    minStock = parsedMinStock;
+  }
+
+  return { data: { name, description: description || null, price, stock, minStock } };
 }
 
 export async function createProduct(formData: FormData) {
@@ -99,6 +117,26 @@ export async function sellProduct(productId: string, formData: FormData) {
       },
     }),
   ]);
+
+  if (product!.stock !== null && product!.minStock !== null) {
+    const newStock = product!.stock - quantity;
+    if (newStock <= product!.minStock) {
+      const business = await prisma.business.findUnique({ where: { id: session.businessId } });
+      if (business) {
+        const ownerEmails = await getOwnerEmails(session.organizationId);
+        await Promise.all(
+          ownerEmails.map((email) =>
+            sendLowStockAlert(email, {
+              businessName: business.name,
+              productName: product!.name,
+              currentStock: newStock,
+              minStock: product!.minStock!,
+            })
+          )
+        );
+      }
+    }
+  }
 
   revalidatePath("/dashboard/catalog");
   revalidatePath("/dashboard/register");

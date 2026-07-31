@@ -210,6 +210,7 @@ model Product {
   imageUrl    String?
   price       Float
   stock       Int? // null = no se trackea inventario para este producto
+  minStock    Int? // null = sin alerta de stock bajo
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
 

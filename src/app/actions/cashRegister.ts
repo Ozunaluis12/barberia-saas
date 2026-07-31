@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/guard";
 import { sendCashDiscrepancyAlert } from "@/lib/email";
 import { logAudit } from "@/lib/audit";
+import { getOwnerEmails } from "@/lib/owners";
 
 /**
  * Solo el dueño, o el miembro del roster vinculado a esa caja personal, puede
@@ -128,13 +129,10 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
   ]);
 
   if (business && Math.abs(difference) >= business.cashDiscrepancyAlertThreshold) {
-    const owners = await prisma.user.findMany({
-      where: { role: "OWNER", business: { organizationId: session.organizationId } },
-      select: { email: true },
-    });
+    const ownerEmails = await getOwnerEmails(session.organizationId);
     await Promise.all(
-      owners.map((o) =>
-        sendCashDiscrepancyAlert(o.email, {
+      ownerEmails.map((email) =>
+        sendCashDiscrepancyAlert(email, {
           businessName: business.name,
           drawerLabel: staff?.name ?? "Caja general",
           expectedAmount,

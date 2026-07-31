@@ -7,6 +7,7 @@ const ERRORS: Record<string, string> = {
   NOMBRE_REQUERIDO: "El nombre es obligatorio.",
   PRECIO_INVALIDO: "El precio no puede ser negativo.",
   STOCK_INVALIDO: "El stock debe ser un número entero mayor o igual a 0.",
+  MINSTOCK_INVALIDO: "El stock mínimo debe ser un número entero mayor o igual a 0.",
   NO_ENCONTRADO: "No se encontró ese producto.",
   CANTIDAD_INVALIDA: "La cantidad a vender debe ser mayor a 0.",
   STOCK_INSUFICIENTE: "No hay suficiente stock para vender esa cantidad.",
@@ -228,6 +229,18 @@ export default async function CatalogPage({
               name="stock"
               min={0}
               placeholder="Sin trackear"
+              className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-cream/70">
+              Stock mínimo (avisa por correo al dueño cuando llegue a este nivel)
+            </label>
+            <input
+              type="number"
+              name="minStock"
+              min={0}
+              placeholder="Sin alerta"
               className="mt-1 w-full rounded-md border border-white/20 bg-ink px-3 py-2 outline-none focus:border-gold"
             />
           </div>

@@ -72,6 +72,42 @@ export async function sendAppointmentReminderEmail(
   }
 }
 
+export type LowStockDetails = {
+  businessName: string;
+  productName: string;
+  currentStock: number;
+  minStock: number;
+};
+
+export async function sendLowStockAlert(to: string, details: LowStockDetails): Promise<SendResult> {
+  if (!resend) {
+    console.log(
+      `[email:stock] Resend no configurado. ${details.productName} en ${details.businessName}: quedan ${details.currentStock} (mínimo ${details.minStock})`
+    );
+    return { sent: false, reason: "RESEND_API_KEY no configurado" };
+  }
+
+  try {
+    await resend.emails.send({
+      from: FROM_ADDRESS,
+      to,
+      subject: `⚠️ ${details.businessName}: stock bajo de ${details.productName}`,
+      html: `
+        <p>El producto <strong>${details.productName}</strong> en <strong>${details.businessName}</strong>
+        está por agotarse.</p>
+        <ul>
+          <li><strong>Stock actual:</strong> ${details.currentStock}</li>
+          <li><strong>Mínimo configurado:</strong> ${details.minStock}</li>
+        </ul>
+      `,
+    });
+    return { sent: true };
+  } catch (error) {
+    console.error("[email:stock] Error enviando correo:", error);
+    return { sent: false, reason: "Error al enviar el correo" };
+  }
+}
+
 export type CashDiscrepancyDetails = {
   businessName: string;
   drawerLabel: string; // nombre del staff o "Caja general"
