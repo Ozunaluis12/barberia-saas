@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
+import { removeWaitlistEntry } from "@/app/actions/waitlist";
 
 export default async function WaitlistPage() {
   const session = await requireSession();
@@ -31,6 +32,7 @@ export default async function WaitlistPage() {
               <th className="px-4 py-2">Cliente</th>
               <th className="px-4 py-2">Teléfono</th>
               <th className="px-4 py-2">Estado</th>
+              <th className="px-4 py-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -52,11 +54,16 @@ export default async function WaitlistPage() {
                     </span>
                   )}
                 </td>
+                <td className="px-4 py-2 text-right">
+                  <form action={removeWaitlistEntry.bind(null, e.id)}>
+                    <button className="text-xs text-red-400 hover:underline">Quitar</button>
+                  </form>
+                </td>
               </tr>
             ))}
             {entries.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-cream/40" colSpan={6}>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={7}>
                   No hay nadie en la lista de espera.
                 </td>
               </tr>
