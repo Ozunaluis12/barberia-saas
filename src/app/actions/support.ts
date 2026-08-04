@@ -368,6 +368,56 @@ export async function recordSubscriptionPaymentAction(formData: FormData) {
   revalidatePath(`/soporte/empresas/${businessId}`);
 }
 
+export async function createSupportUserAction(formData: FormData) {
+  const session = await requireSupportSession();
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+
+  if (!name || !email || password.length < 6) {
+    redirect("/soporte/equipo?error=DATOS_INVALIDOS");
+  }
+
+  const existing = await prisma.supportUser.findUnique({ where: { email } });
+  if (existing) redirect("/soporte/equipo?error=EMAIL_EN_USO");
+
+  const passwordHash = await hashPassword(password);
+  await prisma.supportUser.create({ data: { name, email, passwordHash } });
+
+  await logSupportAudit(session, null, "SUPPORT_TEAM_ADD", `${name} (${email})`);
+
+  revalidatePath("/soporte/equipo");
+}
+
+export async function toggleSupportUserActiveAction(formData: FormData) {
+  const session = await requireSupportSession();
+  const supportUserId = String(formData.get("supportUserId") ?? "");
+
+  const target = await prisma.supportUser.findUnique({ where: { id: supportUserId } });
+  if (!target) throw new Error("Cuenta no encontrada");
+
+  if (target.active) {
+    const otherActive = await prisma.supportUser.count({
+      where: { active: true, id: { not: supportUserId } },
+    });
+    if (otherActive === 0) {
+      redirect("/soporte/equipo?error=ULTIMA_CUENTA_SOPORTE");
+    }
+  }
+
+  const nextActive = !target.active;
+  await prisma.supportUser.update({ where: { id: supportUserId }, data: { active: nextActive } });
+
+  await logSupportAudit(
+    session,
+    null,
+    nextActive ? "SUPPORT_TEAM_ACTIVATE" : "SUPPORT_TEAM_DEACTIVATE",
+    target.email
+  );
+
+  revalidatePath("/soporte/equipo");
+}
+
 export async function deleteBusinessAction(formData: FormData) {
   const session = await requireSupportSession();
   const businessId = String(formData.get("businessId") ?? "");

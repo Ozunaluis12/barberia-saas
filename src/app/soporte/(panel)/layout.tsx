@@ -8,10 +8,15 @@ export default async function SupportLayout({ children }: { children: React.Reac
   return (
     <div className="min-h-screen bg-ink text-cream">
       <header className="flex items-center justify-between border-b border-white/10 bg-charcoal px-6 py-4">
-        <div>
-          <p className="text-sm uppercase tracking-widest text-gold">Turnify · Soporte</p>
-          <Link href="/soporte" className="text-lg font-bold hover:text-gold">
-            Empresas
+        <div className="flex items-center gap-6">
+          <div>
+            <p className="text-sm uppercase tracking-widest text-gold">Turnify · Soporte</p>
+            <Link href="/soporte" className="text-lg font-bold hover:text-gold">
+              Empresas
+            </Link>
+          </div>
+          <Link href="/soporte/equipo" className="text-sm text-cream/60 hover:text-gold">
+            Equipo
           </Link>
         </div>
         <div className="flex items-center gap-4 text-sm">

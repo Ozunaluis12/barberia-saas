@@ -460,7 +460,7 @@ model SubscriptionInvoice {
 // sistema a propósito, solo lo que de verdad importa auditar.
 model AuditLog {
   id             String   @id @default(cuid())
-  organizationId String
+  organizationId String? // null = acción interna de Soporte sin una empresa asociada (ej. gestión del equipo de soporte)
   businessId     String?
   userId         String?
   userName       String // snapshot: sigue siendo legible si el usuario se borra/desactiva
