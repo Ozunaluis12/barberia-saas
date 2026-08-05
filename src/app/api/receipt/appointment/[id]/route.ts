@@ -104,6 +104,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   doc.fontSize(11).text("Total", 40, doc.y, { continued: true, width: 250 });
   doc.text(formatCOP(price), { align: "right" });
   doc.moveDown(0.5);
+
+  if (appointment.depositAmount) {
+    const balance = price - appointment.depositAmount;
+    doc.fontSize(9).fillColor("#555");
+    doc.text(`Anticipo pagado: ${formatCOP(appointment.depositAmount)}`);
+    doc.text(`Saldo cobrado: ${formatCOP(balance)}`);
+    doc.moveDown(0.3);
+  }
+
   doc.fontSize(9).fillColor("#555").text(`Método de pago: ${PAYMENT_LABEL[appointment.paymentMethod] ?? appointment.paymentMethod}`);
 
   doc.moveDown(1.5);

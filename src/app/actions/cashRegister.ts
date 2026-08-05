@@ -76,7 +76,7 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim();
   const closedAt = new Date();
 
-  const paidInWindow = await prisma.appointment.aggregate({
+  const paidInWindow = await prisma.appointment.findMany({
     where: {
       businessId: session.businessId,
       ...(cashSession!.staffId ? { staffId: cashSession!.staffId } : {}),
@@ -84,8 +84,14 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
       paymentStatus: "PAID",
       paidAt: { gte: cashSession!.openedAt, lte: closedAt },
     },
-    _sum: { priceCharged: true },
+    select: { priceCharged: true, depositAmount: true },
   });
+  // El anticipo nunca fue efectivo (se cobró por transferencia antes) — si la
+  // cita tuvo seña, solo el saldo cobrado ahora en efectivo cuenta para caja.
+  const paidInWindowCashTotal = paidInWindow.reduce(
+    (sum, a) => sum + ((a.priceCharged ?? 0) - (a.depositAmount ?? 0)),
+    0
+  );
 
   // Las ventas de producto no se pueden atribuir a un miembro puntual del
   // roster (Staff), así que solo suman al esperado de la caja general.
@@ -102,7 +108,7 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
 
   const expectedAmount =
     cashSession!.openingAmount +
-    (paidInWindow._sum.priceCharged ?? 0) +
+    paidInWindowCashTotal +
     (productSalesInWindow._sum.total ?? 0);
   const difference = countedAmount - expectedAmount;
 

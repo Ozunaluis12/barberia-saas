@@ -10,6 +10,7 @@ import {
 } from "@/app/actions/appointments";
 import { getVocabulary } from "@/lib/vocabulary";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { formatCOP } from "@/lib/money";
 import WalkInForm from "./WalkInForm";
 import CopyReviewLinkButton from "./CopyReviewLinkButton";
 
@@ -150,7 +151,12 @@ export default async function AppointmentsPage({
                       Por verificar
                     </span>
                   ) : (a.status === "CONFIRMED" || a.status === "COMPLETED") ? (
-                    <div className="flex gap-2 text-xs">
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      {a.paymentStatus === "PARTIALLY_PAID" && (
+                        <span className="rounded-full bg-yellow-500/20 px-2 py-1 text-yellow-400">
+                          Anticipo pagado · falta {formatCOP((a.priceCharged ?? a.service.price) - (a.depositAmount ?? 0))}
+                        </span>
+                      )}
                       <form action={markAppointmentPaid.bind(null, a.id, "CASH")}>
                         <button className="text-gold hover:underline">Efectivo</button>
                       </form>

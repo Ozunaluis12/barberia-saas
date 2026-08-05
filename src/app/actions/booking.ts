@@ -115,6 +115,14 @@ export async function createBooking(params: {
       // repetición por adelantado es un problema de cobro recurrente aparte.
       const requiresAdvancePayment = business.advancePaymentEnabled;
 
+      // Misma fórmula que ya usa el cliente en BookingFlow.tsx para mostrar
+      // cuánto debe transferir — se guarda aquí para que el resto del sistema
+      // (confirmar pago, recibo, caja) sepa cuánto fue la seña y no confunda
+      // el anticipo con el precio completo.
+      const depositAmount = requiresAdvancePayment
+        ? service.depositAmount ?? business.advancePaymentAmount ?? service.price
+        : null;
+
       // El cupón se vuelve a validar aquí adentro (nunca se confía en el precio
       // que mandó el cliente) — solo aplica a la primera cita, no a repeticiones.
       let finalPrice = service.price;
@@ -152,6 +160,9 @@ export async function createBooking(params: {
           source: "ONLINE",
           anyStaffRequested: params.staffId === null,
           priceCharged: finalPrice,
+          // Un cupón puede haber bajado el precio por debajo de la seña fija
+          // del negocio — nunca se cobra un anticipo mayor al precio final.
+          depositAmount: depositAmount === null ? null : Math.min(depositAmount, finalPrice),
           recurrenceGroupId,
           couponCode,
           ...(requiresAdvancePayment

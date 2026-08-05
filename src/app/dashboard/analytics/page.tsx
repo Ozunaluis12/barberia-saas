@@ -18,7 +18,7 @@ export default async function AnalyticsPage({
       where: {
         businessId: session.businessId,
         status: "COMPLETED",
-        paymentStatus: { not: "REFUNDED" },
+        paymentStatus: "PAID",
         startTime: { gte: rangeStart, lte: rangeEnd },
       },
       include: { service: true },

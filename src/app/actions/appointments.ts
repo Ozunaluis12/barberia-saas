@@ -9,6 +9,7 @@ import { findOrCreateClient, applyClientStrike } from "@/lib/clients";
 import { sendWhatsAppMessage } from "@/lib/notifications";
 import { logAudit } from "@/lib/audit";
 import { assignReceiptNumber } from "@/lib/receipts";
+import { formatCOP } from "@/lib/money";
 
 export type CreateWalkInResult = { ok: true } | { ok: false; error: string };
 
@@ -166,15 +167,28 @@ export async function confirmAdvancePayment(appointmentId: string) {
   });
   if (!appt) return;
 
-  const receiptNumber = await assignReceiptNumber(session.businessId);
+  // El comprobante confirma la SEÑA, no el precio completo — si queda un
+  // saldo, la cita pasa a "pago parcial" en vez de "pagada", para que el
+  // negocio sepa que todavía falta cobrar el resto en persona.
+  const remainder = (appt.priceCharged ?? appt.service.price) - (appt.depositAmount ?? 0);
+  const fullyPaid = appt.depositAmount === null || remainder <= 0;
+
+  const receiptNumber = fullyPaid ? await assignReceiptNumber(session.businessId) : appt.receiptNumber;
   await prisma.appointment.update({
     where: { id: appointmentId },
-    data: { status: "CONFIRMED", paymentStatus: "PAID", paidAt: new Date(), receiptNumber },
+    data: {
+      status: "CONFIRMED",
+      paymentStatus: fullyPaid ? "PAID" : "PARTIALLY_PAID",
+      paidAt: new Date(),
+      receiptNumber,
+    },
   });
 
   await sendWhatsAppMessage(
     appt.clientPhone,
-    `Hola ${appt.clientName}, confirmamos tu pago: tu cita de ${appt.service.name} en ${appt.business.name} el ${appt.startTime.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })} a las ${appt.startTime.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })} quedó agendada. ¡Te esperamos!`
+    fullyPaid
+      ? `Hola ${appt.clientName}, confirmamos tu pago: tu cita de ${appt.service.name} en ${appt.business.name} el ${appt.startTime.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })} a las ${appt.startTime.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })} quedó agendada. ¡Te esperamos!`
+      : `Hola ${appt.clientName}, confirmamos tu anticipo: tu cita de ${appt.service.name} en ${appt.business.name} el ${appt.startTime.toLocaleDateString("es", { day: "2-digit", month: "2-digit", year: "numeric" })} a las ${appt.startTime.toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" })} quedó agendada. Falta un saldo de ${formatCOP(remainder)} que se cobra el día de tu cita.`
   );
 
   await logAudit(session, "payment.confirmed", `${appt.clientName} — ${appt.service.name}`);

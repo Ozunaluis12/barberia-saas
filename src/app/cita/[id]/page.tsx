@@ -66,7 +66,7 @@ export default async function ClientAppointmentPage({
         {appt.status === "PENDING_PAYMENT" && (
           <div className="mt-8 space-y-3 rounded-md border border-gold/40 bg-ink p-4 text-sm">
             <p className="font-semibold text-gold">
-              Paga {formatCOP(appt.service.depositAmount ?? appt.business.advancePaymentAmount ?? appt.priceCharged ?? appt.service.price)} por adelantado para
+              Paga {formatCOP(appt.depositAmount ?? appt.service.depositAmount ?? appt.business.advancePaymentAmount ?? appt.priceCharged ?? appt.service.price)} por adelantado para
               confirmar tu cita
             </p>
             {appt.business.paymentQrUrl && (

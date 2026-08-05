@@ -324,10 +324,11 @@ model Appointment {
   source            String      @default("ONLINE") // ONLINE, WALK_IN
   anyStaffRequested Boolean     @default(false)
   lateCancellation  Boolean     @default(false)
-  priceCharged      Float? // snapshot del precio del servicio al momento de la reserva
+  priceCharged      Float? // snapshot del precio total del servicio al momento de la reserva
+  depositAmount     Float? // cuánto se exigió/cobró como anticipo (seña); null = esta cita nunca tuvo anticipo
   paymentMethod     String      @default("UNPAID") // UNPAID, CASH, CARD_IN_PERSON, ONLINE, TRANSFER
-  paymentStatus     String      @default("PENDING") // PENDING, PAID, REFUNDED, AWAITING_VERIFICATION
-  paidAt            DateTime? // cuándo se marcó como pagada (para acotar sesiones de caja)
+  paymentStatus     String      @default("PENDING") // PENDING, PARTIALLY_PAID (solo el anticipo), PAID, REFUNDED, AWAITING_VERIFICATION
+  paidAt            DateTime? // cuándo se marcó como pagada (para acotar sesiones de caja) — con anticipo, se actualiza al cobrar el saldo
   receiptNumber     Int? // consecutivo de factura/recibo, asignado al marcar como pagada
   refundedAt        DateTime?
   refundReason      String?
