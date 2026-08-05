@@ -22,6 +22,8 @@ services:
         value: production
       - key: RESEND_API_KEY
         sync: false
+      - key: RESEND_FROM_ADDRESS
+        sync: false
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -58,4 +60,6 @@ services:
       - key: TWILIO_WHATSAPP_FROM
         sync: false
       - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_ADDRESS
         sync: false

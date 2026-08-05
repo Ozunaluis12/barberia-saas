@@ -22,7 +22,7 @@ export async function closePayrollPeriod(formData: FormData) {
     where: {
       businessId: session.businessId,
       status: "COMPLETED",
-      paymentStatus: { not: "REFUNDED" },
+      paymentStatus: "PAID",
       startTime: { gte: periodStart, lte: periodEnd },
     },
     include: { staff: true, service: true },
@@ -44,6 +44,24 @@ export async function closePayrollPeriod(formData: FormData) {
 
   const payouts = Array.from(byStaff.entries()).filter(([, r]) => r.revenue > 0);
   if (payouts.length === 0) redirect("/dashboard/reports?error=SIN_DATOS");
+
+  // Si alguno de estos miembros del equipo ya tiene un pago cerrado que se
+  // cruza con este rango, se bloquea todo el cierre — nunca se paga por
+  // partes ni en silencio una comisión que ya se había pagado.
+  const overlapping = await prisma.payrollPayout.findFirst({
+    where: {
+      businessId: session.businessId,
+      staffId: { in: payouts.map(([staffId]) => staffId) },
+      periodStart: { lte: periodEnd },
+      periodEnd: { gte: periodStart },
+    },
+    include: { staff: true },
+  });
+  if (overlapping) {
+    redirect(
+      `/dashboard/reports?error=PERIODO_SUPERPUESTO&staff=${encodeURIComponent(overlapping.staff.name)}`
+    );
+  }
 
   await prisma.payrollPayout.createMany({
     data: payouts.map(([staffId, r]) => ({

@@ -322,6 +322,22 @@ prisma/
    | Salón de belleza    | `/book/demo-salon`         | `salon@demo.com`        | `Salon123`        |
    | Spa                 | `/book/demo-spa`           | `spa@demo.com`          | `Spa123`          |
 
+## Panel de soporte (`/soporte`)
+
+Aparte del panel de cada negocio (`/dashboard`), existe un panel interno en `/soporte` para el
+equipo que crea, activa/desactiva y da soporte a las empresas que usan Turnify — no para los
+dueños de negocio. Vive en un modelo separado (`SupportUser`), con su propia sesión y login
+(`/soporte/login`), completamente aislado de las cuentas `User` de cada negocio.
+
+Desde ahí se puede: crear empresas nuevas, activar/suspender el acceso de una empresa, editar su
+plan y renovación de suscripción, agregar/quitar personal y cambiar roles, subir el logo propio de
+cada negocio (aparece en sus facturas PDF), y ver la auditoría de cada organización.
+
+No hay registro público para estas cuentas. La primera se crea con el seed, a partir de
+`SUPPORT_EMAIL`/`SUPPORT_PASSWORD` (ver `.env.example`) — si no están definidas, el seed no crea
+ninguna cuenta y `/soporte/login` queda sin nadie con quién entrar. Cuentas adicionales del equipo
+se agregan luego desde `/soporte/equipo`, ya con una cuenta activa.
+
 ## Scripts disponibles
 
 | Comando         | Descripción                                  |
@@ -356,15 +372,19 @@ mano en el dashboard (o aceptar que Render cree recursos nuevos `turnify-db`/
 `turnify-app` en el próximo sync del Blueprint).
 
 **Variables opcionales que hay que cargar a mano:** `render.yaml` declara
-`RESEND_API_KEY`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
-`CLOUDINARY_API_SECRET`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` y
-`TWILIO_WHATSAPP_FROM` como `sync: false` — Render crea el campo vacío en el
-dashboard pero no adivina el valor. Sin las tres de Cloudinary, el formulario
-de subir foto sigue funcionando pero la imagen no se guarda (falla en
-silencio); sin las tres de Twilio, ningún WhatsApp automático se manda de
-verdad (confirmar/rechazar pago anticipado, difusión masiva, avisar a la
-lista de espera, recordatorios) — solo queda registrado en el log. Hay que
-pegarlas a mano en **turnify-app → Environment** y volver a desplegar.
+`RESEND_API_KEY`, `RESEND_FROM_ADDRESS`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
+`CLOUDINARY_API_SECRET`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`,
+`TWILIO_WHATSAPP_FROM`, `SUPPORT_EMAIL` y `SUPPORT_PASSWORD` como `sync: false`
+— Render crea el campo vacío en el dashboard pero no adivina el valor. Sin las
+tres de Cloudinary, el formulario de subir foto sigue funcionando pero la
+imagen no se guarda (falla en silencio); sin las tres de Twilio, ningún
+WhatsApp automático se manda de verdad (confirmar/rechazar pago anticipado,
+difusión masiva, avisar a la lista de espera, recordatorios) — solo queda
+registrado en el log; sin `RESEND_FROM_ADDRESS`, los correos salen del
+dominio de pruebas de Resend en vez del propio; sin `SUPPORT_EMAIL`/
+`SUPPORT_PASSWORD`, el seed no crea ninguna cuenta de `/soporte` (ver más
+arriba). Hay que pegarlas a mano en **turnify-app → Environment** y volver a
+desplegar.
 
 El cron `turnify-reminders` es un servicio **aparte, con sus propias
 variables — no hereda nada de `turnify-app`**: necesita su propio

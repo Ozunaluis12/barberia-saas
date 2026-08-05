@@ -19,29 +19,35 @@ async function remindPendingPayments() {
   let reminded = 0;
 
   for (const business of businesses) {
-    const halfCutoff = new Date(Date.now() - (business.advancePaymentExpirationHours / 2) * 60 * 60 * 1000);
-    const fullCutoff = new Date(Date.now() - business.advancePaymentExpirationHours * 60 * 60 * 1000);
+    // Un dato corrupto de un solo negocio no debe impedir que se procesen los
+    // demás — se loguea y se sigue con el siguiente.
+    try {
+      const halfCutoff = new Date(Date.now() - (business.advancePaymentExpirationHours / 2) * 60 * 60 * 1000);
+      const fullCutoff = new Date(Date.now() - business.advancePaymentExpirationHours * 60 * 60 * 1000);
 
-    const dueForReminder = await prisma.appointment.findMany({
-      where: {
-        businessId: business.id,
-        status: "PENDING_PAYMENT",
-        paymentReminderSentAt: null,
-        createdAt: { lte: halfCutoff, gt: fullCutoff },
-      },
-      include: { service: true },
-    });
-
-    for (const appt of dueForReminder) {
-      await sendWhatsAppMessage(
-        appt.clientPhone,
-        `Hola ${appt.clientName}, todavía no confirmamos tu pago de ${appt.service.name} en ${business.name}. Si ya pagaste, envía tu comprobante cuanto antes o tu horario podría liberarse.`
-      );
-      await prisma.appointment.update({
-        where: { id: appt.id },
-        data: { paymentReminderSentAt: new Date() },
+      const dueForReminder = await prisma.appointment.findMany({
+        where: {
+          businessId: business.id,
+          status: "PENDING_PAYMENT",
+          paymentReminderSentAt: null,
+          createdAt: { lte: halfCutoff, gt: fullCutoff },
+        },
+        include: { service: true },
       });
-      reminded++;
+
+      for (const appt of dueForReminder) {
+        await sendWhatsAppMessage(
+          appt.clientPhone,
+          `Hola ${appt.clientName}, todavía no confirmamos tu pago de ${appt.service.name} en ${business.name}. Si ya pagaste, envía tu comprobante cuanto antes o tu horario podría liberarse.`
+        );
+        await prisma.appointment.update({
+          where: { id: appt.id },
+          data: { paymentReminderSentAt: new Date() },
+        });
+        reminded++;
+      }
+    } catch (e) {
+      console.error(`remindPendingPayments: falló para el negocio ${business.id} (${business.name}):`, e);
     }
   }
 
@@ -61,22 +67,26 @@ async function expirePendingPayments() {
   let expired = 0;
 
   for (const business of businesses) {
-    const cutoff = new Date(Date.now() - business.advancePaymentExpirationHours * 60 * 60 * 1000);
-    const stale = await prisma.appointment.findMany({
-      where: { businessId: business.id, status: "PENDING_PAYMENT", createdAt: { lt: cutoff } },
-    });
-
-    for (const appt of stale) {
-      // Guarda status: "PENDING_PAYMENT" en el where para no pisar una cita que
-      // el negocio acaba de confirmar/rechazar justo entre el findMany de arriba
-      // y este update — si ya cambió de estado, count sale 0 y se ignora.
-      const { count } = await prisma.appointment.updateMany({
-        where: { id: appt.id, status: "PENDING_PAYMENT" },
-        data: { status: "CANCELLED" },
+    try {
+      const cutoff = new Date(Date.now() - business.advancePaymentExpirationHours * 60 * 60 * 1000);
+      const stale = await prisma.appointment.findMany({
+        where: { businessId: business.id, status: "PENDING_PAYMENT", createdAt: { lt: cutoff } },
       });
-      if (count === 0) continue;
 
-      expired++;
+      for (const appt of stale) {
+        // Guarda status: "PENDING_PAYMENT" en el where para no pisar una cita que
+        // el negocio acaba de confirmar/rechazar justo entre el findMany de arriba
+        // y este update — si ya cambió de estado, count sale 0 y se ignora.
+        const { count } = await prisma.appointment.updateMany({
+          where: { id: appt.id, status: "PENDING_PAYMENT" },
+          data: { status: "CANCELLED" },
+        });
+        if (count === 0) continue;
+
+        expired++;
+      }
+    } catch (e) {
+      console.error(`expirePendingPayments: falló para el negocio ${business.id} (${business.name}):`, e);
     }
   }
 
@@ -103,50 +113,50 @@ async function sendWeeklyDigests() {
   let sent = 0;
 
   for (const business of businesses) {
-    const ownerEmails = await getOwnerEmails(business.organizationId);
-    if (ownerEmails.length === 0) continue;
+    try {
+      const ownerEmails = await getOwnerEmails(business.organizationId);
+      if (ownerEmails.length === 0) continue;
 
-    const appointments = await prisma.appointment.findMany({
-      where: {
-        businessId: business.id,
-        status: "COMPLETED",
-        paymentStatus: { not: "REFUNDED" },
-        startTime: { gte: sevenDaysAgo, lte: now },
-      },
-      include: { service: true },
-    });
+      const appointments = await prisma.appointment.findMany({
+        where: {
+          businessId: business.id,
+          status: "COMPLETED",
+          paymentStatus: "PAID",
+          startTime: { gte: sevenDaysAgo, lte: now },
+        },
+        include: { service: true },
+      });
 
-    const revenue = appointments.reduce((sum, a) => sum + (a.priceCharged ?? a.service.price), 0);
+      const revenue = appointments.reduce((sum, a) => sum + (a.priceCharged ?? a.service.price), 0);
 
-    const byService = new Map<string, number>();
-    for (const a of appointments) {
-      byService.set(a.service.name, (byService.get(a.service.name) ?? 0) + 1);
+      const byService = new Map<string, number>();
+      for (const a of appointments) {
+        byService.set(a.service.name, (byService.get(a.service.name) ?? 0) + 1);
+      }
+      const topServiceName =
+        Array.from(byService.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+      await Promise.all(
+        ownerEmails.map((email) =>
+          sendWeeklyDigestEmail(email, {
+            businessName: business.name,
+            revenue,
+            appointmentCount: appointments.length,
+            topServiceName,
+          })
+        )
+      );
+      await prisma.business.update({ where: { id: business.id }, data: { lastDigestSentAt: now } });
+      sent++;
+    } catch (e) {
+      console.error(`sendWeeklyDigests: falló para el negocio ${business.id} (${business.name}):`, e);
     }
-    const topServiceName =
-      Array.from(byService.entries()).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-
-    await Promise.all(
-      ownerEmails.map((email) =>
-        sendWeeklyDigestEmail(email, {
-          businessName: business.name,
-          revenue,
-          appointmentCount: appointments.length,
-          topServiceName,
-        })
-      )
-    );
-    await prisma.business.update({ where: { id: business.id }, data: { lastDigestSentAt: now } });
-    sent++;
   }
 
   console.log(`Resúmenes semanales enviados: ${sent}.`);
 }
 
-async function main() {
-  await remindPendingPayments();
-  await expirePendingPayments();
-  await sendWeeklyDigests();
-
+async function sendAppointmentRemindersForAllBusinesses() {
   const businesses = await prisma.business.findMany({
     where: { reminderChannels: { not: "" } },
   });
@@ -155,49 +165,75 @@ async function main() {
   let skipped = 0;
 
   for (const business of businesses) {
-    const channels = business.reminderChannels.split(",").filter(Boolean) as ReminderChannel[];
-    if (channels.length === 0) continue;
+    try {
+      const channels = business.reminderChannels.split(",").filter(Boolean) as ReminderChannel[];
+      if (channels.length === 0) continue;
 
-    const windowStart = new Date(Date.now() + business.reminderHoursBefore * 60 * 60 * 1000);
-    const windowEnd = new Date(windowStart.getTime() + WINDOW_MINUTES * 60 * 1000);
+      const windowStart = new Date(Date.now() + business.reminderHoursBefore * 60 * 60 * 1000);
+      const windowEnd = new Date(windowStart.getTime() + WINDOW_MINUTES * 60 * 1000);
 
-    const appointments = await prisma.appointment.findMany({
-      where: {
-        businessId: business.id,
-        status: "CONFIRMED",
-        reminderSentAt: null,
-        startTime: { gte: windowStart, lt: windowEnd },
-      },
-      include: { service: true },
-    });
-
-    for (const appt of appointments) {
-      const results = await sendAppointmentReminders(channels, {
-        clientName: appt.clientName,
-        clientPhone: appt.clientPhone,
-        clientEmail: appt.clientEmail,
-        businessName: business.name,
-        serviceName: appt.service.name,
-        startTime: appt.startTime,
+      const appointments = await prisma.appointment.findMany({
+        where: {
+          businessId: business.id,
+          status: "CONFIRMED",
+          reminderSentAt: null,
+          startTime: { gte: windowStart, lt: windowEnd },
+        },
+        include: { service: true },
       });
 
-      // Se marca como recordada si al menos un canal lo logró — si el negocio
-      // tiene WhatsApp y correo activos, no hace falta que los dos funcionen.
-      if (results.some((r) => r.result.sent)) {
-        await prisma.appointment.update({
-          where: { id: appt.id },
-          data: { reminderSentAt: new Date() },
+      for (const appt of appointments) {
+        const results = await sendAppointmentReminders(channels, {
+          clientName: appt.clientName,
+          clientPhone: appt.clientPhone,
+          clientEmail: appt.clientEmail,
+          businessName: business.name,
+          serviceName: appt.service.name,
+          startTime: appt.startTime,
         });
-        sent++;
-      } else {
-        const reasons = results.map((r) => `${r.channel}: ${r.result.reason}`).join(" | ");
-        console.log(`No se recordó a ${appt.clientName} (cita ${appt.id}): ${reasons}`);
-        skipped++;
+
+        // Se marca como recordada si al menos un canal lo logró — si el negocio
+        // tiene WhatsApp y correo activos, no hace falta que los dos funcionen.
+        if (results.some((r) => r.result.sent)) {
+          await prisma.appointment.update({
+            where: { id: appt.id },
+            data: { reminderSentAt: new Date() },
+          });
+          sent++;
+        } else {
+          const reasons = results.map((r) => `${r.channel}: ${r.result.reason}`).join(" | ");
+          console.log(`No se recordó a ${appt.clientName} (cita ${appt.id}): ${reasons}`);
+          skipped++;
+        }
       }
+    } catch (e) {
+      console.error(`recordatorios de cita: falló para el negocio ${business.id} (${business.name}):`, e);
     }
   }
 
   console.log(`Recordatorios: ${sent} enviados, ${skipped} omitidos/fallidos.`);
+}
+
+/**
+ * Cada etapa es independiente de las demás: si una falla por completo (ej. la
+ * consulta inicial de negocios), las otras tres igual se ejecutan — un negocio
+ * con datos corruptos no debe dejar a toda la plataforma sin recordatorios ni
+ * sin liberar pagos vencidos en esa corrida de 15 minutos.
+ */
+async function runStage(name: string, stage: () => Promise<void>) {
+  try {
+    await stage();
+  } catch (e) {
+    console.error(`Etapa "${name}" falló por completo:`, e);
+  }
+}
+
+async function main() {
+  await runStage("remindPendingPayments", remindPendingPayments);
+  await runStage("expirePendingPayments", expirePendingPayments);
+  await runStage("sendWeeklyDigests", sendWeeklyDigests);
+  await runStage("sendAppointmentReminders", sendAppointmentRemindersForAllBusinesses);
+
   process.exit(0);
 }
 

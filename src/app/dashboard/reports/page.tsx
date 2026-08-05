@@ -7,17 +7,18 @@ import { formatCOP } from "@/lib/money";
 const PAYROLL_ERRORS: Record<string, string> = {
   RANGO_INVALIDO: "Elige un rango de fechas válido antes de cerrar el período.",
   SIN_DATOS: "No hay citas completadas con ingreso en ese rango, no se cerró ningún pago.",
+  PERIODO_SUPERPUESTO: "Ese rango se cruza con un período que ya se pagó — no se cerró nada.",
 };
 
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string; error?: string; paid?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; error?: string; paid?: string; staff?: string }>;
 }) {
   const session = await requirePermission("reports");
   const business = await prisma.business.findUnique({ where: { id: session.businessId } });
   const vocab = getVocabulary(business?.category ?? "OTHER");
-  const { from, to, error, paid } = await searchParams;
+  const { from, to, error, paid, staff: overlapStaffName } = await searchParams;
 
   const rangeStart = from ? new Date(`${from}T00:00:00`) : new Date(new Date().setDate(new Date().getDate() - 30));
   const rangeEnd = to ? new Date(`${to}T23:59:59`) : new Date();
@@ -26,7 +27,7 @@ export default async function ReportsPage({
     where: {
       businessId: session.businessId,
       status: "COMPLETED",
-      paymentStatus: { not: "REFUNDED" },
+      paymentStatus: "PAID",
       startTime: { gte: rangeStart, lte: rangeEnd },
     },
     include: { staff: true, service: true },
@@ -131,6 +132,7 @@ export default async function ReportsPage({
       {error && (
         <p className="mt-4 rounded-md bg-red-500/10 px-3 py-2 text-sm text-red-400">
           {PAYROLL_ERRORS[error] ?? "Ocurrió un error, intenta de nuevo."}
+          {error === "PERIODO_SUPERPUESTO" && overlapStaffName ? ` (${overlapStaffName})` : ""}
         </p>
       )}
       {paid && (
