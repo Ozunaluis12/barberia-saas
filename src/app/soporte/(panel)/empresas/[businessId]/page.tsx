@@ -12,6 +12,7 @@ import {
   deleteStaffAction,
   recordSubscriptionPaymentAction,
   deleteBusinessAction,
+  toggleStoreEnabledAction,
 } from "@/app/actions/support";
 
 const ACTION_LABEL: Record<string, string> = {
@@ -29,6 +30,8 @@ const ACTION_LABEL: Record<string, string> = {
   SUPPORT_UPDATE_BUSINESS_INFO: "Soporte actualizó los datos del negocio",
   SUPPORT_RECORD_PAYMENT: "Soporte registró un pago de suscripción",
   SUPPORT_DELETE_BUSINESS: "Soporte eliminó la empresa",
+  SUPPORT_ENABLE_STORE: "Soporte activó la Tiendita",
+  SUPPORT_DISABLE_STORE: "Soporte desactivó la Tiendita",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -189,6 +192,31 @@ export default async function SupportBusinessDetailPage({
           El identificador /{business.slug} no se puede cambiar aquí — ya está en uso en links de
           reserva y QRs del negocio.
         </p>
+      </section>
+
+      <section className="rounded-lg border border-white/10 p-4">
+        <h2 className="font-semibold">Funciones</h2>
+        <div className="mt-3 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Tiendita (mecatos, bebidas, snacks)</p>
+            <p className="text-xs text-cream/50">
+              No todos los negocios venden esto — actívalo solo si lo piden.
+            </p>
+          </div>
+          <form action={toggleStoreEnabledAction}>
+            <input type="hidden" name="businessId" value={business.id} />
+            <button
+              type="submit"
+              className={
+                business.storeEnabled
+                  ? "rounded-md bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-500/30"
+                  : "rounded-md bg-gold px-3 py-1.5 text-xs font-semibold text-ink hover:bg-gold/90"
+              }
+            >
+              {business.storeEnabled ? "Desactivar" : "Activar"}
+            </button>
+          </form>
+        </div>
       </section>
 
       <section className="rounded-lg border border-white/10 p-4">

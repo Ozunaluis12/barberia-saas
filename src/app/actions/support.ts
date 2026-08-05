@@ -445,3 +445,20 @@ export async function deleteBusinessAction(formData: FormData) {
   revalidatePath("/soporte");
   redirect("/soporte");
 }
+
+export async function toggleStoreEnabledAction(formData: FormData) {
+  const session = await requireSupportSession();
+  const businessId = String(formData.get("businessId") ?? "");
+  const business = await loadBusinessOrThrow(businessId);
+
+  const nextEnabled = !business.storeEnabled;
+  await prisma.business.update({ where: { id: businessId }, data: { storeEnabled: nextEnabled } });
+
+  await logSupportAudit(
+    session,
+    { organizationId: business.organizationId, businessId },
+    nextEnabled ? "SUPPORT_ENABLE_STORE" : "SUPPORT_DISABLE_STORE"
+  );
+
+  revalidatePath(`/soporte/empresas/${businessId}`);
+}

@@ -22,6 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ...(can("staff") ? [{ href: "/dashboard/staff", label: vocab.staffPlural }] : []),
     ...(can("catalog") ? [{ href: "/dashboard/services", label: "Servicios" }] : []),
     ...(can("catalog") ? [{ href: "/dashboard/catalog", label: "Catálogo" }] : []),
+    ...(can("catalog") && business?.storeEnabled ? [{ href: "/dashboard/store", label: "Tiendita" }] : []),
     ...(can("catalog") ? [{ href: "/dashboard/coupons", label: "Cupones" }] : []),
     ...(can("catalog") ? [{ href: "/dashboard/packages", label: "Paquetes" }] : []),
     { href: "/dashboard/clients", label: "Clientes" },
