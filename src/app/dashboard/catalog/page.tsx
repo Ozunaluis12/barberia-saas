@@ -12,6 +12,9 @@ const ERRORS: Record<string, string> = {
   NO_ENCONTRADO: "No se encontró ese producto.",
   CANTIDAD_INVALIDA: "La cantidad a vender debe ser mayor a 0.",
   STOCK_INSUFICIENTE: "No hay suficiente stock para vender esa cantidad.",
+  TARJETA_INVALIDA: "Ese código de tarjeta de regalo no es válido.",
+  TARJETA_VENCIDA: "Esa tarjeta de regalo ya venció.",
+  TARJETA_SIN_SALDO: "Esa tarjeta de regalo no tiene saldo.",
 };
 
 export default async function CatalogPage({
@@ -22,7 +25,8 @@ export default async function CatalogPage({
   const session = await requirePermission("catalog");
   const { error } = await searchParams;
 
-  const [products, recentSales] = await Promise.all([
+  const [business, products, recentSales] = await Promise.all([
+    prisma.business.findUnique({ where: { id: session.businessId } }),
     prisma.product.findMany({
       where: { businessId: session.businessId },
       orderBy: { createdAt: "asc" },
@@ -109,6 +113,14 @@ export default async function CatalogPage({
                         <option value="CASH">Efectivo</option>
                         <option value="CARD_IN_PERSON">Tarjeta</option>
                       </select>
+                      {business?.giftCardsEnabled && (
+                        <input
+                          type="text"
+                          name="giftCardCode"
+                          placeholder="Cód. regalo"
+                          className="w-20 rounded-md border border-white/20 bg-ink px-1.5 py-1 text-xs uppercase outline-none focus:border-gold"
+                        />
+                      )}
                       <button className="text-xs text-gold hover:underline">Vender</button>
                     </form>
                     <Link

@@ -84,12 +84,13 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
       paymentStatus: "PAID",
       paidAt: { gte: cashSession!.openedAt, lte: closedAt },
     },
-    select: { priceCharged: true, depositAmount: true },
+    select: { priceCharged: true, depositAmount: true, giftCardRedeemed: true },
   });
-  // El anticipo nunca fue efectivo (se cobró por transferencia antes) — si la
-  // cita tuvo seña, solo el saldo cobrado ahora en efectivo cuenta para caja.
+  // Ni el anticipo (se cobró por transferencia antes) ni el saldo cubierto
+  // con tarjeta de regalo fueron efectivo real entrando a esta caja — solo
+  // cuenta lo que de verdad se cobró en efectivo.
   const paidInWindowCashTotal = paidInWindow.reduce(
-    (sum, a) => sum + ((a.priceCharged ?? 0) - (a.depositAmount ?? 0)),
+    (sum, a) => sum + ((a.priceCharged ?? 0) - (a.depositAmount ?? 0) - (a.giftCardRedeemed ?? 0)),
     0
   );
 
@@ -97,31 +98,40 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
   // miembro puntual del roster (Staff), así que solo suman al esperado de la
   // caja general.
   const [productSalesInWindow, storeSalesInWindow] = cashSession!.staffId
-    ? [{ _sum: { total: null as number | null } }, { _sum: { total: null as number | null } }]
+    ? [[], []]
     : await Promise.all([
-        prisma.productSale.aggregate({
+        prisma.productSale.findMany({
           where: {
             businessId: session.businessId,
             paymentMethod: "CASH",
             createdAt: { gte: cashSession!.openedAt, lte: closedAt },
           },
-          _sum: { total: true },
+          select: { total: true, giftCardRedeemed: true },
         }),
-        prisma.storeSale.aggregate({
+        prisma.storeSale.findMany({
           where: {
             businessId: session.businessId,
             paymentMethod: "CASH",
             createdAt: { gte: cashSession!.openedAt, lte: closedAt },
           },
-          _sum: { total: true },
+          select: { total: true, giftCardRedeemed: true },
         }),
       ]);
+
+  const productSalesCashTotal = productSalesInWindow.reduce(
+    (sum, s) => sum + (s.total - (s.giftCardRedeemed ?? 0)),
+    0
+  );
+  const storeSalesCashTotal = storeSalesInWindow.reduce(
+    (sum, s) => sum + (s.total - (s.giftCardRedeemed ?? 0)),
+    0
+  );
 
   const expectedAmount =
     cashSession!.openingAmount +
     paidInWindowCashTotal +
-    (productSalesInWindow._sum.total ?? 0) +
-    (storeSalesInWindow._sum.total ?? 0);
+    productSalesCashTotal +
+    storeSalesCashTotal;
   const difference = countedAmount - expectedAmount;
 
   // Si no cuadra, exigimos una explicación — no se puede cerrar en silencio.

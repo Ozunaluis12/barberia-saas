@@ -113,6 +113,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     doc.moveDown(0.3);
   }
 
+  if (appointment.giftCardRedeemed) {
+    doc
+      .fontSize(9)
+      .fillColor("#555")
+      .text(`Tarjeta de regalo (${appointment.giftCardCode}): -${formatCOP(appointment.giftCardRedeemed)}`);
+    doc.moveDown(0.3);
+  }
+
   doc.fontSize(9).fillColor("#555").text(`Método de pago: ${PAYMENT_LABEL[appointment.paymentMethod] ?? appointment.paymentMethod}`);
 
   doc.moveDown(1.5);

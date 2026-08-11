@@ -102,6 +102,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   doc.fontSize(11).fillColor("#000").text("Total", 40, doc.y, { continued: true, width: 250 });
   doc.text(formatCOP(sale.total), { align: "right" });
   doc.moveDown(0.5);
+
+  if (sale.giftCardRedeemed) {
+    doc
+      .fontSize(9)
+      .fillColor("#555")
+      .text(`Tarjeta de regalo (${sale.giftCardCode}): -${formatCOP(sale.giftCardRedeemed)}`);
+    doc.moveDown(0.3);
+  }
+
   doc.fontSize(9).fillColor("#555").text(`Método de pago: ${PAYMENT_LABEL[sale.paymentMethod] ?? sale.paymentMethod}`);
 
   doc.moveDown(1.5);

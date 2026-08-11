@@ -8,6 +8,7 @@ import { uploadImage } from "@/lib/images";
 import { sendLowStockAlert } from "@/lib/email";
 import { getOwnerEmails } from "@/lib/owners";
 import { assignReceiptNumber } from "@/lib/receipts";
+import { resolveGiftCardRedemption } from "@/app/actions/giftCards";
 
 type ParsedProduct =
   | { error: "NOMBRE_REQUERIDO" | "PRECIO_INVALIDO" | "STOCK_INVALIDO" | "MINSTOCK_INVALIDO" }
@@ -102,11 +103,25 @@ export async function sellProduct(productId: string, formData: FormData) {
     redirect(`/dashboard/catalog?error=STOCK_INSUFICIENTE`);
   }
 
+  const total = product!.price * quantity;
+  const giftCardCodeInput = String(formData.get("giftCardCode") ?? "").trim().toUpperCase();
+  let giftCardId: string | null = null;
+  let giftCardRedeemed: number | null = null;
+  if (giftCardCodeInput) {
+    const resolution = await resolveGiftCardRedemption(session.businessId, giftCardCodeInput, total);
+    if (!resolution.ok) redirect(`/dashboard/catalog?error=${resolution.error}`);
+    giftCardId = resolution.giftCardId;
+    giftCardRedeemed = resolution.amount;
+  }
+
   const receiptNumber = await assignReceiptNumber(session.businessId);
 
   await prisma.$transaction([
     ...(product!.stock !== null
       ? [prisma.product.update({ where: { id: productId }, data: { stock: { decrement: quantity } } })]
+      : []),
+    ...(giftCardId
+      ? [prisma.giftCard.update({ where: { id: giftCardId }, data: { balance: { decrement: giftCardRedeemed! } } })]
       : []),
     prisma.productSale.create({
       data: {
@@ -114,10 +129,12 @@ export async function sellProduct(productId: string, formData: FormData) {
         businessId: session.businessId,
         quantity,
         unitPrice: product!.price,
-        total: product!.price * quantity,
+        total,
         paymentMethod,
         soldByUserId: session.userId,
         receiptNumber,
+        giftCardCode: giftCardId ? giftCardCodeInput : null,
+        giftCardRedeemed,
       },
     }),
   ]);

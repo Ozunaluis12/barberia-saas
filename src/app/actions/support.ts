@@ -462,3 +462,20 @@ export async function toggleStoreEnabledAction(formData: FormData) {
 
   revalidatePath(`/soporte/empresas/${businessId}`);
 }
+
+export async function toggleGiftCardsEnabledAction(formData: FormData) {
+  const session = await requireSupportSession();
+  const businessId = String(formData.get("businessId") ?? "");
+  const business = await loadBusinessOrThrow(businessId);
+
+  const nextEnabled = !business.giftCardsEnabled;
+  await prisma.business.update({ where: { id: businessId }, data: { giftCardsEnabled: nextEnabled } });
+
+  await logSupportAudit(
+    session,
+    { organizationId: business.organizationId, businessId },
+    nextEnabled ? "SUPPORT_ENABLE_GIFTCARDS" : "SUPPORT_DISABLE_GIFTCARDS"
+  );
+
+  revalidatePath(`/soporte/empresas/${businessId}`);
+}

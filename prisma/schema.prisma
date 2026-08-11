@@ -58,6 +58,7 @@ model Business {
   nextReceiptNumber       Int      @default(1) // consecutivo de la próxima factura/recibo a emitir
   logoUrl                 String? // logo propio del negocio; se usa en sus facturas PDF en vez de solo texto
   storeEnabled            Boolean  @default(false) // "Tiendita" (mecatos/bebidas) — la activa Soporte, no todos los negocios la venden
+  giftCardsEnabled        Boolean  @default(false) // Tarjetas de regalo — la activa Soporte, no todos los negocios las venden
   createdAt               DateTime @default(now())
 
   users        User[]
@@ -78,6 +79,7 @@ model Business {
   expenses        Expense[]
   servicePackages   ServicePackage[]
   packagePurchases  ClientPackagePurchase[]
+  giftCards         GiftCard[]
 }
 
 // Historial de un cliente a nivel de organización: si canceló tarde o no
@@ -129,6 +131,7 @@ model User {
   payrollPayouts PayrollPayout[]
   storeSales     StoreSale[]
   storeRestocks  StoreRestock[]
+  giftCardsIssued GiftCard[]
 }
 
 // Token de un solo uso para el flujo de "olvidé mi contraseña". Se guarda el hash,
@@ -306,6 +309,8 @@ model ProductSale {
   soldByUserId  String
   soldBy        User     @relation(fields: [soldByUserId], references: [id])
   receiptNumber Int? // consecutivo de factura/recibo, asignado al vender
+  giftCardCode     String? // código de la tarjeta de regalo usada, si hubo
+  giftCardRedeemed Float? // cuánto del total se cubrió con tarjeta de regalo
   createdAt     DateTime @default(now())
 
   @@index([businessId, createdAt])
@@ -351,6 +356,8 @@ model StoreSale {
   soldByUserId  String
   soldBy        User      @relation(fields: [soldByUserId], references: [id])
   receiptNumber Int? // consecutivo de factura/recibo, asignado al vender
+  giftCardCode     String? // código de la tarjeta de regalo usada, si hubo
+  giftCardRedeemed Float? // cuánto del total se cubrió con tarjeta de regalo
   createdAt     DateTime  @default(now())
 
   @@index([businessId, createdAt])
@@ -375,6 +382,35 @@ model StoreRestock {
   @@index([businessId, createdAt])
 }
 
+// Tarjeta de regalo — se emite en persona desde el panel o el cliente la
+// compra online (pago manual, mismo patrón que el anticipo de citas). Solo
+// existe para negocios con Business.giftCardsEnabled = true (lo activa
+// Soporte). El saldo se redime contra citas, Catálogo o Tiendita — el
+// "historial de uso" se reconstruye consultando esas tablas por `code`, no
+// hay un modelo de redención aparte.
+model GiftCard {
+  id             String    @id @default(cuid())
+  businessId     String
+  business       Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  code           String    @unique // 8 caracteres, alfabeto sin 0/O/1/I para leerlo por WhatsApp sin confusión
+  initialAmount  Float
+  balance        Float // saldo restante; se descuenta al redimir
+  recipientName  String?
+  recipientPhone String?
+  purchaserName  String?
+  purchaserPhone String?
+  purchaserEmail String?
+  expiresAt      DateTime?
+  status         String    @default("ACTIVE") // PENDING_PAYMENT (compra online sin confirmar), ACTIVE, CANCELLED
+  paymentMethod  String? // CASH, CARD_IN_PERSON, TRANSFER
+  issuedByUserId String?
+  issuedBy       User?     @relation(fields: [issuedByUserId], references: [id])
+  createdAt      DateTime  @default(now())
+  confirmedAt    DateTime?
+
+  @@index([businessId, status])
+}
+
 model Appointment {
   id                String      @id @default(cuid())
   businessId        String
@@ -396,6 +432,8 @@ model Appointment {
   lateCancellation  Boolean     @default(false)
   priceCharged      Float? // snapshot del precio total del servicio al momento de la reserva
   depositAmount     Float? // cuánto se exigió/cobró como anticipo (seña); null = esta cita nunca tuvo anticipo
+  giftCardCode      String? // código de la tarjeta de regalo usada, si hubo
+  giftCardRedeemed  Float? // cuánto del precio se cubrió con tarjeta de regalo
   paymentMethod     String      @default("UNPAID") // UNPAID, CASH, CARD_IN_PERSON, ONLINE, TRANSFER
   paymentStatus     String      @default("PENDING") // PENDING, PARTIALLY_PAID (solo el anticipo), PAID, REFUNDED, AWAITING_VERIFICATION
   paidAt            DateTime? // cuándo se marcó como pagada (para acotar sesiones de caja) — con anticipo, se actualiza al cobrar el saldo

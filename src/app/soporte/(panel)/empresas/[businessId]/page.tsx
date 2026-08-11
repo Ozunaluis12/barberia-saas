@@ -13,6 +13,7 @@ import {
   recordSubscriptionPaymentAction,
   deleteBusinessAction,
   toggleStoreEnabledAction,
+  toggleGiftCardsEnabledAction,
 } from "@/app/actions/support";
 
 const ACTION_LABEL: Record<string, string> = {
@@ -32,6 +33,8 @@ const ACTION_LABEL: Record<string, string> = {
   SUPPORT_DELETE_BUSINESS: "Soporte eliminó la empresa",
   SUPPORT_ENABLE_STORE: "Soporte activó la Tiendita",
   SUPPORT_DISABLE_STORE: "Soporte desactivó la Tiendita",
+  SUPPORT_ENABLE_GIFTCARDS: "Soporte activó las tarjetas de regalo",
+  SUPPORT_DISABLE_GIFTCARDS: "Soporte desactivó las tarjetas de regalo",
 };
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -214,6 +217,30 @@ export default async function SupportBusinessDetailPage({
               }
             >
               {business.storeEnabled ? "Desactivar" : "Activar"}
+            </button>
+          </form>
+        </div>
+
+        <hr className="my-4 border-white/10" />
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium">Tarjetas de regalo</p>
+            <p className="text-xs text-cream/50">
+              En persona y compra online — actívalo solo si el negocio las quiere vender.
+            </p>
+          </div>
+          <form action={toggleGiftCardsEnabledAction}>
+            <input type="hidden" name="businessId" value={business.id} />
+            <button
+              type="submit"
+              className={
+                business.giftCardsEnabled
+                  ? "rounded-md bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-500/30"
+                  : "rounded-md bg-gold px-3 py-1.5 text-xs font-semibold text-ink hover:bg-gold/90"
+              }
+            >
+              {business.giftCardsEnabled ? "Desactivar" : "Activar"}
             </button>
           </form>
         </div>

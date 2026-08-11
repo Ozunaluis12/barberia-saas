@@ -14,6 +14,9 @@ const ERRORS: Record<string, string> = {
   NO_ENCONTRADO: "No se encontró ese producto.",
   CANTIDAD_INVALIDA: "La cantidad a vender debe ser mayor a 0.",
   STOCK_INSUFICIENTE: "No hay suficiente stock para vender esa cantidad.",
+  TARJETA_INVALIDA: "Ese código de tarjeta de regalo no es válido.",
+  TARJETA_VENCIDA: "Esa tarjeta de regalo ya venció.",
+  TARJETA_SIN_SALDO: "Esa tarjeta de regalo no tiene saldo.",
 };
 
 export default async function StorePage({
@@ -141,6 +144,14 @@ export default async function StorePage({
                             <option value="CASH">Efectivo</option>
                             <option value="CARD_IN_PERSON">Tarjeta</option>
                           </select>
+                          {business.giftCardsEnabled && (
+                            <input
+                              type="text"
+                              name="giftCardCode"
+                              placeholder="Cód. regalo"
+                              className="w-20 rounded-md border border-white/20 bg-ink px-1.5 py-1 text-xs uppercase outline-none focus:border-gold"
+                            />
+                          )}
                           <button className="text-xs text-gold hover:underline">Vender</button>
                         </form>
                         <Link href={`/dashboard/store/${p.id}`} className="text-xs text-gold hover:underline">

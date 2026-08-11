@@ -8,6 +8,7 @@ import {
   rejectAdvancePayment,
   refundAppointmentPayment,
 } from "@/app/actions/appointments";
+import { redeemGiftCardForAppointment } from "@/app/actions/giftCards";
 import { getVocabulary } from "@/lib/vocabulary";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 import { formatCOP } from "@/lib/money";
@@ -26,6 +27,13 @@ const ERRORS: Record<string, string> = {
   CAJA_CERRADA:
     "No hay una caja abierta para registrar ese pago en efectivo. Abre una caja en la sección Caja primero.",
   MOTIVO_REQUERIDO: "Escribe el motivo del reembolso antes de confirmarlo.",
+  NO_ENCONTRADO: "No se encontró esa cita.",
+  TARJETA_YA_APLICADA: "Esta cita ya tiene una tarjeta de regalo aplicada.",
+  CODIGO_REQUERIDO: "Escribe el código de la tarjeta de regalo.",
+  TARJETA_INVALIDA: "Ese código de tarjeta de regalo no es válido.",
+  TARJETA_VENCIDA: "Esa tarjeta de regalo ya venció.",
+  TARJETA_SIN_SALDO: "Esa tarjeta de regalo no tiene saldo.",
+  NADA_QUE_REDIMIR: "Esta cita no tiene saldo pendiente para redimir.",
 };
 
 export default async function AppointmentsPage({
@@ -154,8 +162,24 @@ export default async function AppointmentsPage({
                     <div className="flex flex-wrap items-center gap-2 text-xs">
                       {a.paymentStatus === "PARTIALLY_PAID" && (
                         <span className="rounded-full bg-yellow-500/20 px-2 py-1 text-yellow-400">
-                          Anticipo pagado · falta {formatCOP((a.priceCharged ?? a.service.price) - (a.depositAmount ?? 0))}
+                          Falta {formatCOP((a.priceCharged ?? a.service.price) - (a.depositAmount ?? 0) - (a.giftCardRedeemed ?? 0))}
                         </span>
+                      )}
+                      {a.giftCardCode && (
+                        <span className="rounded-full bg-gold/20 px-2 py-1 text-gold">
+                          Regalo {a.giftCardCode}: -{formatCOP(a.giftCardRedeemed ?? 0)}
+                        </span>
+                      )}
+                      {business?.giftCardsEnabled && !a.giftCardCode && (
+                        <form action={redeemGiftCardForAppointment.bind(null, a.id)} className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            name="giftCardCode"
+                            placeholder="Cód. regalo"
+                            className="w-20 rounded-md border border-white/20 bg-ink px-1.5 py-1 text-xs uppercase outline-none focus:border-gold"
+                          />
+                          <button className="text-gold hover:underline">Redimir</button>
+                        </form>
                       )}
                       <form action={markAppointmentPaid.bind(null, a.id, "CASH")}>
                         <button className="text-gold hover:underline">Efectivo</button>
