@@ -132,6 +132,7 @@ model User {
   storeSales     StoreSale[]
   storeRestocks  StoreRestock[]
   giftCardsIssued GiftCard[]
+  depositsConfirmed Appointment[] @relation("AppointmentDepositConfirmedBy")
 }
 
 // Token de un solo uso para el flujo de "olvidé mi contraseña". Se guarda el hash,
@@ -432,6 +433,13 @@ model Appointment {
   lateCancellation  Boolean     @default(false)
   priceCharged      Float? // snapshot del precio total del servicio al momento de la reserva
   depositAmount     Float? // cuánto se exigió/cobró como anticipo (seña); null = esta cita nunca tuvo anticipo
+  // Cuándo y quién confirmó el comprobante del anticipo (transferencia) — campo
+  // aparte de paidAt/paymentMethod porque esos se sobrescriben después, al
+  // cobrar el saldo en persona. Sirve para atribuir esa transferencia a la
+  // caja de quien la confirmó, aunque la cita ya haya quedado pagada del todo.
+  depositConfirmedAt       DateTime?
+  depositConfirmedByUserId String?
+  depositConfirmedBy       User?    @relation("AppointmentDepositConfirmedBy", fields: [depositConfirmedByUserId], references: [id])
   giftCardCode      String? // código de la tarjeta de regalo usada, si hubo
   giftCardRedeemed  Float? // cuánto del precio se cubrió con tarjeta de regalo
   paymentMethod     String      @default("UNPAID") // UNPAID, CASH, CARD_IN_PERSON, ONLINE, TRANSFER
@@ -488,6 +496,8 @@ model CashSession {
   countedAmount  Float?
   expectedAmount Float?
   difference     Float?
+  cardAmount     Float? // total en tarjeta en persona durante la ventana: confiado del sistema, no se cuenta a ciegas
+  transferAmount Float? // total en transferencias confirmadas (anticipos, tarjetas de regalo online) atribuidas a esta caja: igual de confiado, no se cuenta a ciegas
   notes          String?
   status         String    @default("OPEN") // OPEN, CLOSED
   openedAt       DateTime  @default(now())

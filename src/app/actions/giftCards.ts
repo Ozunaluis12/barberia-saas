@@ -104,7 +104,7 @@ export async function confirmGiftCardPayment(cardId: string) {
 
   await prisma.giftCard.update({
     where: { id: cardId },
-    data: { status: "ACTIVE", confirmedAt: new Date(), paymentMethod: "TRANSFER" },
+    data: { status: "ACTIVE", confirmedAt: new Date(), paymentMethod: "TRANSFER", issuedByUserId: session.userId },
   });
 
   const notifyPhone = card.purchaserPhone ?? card.recipientPhone;

@@ -174,13 +174,16 @@ export async function confirmAdvancePayment(appointmentId: string) {
   const fullyPaid = appt.depositAmount === null || remainder <= 0;
 
   const receiptNumber = fullyPaid ? await assignReceiptNumber(session.businessId) : appt.receiptNumber;
+  const confirmedAt = new Date();
   await prisma.appointment.update({
     where: { id: appointmentId },
     data: {
       status: "CONFIRMED",
       paymentStatus: fullyPaid ? "PAID" : "PARTIALLY_PAID",
-      paidAt: new Date(),
+      paidAt: confirmedAt,
       receiptNumber,
+      depositConfirmedAt: confirmedAt,
+      depositConfirmedByUserId: session.userId,
     },
   });
 

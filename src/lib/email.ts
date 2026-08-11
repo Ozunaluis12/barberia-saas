@@ -170,27 +170,39 @@ export async function sendWeeklyDigestEmail(to: string, details: WeeklyDigestDet
   }
 }
 
-export type CashDiscrepancyDetails = {
+type CashSessionSummaryDetails = {
   businessName: string;
   drawerLabel: string; // nombre del staff o "Caja general"
+  openingAmount: number;
   expectedAmount: number;
   countedAmount: number;
   difference: number;
+  cardAmount: number;
+  transferAmount: number;
+  salesCount: number;
   closedByName: string;
   notes: string | null;
+  urgent: boolean; // la diferencia superó el umbral configurado del negocio
 };
 
-export async function sendCashDiscrepancyAlert(
+/** Se manda al dueño en CADA cierre de caja, no solo cuando hay una diferencia grande. */
+export async function sendCashSessionSummary(
   to: string,
-  details: CashDiscrepancyDetails
+  details: CashSessionSummaryDetails
 ): Promise<SendResult> {
+  const matched = details.difference === 0;
   const sign = details.difference > 0 ? "sobrante" : "faltante";
   const amount = formatCOP(Math.abs(details.difference));
+  const total = details.expectedAmount + details.cardAmount + details.transferAmount;
+  const statusLine = matched
+    ? "El recaudo coincidió."
+    : `Hubo un ${sign} de ${amount}${details.urgent ? " — supera el umbral de alerta configurado" : ""}.`;
+  const subject = matched
+    ? `${details.businessName}: cierre de caja (${details.drawerLabel}) — recaudo coincide`
+    : `${details.urgent ? "⚠️ " : ""}${details.businessName}: ${sign} de ${amount} al cerrar caja (${details.drawerLabel})`;
 
   if (!resend) {
-    console.log(
-      `[email:caja] Resend no configurado. Alerta para ${to}: ${sign} de ${amount} en ${details.drawerLabel}`
-    );
+    console.log(`[email:caja] Resend no configurado. Resumen para ${to}: ${details.drawerLabel} — ${statusLine}`);
     return { sent: false, reason: "RESEND_API_KEY no configurado" };
   }
 
@@ -198,14 +210,19 @@ export async function sendCashDiscrepancyAlert(
     await resend.emails.send({
       from: FROM_ADDRESS,
       to,
-      subject: `⚠️ ${details.businessName}: ${sign} de ${amount} al cerrar caja (${details.drawerLabel})`,
+      subject,
       html: `
-        <p>Se cerró una caja con una diferencia mayor al umbral configurado.</p>
+        <p>${statusLine}</p>
         <ul>
           <li><strong>Caja:</strong> ${details.drawerLabel}</li>
-          <li><strong>Esperado:</strong> ${formatCOP(details.expectedAmount)}</li>
-          <li><strong>Contado:</strong> ${formatCOP(details.countedAmount)}</li>
-          <li><strong>Diferencia:</strong> ${details.difference > 0 ? "+" : ""}${formatCOP(details.difference)} (${sign})</li>
+          <li><strong>Ventas en la sesión:</strong> ${details.salesCount}</li>
+          <li><strong>Monto inicial:</strong> ${formatCOP(details.openingAmount)}</li>
+          <li><strong>Efectivo esperado:</strong> ${formatCOP(details.expectedAmount)}</li>
+          <li><strong>Efectivo contado:</strong> ${formatCOP(details.countedAmount)}</li>
+          <li><strong>Diferencia en efectivo:</strong> ${details.difference > 0 ? "+" : ""}${formatCOP(details.difference)}</li>
+          <li><strong>Tarjeta en persona:</strong> ${formatCOP(details.cardAmount)}</li>
+          <li><strong>Transferencias (anticipos/tarjetas de regalo confirmados):</strong> ${formatCOP(details.transferAmount)}</li>
+          <li><strong>Total de la sesión:</strong> ${formatCOP(total)}</li>
           <li><strong>Cerrada por:</strong> ${details.closedByName}</li>
           <li><strong>Notas:</strong> ${details.notes ?? "(sin notas)"}</li>
         </ul>

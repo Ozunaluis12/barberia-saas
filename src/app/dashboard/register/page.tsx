@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
@@ -79,6 +80,14 @@ export default async function RegisterPage({
                   · Monto inicial {formatCOP(s.openingAmount)}
                 </p>
               </div>
+              {isOwner && (
+                <Link
+                  href={`/dashboard/register/${s.id}`}
+                  className="rounded-md border border-white/20 px-3 py-1.5 text-sm hover:border-gold hover:text-gold"
+                >
+                  Ver informe
+                </Link>
+              )}
             </div>
             <form action={closeCashSession.bind(null, s.id)} className="mt-4 flex flex-wrap items-end gap-3">
               <div>
@@ -194,6 +203,7 @@ export default async function RegisterPage({
               <th className="px-4 py-2">Diferencia</th>
               <th className="px-4 py-2">Cerrada por</th>
               <th className="px-4 py-2">Notas</th>
+              <th className="px-4 py-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -219,11 +229,16 @@ export default async function RegisterPage({
                 </td>
                 <td className="px-4 py-2 text-cream/50">{s.closedBy?.name ?? "—"}</td>
                 <td className="px-4 py-2 text-cream/50">{s.notes ?? "—"}</td>
+                <td className="px-4 py-2">
+                  <Link href={`/dashboard/register/${s.id}`} className="text-cream/60 hover:text-gold">
+                    Ver informe
+                  </Link>
+                </td>
               </tr>
             ))}
             {closedSessions.length === 0 && (
               <tr>
-                <td className="px-4 py-6 text-center text-cream/40" colSpan={7}>
+                <td className="px-4 py-6 text-center text-cream/40" colSpan={8}>
                   Aún no hay cierres registrados.
                 </td>
               </tr>

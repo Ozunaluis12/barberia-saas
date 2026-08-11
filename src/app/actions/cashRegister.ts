@@ -4,21 +4,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireSession } from "@/lib/guard";
-import { sendCashDiscrepancyAlert } from "@/lib/email";
+import { sendCashSessionSummary } from "@/lib/email";
 import { logAudit } from "@/lib/audit";
 import { getOwnerEmails } from "@/lib/owners";
 import { formatCOP } from "@/lib/money";
-
-/**
- * Solo el dueño, o el miembro del roster vinculado a esa caja personal, puede
- * abrirla/cerrarla. La caja general (staffId null) es exclusiva del dueño,
- * porque nadie en particular es responsable de ella.
- */
-function canOperateDrawer(session: { role: string; staffId: string | null }, drawerStaffId: string | null): boolean {
-  if (session.role === "OWNER") return true;
-  if (drawerStaffId === null) return false;
-  return session.staffId === drawerStaffId;
-}
+import { canOperateDrawer, getSessionMovements } from "@/lib/cashSession";
 
 /** Abre una caja: por empleado (staffId) o general (staffId vacío/null). */
 export async function openCashSession(formData: FormData) {
@@ -52,14 +42,15 @@ export async function openCashSession(formData: FormData) {
 }
 
 /**
- * Cierra una caja: calcula lo esperado (monto de apertura + pagos en efectivo
- * registrados durante la ventana de la sesión) y lo compara contra lo contado
- * físicamente. La diferencia queda guardada para siempre, no solo mientras la
- * caja está abierta.
+ * Cierra una caja: calcula lo esperado en efectivo (monto de apertura + ventas
+ * en efectivo durante la ventana de la sesión) y lo compara contra lo contado
+ * físicamente. La diferencia queda guardada para siempre. También calcula el
+ * total en tarjeta (confiado del sistema, sin conteo a ciegas — es trazable).
  *
  * A propósito, el monto esperado NUNCA se le muestra a quien va a contar
- * antes de que envíe su conteo (ver /dashboard/register) — un conteo "a
- * ciegas" es lo que hace que este control sirva para algo.
+ * antes de que envíe su conteo — un conteo "a ciegas" es lo que hace que este
+ * control sirva para algo. La revelación (recaudado vs. esperado, por caja)
+ * ocurre recién en la página de detalle a la que se redirige tras cerrar.
  */
 export async function closeCashSession(sessionId: string, formData: FormData) {
   const session = await requireSession();
@@ -76,62 +67,8 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim();
   const closedAt = new Date();
 
-  const paidInWindow = await prisma.appointment.findMany({
-    where: {
-      businessId: session.businessId,
-      ...(cashSession!.staffId ? { staffId: cashSession!.staffId } : {}),
-      paymentMethod: "CASH",
-      paymentStatus: "PAID",
-      paidAt: { gte: cashSession!.openedAt, lte: closedAt },
-    },
-    select: { priceCharged: true, depositAmount: true, giftCardRedeemed: true },
-  });
-  // Ni el anticipo (se cobró por transferencia antes) ni el saldo cubierto
-  // con tarjeta de regalo fueron efectivo real entrando a esta caja — solo
-  // cuenta lo que de verdad se cobró en efectivo.
-  const paidInWindowCashTotal = paidInWindow.reduce(
-    (sum, a) => sum + ((a.priceCharged ?? 0) - (a.depositAmount ?? 0) - (a.giftCardRedeemed ?? 0)),
-    0
-  );
-
-  // Las ventas de producto (Catálogo o Tiendita) no se pueden atribuir a un
-  // miembro puntual del roster (Staff), así que solo suman al esperado de la
-  // caja general.
-  const [productSalesInWindow, storeSalesInWindow] = cashSession!.staffId
-    ? [[], []]
-    : await Promise.all([
-        prisma.productSale.findMany({
-          where: {
-            businessId: session.businessId,
-            paymentMethod: "CASH",
-            createdAt: { gte: cashSession!.openedAt, lte: closedAt },
-          },
-          select: { total: true, giftCardRedeemed: true },
-        }),
-        prisma.storeSale.findMany({
-          where: {
-            businessId: session.businessId,
-            paymentMethod: "CASH",
-            createdAt: { gte: cashSession!.openedAt, lte: closedAt },
-          },
-          select: { total: true, giftCardRedeemed: true },
-        }),
-      ]);
-
-  const productSalesCashTotal = productSalesInWindow.reduce(
-    (sum, s) => sum + (s.total - (s.giftCardRedeemed ?? 0)),
-    0
-  );
-  const storeSalesCashTotal = storeSalesInWindow.reduce(
-    (sum, s) => sum + (s.total - (s.giftCardRedeemed ?? 0)),
-    0
-  );
-
-  const expectedAmount =
-    cashSession!.openingAmount +
-    paidInWindowCashTotal +
-    productSalesCashTotal +
-    storeSalesCashTotal;
+  const { cashTotal, cardTotal, transferTotal, salesCount } = await getSessionMovements(cashSession!, closedAt);
+  const expectedAmount = cashSession!.openingAmount + cashTotal;
   const difference = countedAmount - expectedAmount;
 
   // Si no cuadra, exigimos una explicación — no se puede cerrar en silencio.
@@ -146,6 +83,8 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
         countedAmount,
         expectedAmount,
         difference,
+        cardAmount: cardTotal,
+        transferAmount: transferTotal,
         notes: notes || null,
         status: "CLOSED",
         closedAt,
@@ -157,18 +96,24 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
     prisma.user.findUnique({ where: { id: session.userId } }),
   ]);
 
-  if (business && Math.abs(difference) >= business.cashDiscrepancyAlertThreshold) {
+  if (business) {
+    const overThreshold = Math.abs(difference) >= business.cashDiscrepancyAlertThreshold;
     const ownerEmails = await getOwnerEmails(session.organizationId);
     await Promise.all(
       ownerEmails.map((email) =>
-        sendCashDiscrepancyAlert(email, {
+        sendCashSessionSummary(email, {
           businessName: business.name,
           drawerLabel: staff?.name ?? "Caja general",
+          openingAmount: cashSession!.openingAmount,
           expectedAmount,
           countedAmount,
           difference,
+          cardAmount: cardTotal,
+          transferAmount: transferTotal,
+          salesCount,
           closedByName: closedByUser?.name ?? "—",
           notes: notes || null,
+          urgent: overThreshold,
         })
       )
     );
@@ -181,5 +126,5 @@ export async function closeCashSession(sessionId: string, formData: FormData) {
   );
 
   revalidatePath("/dashboard/register");
-  redirect("/dashboard/register");
+  redirect(`/dashboard/register/${sessionId}`);
 }
