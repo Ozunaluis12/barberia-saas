@@ -9,6 +9,10 @@ const PAYMENT_LABEL: Record<string, string> = {
   CASH: "Efectivo",
   CARD_IN_PERSON: "Tarjeta",
   TRANSFER: "Transferencia",
+  REFUND_CASH: "Reembolso (efectivo)",
+  REFUND_CARD_IN_PERSON: "Reembolso (tarjeta)",
+  INGRESO: "Ingreso manual",
+  EGRESO: "Egreso manual",
 };
 
 export default async function CashSessionDetailPage({
@@ -193,7 +197,9 @@ export default async function CashSessionDetailPage({
                   </td>
                   <td className="px-4 py-2">{m.label}</td>
                   <td className="px-4 py-2 text-cream/60">{PAYMENT_LABEL[m.method] ?? m.method}</td>
-                  <td className="px-4 py-2 text-cream/70">{formatCOP(m.amount)}</td>
+                  <td className={`px-4 py-2 ${m.amount < 0 ? "text-red-400" : "text-cream/70"}`}>
+                    {formatCOP(m.amount)}
+                  </td>
                 </tr>
               ))}
               {movements.length === 0 && (

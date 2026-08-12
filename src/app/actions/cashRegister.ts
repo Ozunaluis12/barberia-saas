@@ -42,6 +42,45 @@ export async function openCashSession(formData: FormData) {
 }
 
 /**
+ * Registra un movimiento manual de efectivo en una caja abierta — sacar
+ * cambio, meter una base extra, un préstamo, etc. — sin venta de por medio.
+ * El concepto es obligatorio: ningún movimiento de dinero se hace en
+ * silencio, mismo criterio que las notas de un cierre que no cuadra.
+ */
+export async function recordCashMovement(sessionId: string, formData: FormData) {
+  const session = await requireSession();
+  const cashSession = await prisma.cashSession.findFirst({
+    where: { id: sessionId, businessId: session.businessId, status: "OPEN" },
+  });
+  if (!cashSession) redirect("/dashboard/register?error=CAJA_NO_ENCONTRADA");
+
+  if (!canOperateDrawer(session, cashSession!.staffId)) {
+    redirect("/dashboard/register?error=SIN_PERMISO");
+  }
+
+  const typeInput = String(formData.get("type") ?? "");
+  const type = typeInput === "EGRESO" ? "EGRESO" : "INGRESO";
+  const amount = Number(formData.get("amount") ?? 0);
+  const concept = String(formData.get("concept") ?? "").trim();
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    redirect("/dashboard/register?error=MONTO_INVALIDO");
+  }
+  if (!concept) {
+    redirect("/dashboard/register?error=CONCEPTO_REQUERIDO");
+  }
+
+  await prisma.cashMovement.create({
+    data: { cashSessionId: sessionId, type, amount, concept, createdByUserId: session.userId },
+  });
+
+  await logAudit(session, "cash.movement", `${type === "INGRESO" ? "+" : "-"}${formatCOP(amount)}: ${concept}`);
+
+  revalidatePath("/dashboard/register");
+  redirect("/dashboard/register");
+}
+
+/**
  * Cierra una caja: calcula lo esperado en efectivo (monto de apertura + ventas
  * en efectivo durante la ventana de la sesión) y lo compara contra lo contado
  * físicamente. La diferencia queda guardada para siempre. También calcula el

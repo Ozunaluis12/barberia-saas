@@ -274,7 +274,7 @@ export async function refundAppointmentPayment(appointmentId: string, formData: 
 
   await prisma.appointment.update({
     where: { id: appointmentId },
-    data: { paymentStatus: "REFUNDED", refundedAt: new Date(), refundReason: reason },
+    data: { paymentStatus: "REFUNDED", refundedAt: new Date(), refundReason: reason, refundedByUserId: session.userId },
   });
 
   await logAudit(session, "payment.refunded", `${appt.clientName}: ${reason}`);

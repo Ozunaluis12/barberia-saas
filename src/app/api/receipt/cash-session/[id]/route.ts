@@ -9,6 +9,10 @@ const PAYMENT_LABEL: Record<string, string> = {
   CASH: "Efectivo",
   CARD_IN_PERSON: "Tarjeta",
   TRANSFER: "Transferencia",
+  REFUND_CASH: "Reembolso (efectivo)",
+  REFUND_CARD_IN_PERSON: "Reembolso (tarjeta)",
+  INGRESO: "Ingreso manual",
+  EGRESO: "Egreso manual",
 };
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -141,7 +145,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           doc.y,
           { continued: true, width: 300 }
         );
-      doc.text(formatCOP(m.amount), { align: "right" });
+      doc.fillColor(m.amount < 0 ? "#b91c1c" : "#000").text(formatCOP(m.amount), { align: "right" });
       doc.moveDown(0.25);
     }
     doc.moveDown(0.5);

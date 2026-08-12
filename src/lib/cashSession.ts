@@ -43,19 +43,29 @@ export type SessionMovements = {
  * ningún conteo a ciegas — son informativas, confiadas del sistema, igual
  * que la tarjeta en persona.
  *
+ * Los reembolsos (efectivo o tarjeta, según cómo se pagó originalmente) y
+ * los movimientos manuales (+Ingreso/-Egreso) también se descuentan/suman al
+ * efectivo esperado — un reembolso en efectivo sí salió físicamente del
+ * cajón, y por eso debe restarse para que la caja no aparezca "faltante"
+ * por algo que en realidad fue un reembolso legítimo.
+ *
  * Único lugar de verdad para este cálculo: lo usan el cierre de caja, la
  * página de detalle (en vivo o congelada) y la tirilla en PDF.
  */
 export async function getSessionMovements(
-  cashSession: { businessId: string; staffId: string | null; openedAt: Date },
+  cashSession: { id: string; businessId: string; staffId: string | null; openedAt: Date },
   until: Date
 ): Promise<SessionMovements> {
+  // Se incluye REFUNDED (no solo PAID) para que la venta original siga
+  // apareciendo aunque después se haya reembolsado — el reembolso se suma
+  // aparte, como su propia línea negativa, en vez de hacer como si la venta
+  // nunca hubiera pasado.
   const appointmentsInWindow = await prisma.appointment.findMany({
     where: {
       businessId: cashSession.businessId,
       ...(cashSession.staffId ? { staffId: cashSession.staffId } : {}),
       paymentMethod: { in: ["CASH", "CARD_IN_PERSON"] },
-      paymentStatus: "PAID",
+      paymentStatus: { in: ["PAID", "REFUNDED"] },
       paidAt: { gte: cashSession.openedAt, lte: until },
     },
     select: {
@@ -68,6 +78,38 @@ export async function getSessionMovements(
       service: { select: { name: true } },
     },
     orderBy: { paidAt: "asc" },
+  });
+
+  // Reembolsos procesados por alguien de esta caja: se cuenta aparte de la
+  // venta original porque puede haber pasado en una sesión distinta (incluso
+  // en un turno o día distinto).
+  const refundsInWindow = await prisma.appointment.findMany({
+    where: {
+      businessId: cashSession.businessId,
+      paymentMethod: { in: ["CASH", "CARD_IN_PERSON"] },
+      paymentStatus: "REFUNDED",
+      refundedAt: { gte: cashSession.openedAt, lte: until },
+      ...(cashSession.staffId ? { refundedBy: { staffId: cashSession.staffId } } : {}),
+    },
+    select: {
+      refundedAt: true,
+      paymentMethod: true,
+      priceCharged: true,
+      depositAmount: true,
+      giftCardRedeemed: true,
+      refundReason: true,
+      clientName: true,
+      service: { select: { name: true } },
+    },
+    orderBy: { refundedAt: "asc" },
+  });
+
+  // Movimientos manuales de esta caja puntual (no se filtran por vendedor:
+  // ya están atados a esta sesión específica por cashSessionId).
+  const cashMovementsInWindow = await prisma.cashMovement.findMany({
+    where: { cashSessionId: cashSession.id, createdAt: { gte: cashSession.openedAt, lte: until } },
+    select: { createdAt: true, type: true, amount: true, concept: true },
+    orderBy: { createdAt: "asc" },
   });
 
   // Anticipos pagados por transferencia y confirmados por alguien de esta
@@ -152,6 +194,7 @@ export async function getSessionMovements(
   let cashTotal = 0;
   let cardTotal = 0;
   let transferTotal = 0;
+  let salesCount = 0;
 
   for (const a of appointmentsInWindow) {
     // Ni el anticipo (se cobró antes, por transferencia) ni el saldo cubierto
@@ -159,6 +202,7 @@ export async function getSessionMovements(
     const netAmount = (a.priceCharged ?? 0) - (a.depositAmount ?? 0) - (a.giftCardRedeemed ?? 0);
     if (a.paymentMethod === "CASH") cashTotal += netAmount;
     else cardTotal += netAmount;
+    salesCount++;
     movements.push({
       at: a.paidAt!,
       label: `${a.service.name} · ${a.clientName}`,
@@ -169,6 +213,7 @@ export async function getSessionMovements(
 
   for (const a of depositTransfersInWindow) {
     transferTotal += a.depositAmount ?? 0;
+    salesCount++;
     movements.push({
       at: a.depositConfirmedAt!,
       label: `Anticipo confirmado · ${a.service.name} · ${a.clientName}`,
@@ -181,6 +226,7 @@ export async function getSessionMovements(
     const netAmount = s.total - (s.giftCardRedeemed ?? 0);
     if (s.paymentMethod === "CASH") cashTotal += netAmount;
     else cardTotal += netAmount;
+    salesCount++;
     movements.push({
       at: s.createdAt,
       label: `${s.product.name} x${s.quantity}`,
@@ -193,6 +239,7 @@ export async function getSessionMovements(
     const netAmount = s.total - (s.giftCardRedeemed ?? 0);
     if (s.paymentMethod === "CASH") cashTotal += netAmount;
     else cardTotal += netAmount;
+    salesCount++;
     movements.push({
       at: s.createdAt,
       label: `${s.storeItem.name} x${s.quantity}`,
@@ -205,6 +252,7 @@ export async function getSessionMovements(
     if (g.paymentMethod === "CASH") cashTotal += g.initialAmount;
     else if (g.paymentMethod === "CARD_IN_PERSON") cardTotal += g.initialAmount;
     else transferTotal += g.initialAmount;
+    salesCount++;
     movements.push({
       at: g.confirmedAt!,
       label: `Tarjeta de regalo emitida (${g.code})`,
@@ -213,7 +261,33 @@ export async function getSessionMovements(
     });
   }
 
+  for (const r of refundsInWindow) {
+    // Se reembolsa el neto que realmente había entrado (el anticipo y lo
+    // cubierto con tarjeta de regalo nunca fueron efectivo/tarjeta de esta
+    // caja, así que tampoco salen de aquí al reembolsar).
+    const netAmount = (r.priceCharged ?? 0) - (r.depositAmount ?? 0) - (r.giftCardRedeemed ?? 0);
+    if (r.paymentMethod === "CASH") cashTotal -= netAmount;
+    else cardTotal -= netAmount;
+    movements.push({
+      at: r.refundedAt!,
+      label: `Reembolso · ${r.service.name} · ${r.clientName} (${r.refundReason ?? "sin motivo"})`,
+      method: `REFUND_${r.paymentMethod}`,
+      amount: -netAmount,
+    });
+  }
+
+  for (const m of cashMovementsInWindow) {
+    const signedAmount = m.type === "INGRESO" ? m.amount : -m.amount;
+    cashTotal += signedAmount;
+    movements.push({
+      at: m.createdAt,
+      label: m.concept,
+      method: m.type,
+      amount: signedAmount,
+    });
+  }
+
   movements.sort((a, b) => a.at.getTime() - b.at.getTime());
 
-  return { cashTotal, cardTotal, transferTotal, salesCount: movements.length, movements };
+  return { cashTotal, cardTotal, transferTotal, salesCount, movements };
 }

@@ -133,6 +133,8 @@ model User {
   storeRestocks  StoreRestock[]
   giftCardsIssued GiftCard[]
   depositsConfirmed Appointment[] @relation("AppointmentDepositConfirmedBy")
+  refundsProcessed  Appointment[] @relation("AppointmentRefundedBy")
+  cashMovements     CashMovement[]
 }
 
 // Token de un solo uso para el flujo de "olvidé mi contraseña". Se guarda el hash,
@@ -448,6 +450,8 @@ model Appointment {
   receiptNumber     Int? // consecutivo de factura/recibo, asignado al marcar como pagada
   refundedAt        DateTime?
   refundReason      String?
+  refundedByUserId  String? // quién procesó el reembolso, para atribuirlo a su caja (si fue en efectivo)
+  refundedBy        User?    @relation("AppointmentRefundedBy", fields: [refundedByUserId], references: [id])
   reminderSentAt    DateTime? // evita mandar el mismo recordatorio dos veces
   paymentReminderSentAt DateTime? // evita repetir el aviso de "confirma tu pago pronto" antes de expirar
   recurrenceGroupId String? // comparte id entre todas las citas de una misma serie recurrente; null = cita suelta
@@ -502,8 +506,27 @@ model CashSession {
   status         String    @default("OPEN") // OPEN, CLOSED
   openedAt       DateTime  @default(now())
   closedAt       DateTime?
+  movements      CashMovement[]
 
   @@index([businessId, status])
+}
+
+// Movimiento manual de efectivo dentro de una caja abierta, sin venta de por
+// medio (sacar cambio, meter una base extra, un préstamo, etc.) — siempre
+// con un concepto obligatorio, mismo espíritu que las notas de un cierre que
+// no cuadra: ningún movimiento de dinero se hace en silencio.
+model CashMovement {
+  id              String      @id @default(cuid())
+  cashSessionId   String
+  cashSession     CashSession @relation(fields: [cashSessionId], references: [id], onDelete: Cascade)
+  type            String // INGRESO, EGRESO
+  amount          Float
+  concept         String
+  createdByUserId String
+  createdBy       User        @relation(fields: [createdByUserId], references: [id])
+  createdAt       DateTime    @default(now())
+
+  @@index([cashSessionId])
 }
 
 // Cierre congelado de un período de nómina/comisión para un miembro del

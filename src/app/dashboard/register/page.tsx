@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireSession } from "@/lib/guard";
 import { prisma } from "@/lib/db";
 import { getVocabulary } from "@/lib/vocabulary";
-import { openCashSession, closeCashSession } from "@/app/actions/cashRegister";
+import { openCashSession, closeCashSession, recordCashMovement } from "@/app/actions/cashRegister";
 import { formatCOP } from "@/lib/money";
 
 const ERRORS: Record<string, string> = {
@@ -10,6 +10,8 @@ const ERRORS: Record<string, string> = {
   CAJA_NO_ENCONTRADA: "No se encontró esa caja abierta.",
   SIN_PERMISO: "Solo puedes abrir o cerrar tu propia caja.",
   NOTAS_REQUERIDAS: "La caja no cuadró: agrega una nota explicando la diferencia antes de cerrar.",
+  MONTO_INVALIDO: "El monto del movimiento debe ser mayor a 0.",
+  CONCEPTO_REQUERIDO: "Escribe un concepto para el movimiento de efectivo.",
 };
 
 export default async function RegisterPage({
@@ -113,6 +115,45 @@ export default async function RegisterPage({
                 className="rounded-md bg-gold px-4 py-2 font-semibold text-ink hover:bg-gold/90"
               >
                 Cerrar caja
+              </button>
+            </form>
+            <form action={recordCashMovement.bind(null, s.id)} className="mt-3 flex flex-wrap items-end gap-2 border-t border-white/5 pt-3">
+              <div>
+                <label className="text-xs text-cream/50">Movimiento</label>
+                <select
+                  name="type"
+                  defaultValue="INGRESO"
+                  className="mt-1 block rounded-md border border-white/20 bg-ink px-2 py-1.5 text-sm outline-none focus:border-gold"
+                >
+                  <option value="INGRESO">+ Ingreso</option>
+                  <option value="EGRESO">- Egreso</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-cream/50">Monto</label>
+                <input
+                  type="number"
+                  name="amount"
+                  step="1"
+                  min={0}
+                  required
+                  className="mt-1 block w-28 rounded-md border border-white/20 bg-ink px-2 py-1.5 text-sm outline-none focus:border-gold"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-cream/50">Concepto</label>
+                <input
+                  name="concept"
+                  required
+                  placeholder="Ej: cambio para la caja, préstamo, retiro parcial"
+                  className="mt-1 block w-full rounded-md border border-white/20 bg-ink px-2 py-1.5 text-sm outline-none focus:border-gold"
+                />
+              </div>
+              <button
+                type="submit"
+                className="rounded-md border border-white/20 px-3 py-1.5 text-sm hover:border-gold hover:text-gold"
+              >
+                Registrar
               </button>
             </form>
           </div>
