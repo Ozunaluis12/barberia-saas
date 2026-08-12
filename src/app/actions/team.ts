@@ -24,7 +24,6 @@ async function resolveStaffLink(
 ): Promise<string | null> {
   const staffId = String(formData.get("staffId") ?? "").trim();
   if (!staffId) return null;
-  // Debe ser del roster de este negocio y no estar ya vinculado a OTRA cuenta.
   const staff = await prisma.staff.findFirst({
     where: { id: staffId, businessId },
     include: { linkedUser: true },

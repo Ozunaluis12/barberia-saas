@@ -37,7 +37,6 @@ export default async function AnalyticsPage({
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
   const netProfit = appointmentRevenue + productRevenue - totalExpenses;
 
-  // Horas pico
   const byHour = new Map<number, number>();
   for (const a of appointments) {
     const h = a.startTime.getHours();
@@ -48,7 +47,6 @@ export default async function AnalyticsPage({
     .map(([hour, count]) => ({ hour, count }));
   const maxHourCount = Math.max(1, ...peakHours.map((h) => h.count));
 
-  // Servicio más vendido
   const byService = new Map<string, { name: string; count: number }>();
   for (const a of appointments) {
     const entry = byService.get(a.serviceId) ?? { name: a.service.name, count: 0 };
@@ -59,7 +57,6 @@ export default async function AnalyticsPage({
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
-  // Producto más vendido
   const byProduct = new Map<string, { name: string; count: number }>();
   for (const s of productSales) {
     const entry = byProduct.get(s.productId) ?? { name: s.product.name, count: 0 };
